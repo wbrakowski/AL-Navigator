@@ -1,0 +1,75 @@
+{
+	"name": "report-helper-functions",
+	"displayName": "Report Helper Functions",
+	"description": "Various functions to help developing busines central reports",
+	"version": "0.0.1",
+	"publisher": "wbrakowski",
+	"author": {
+		"name": "Waldemar Brakowski",
+		"email": "wbrakowski@gmail.com"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/wbrakowski/report-helper-functions"
+	},
+<<<<<<< HEAD
+
+=======
+>>>>>>> 148723f... Few Changes
+	"engines": {
+		"vscode": "^1.39.0"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onCommand:extension.DataItem",
+		"onCommand:extension.OnAfterGetRecord",
+		"onCommand:extension.openReportWindow"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "extension.DataItem",
+				"title": "DataItem Jumper"
+			},
+			{
+				"command": "extension.OnAfterGetRecord",
+				"title": "OnAfterGetRecord Jumper"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "extension.DataItem",
+				"key": "ctrl+alt+d"
+			},
+			{
+				"command": "extension.OnAfterGetRecord",
+				"key": "ctrl+alt+g"
+			}
+		]
+<<<<<<< HEAD
+
+=======
+>>>>>>> 148723f... Few Changes
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/glob": "^7.1.1",
+		"@types/mocha": "^5.2.6",
+		"@types/node": "^10.12.21",
+		"@types/vscode": "^1.39.0",
+		"glob": "^7.1.4",
+		"mocha": "^6.1.4",
+		"typescript": "^3.3.1",
+		"tslint": "^5.12.1",
+		"vscode-test": "^1.2.0"
+	}
+}
