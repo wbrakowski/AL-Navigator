@@ -1,6 +1,6 @@
-# report-helper-functions README
+# al-navigator README
 
-Various helper functions to make developing reports for Business Central easier.
+Various navigation functions to make developing objects for Business Central easier.
 
 ## Features
 
@@ -10,18 +10,12 @@ Various helper functions to make developing reports for Business Central easier.
 ## Usage
 
 - Use the shortcut Ctrl + Alt + D to jump through data items in your .al report file 
-- Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al report file 
+- Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al  file 
 
 ## Known Issues
 
 Currently none.
 
-## Release Notes
-
-### 0.0.1
-
-Initial release
-
 ## Git Repository
 
-https://github.com/wbrakowski/report-helper-functions.git
+https://github.com/wbrakowski/AL-Navigator

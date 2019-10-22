@@ -1,9 +1,13 @@
 # Change Log
 
-All notable changes to the "report-helper-functions" extension will be documented in this file.
+All notable changes to the "AL-Navigator" extension will be documented in this file.
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+## Release Notes
 
-## [Unreleased]
+### 0.0.1
 
-- Initial release
+Initial release
+
+### 0.0.2
+
+Changed name of the extension

@@ -1,8 +1,8 @@
 {
-	"name": "report-helper-functions",
-	"displayName": "Report Helper Functions",
+	"name": "al-navigator",
+	"displayName": "AL Navigator",
 	"description": "Various functions to help developing busines central reports",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"publisher": "wbrakowski",
 	"author": {
 		"name": "Waldemar Brakowski",
@@ -10,7 +10,7 @@
 	},
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/wbrakowski/report-helper-functions"
+		"url": "https://github.com/wbrakowski/al-navigator"
 	},
 	"engines": {
 		"vscode": "^1.39.0"
