@@ -11,3 +11,7 @@ Initial release
 ### 0.0.2
 
 Changed name of the extension
+
+### 0.0.3
+- Added functionality jump to keys section in table
+- Jump through all triggers in al file

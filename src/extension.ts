@@ -4,23 +4,32 @@
 
 import * as vscode from 'vscode';
 import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
-import { ReportJumper } from './reportJumper';
+import { FileJumper } from './fileJumper';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	
-	let dataItemCommand = commands.registerCommand("extension.DataItem", () => {
-	  ReportJumper.jumpToNextDataItem();
+	let jumpToNextdataItemCmd = commands.registerCommand("extension.DataItem", () => {
+		FileJumper.jumpToNextDataItem();
 	});
 
-	let onAfterGetRecCommand = commands.registerCommand("extension.OnAfterGetRecord", () => {
-	  ReportJumper.jumpToNextOnAfterGetRecordTrigger();
+	let jumpToOnAfterGetRecCmd = commands.registerCommand("extension.OnAfterGetRecord", () => {
+		FileJumper.jumpToNextOnAfterGetRecordTrigger();
 	});
 
+	let jumpToNextTriggerCommand = commands.registerCommand("extension.Trigger", () => {
+		FileJumper.jumpToNextTrigger();
+	  });
 
-	context.subscriptions.push(dataItemCommand);
-	context.subscriptions.push(onAfterGetRecCommand);
+	let jumpToKeysCommand = commands.registerCommand("extension.Keys", () => {
+		FileJumper.jumpToKeys();
+	  });
+
+	context.subscriptions.push(jumpToNextdataItemCmd);
+	context.subscriptions.push(jumpToOnAfterGetRecCmd);
+	context.subscriptions.push(jumpToNextTriggerCommand);
+	context.subscriptions.push(jumpToKeysCommand);
 }
 
 // this method is called when your extension is deactivated
