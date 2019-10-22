@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Various functions to help developing busines central reports",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"publisher": "wbrakowski",
 	"author": {
 		"name": "Waldemar Brakowski",
@@ -21,7 +21,8 @@
 	"activationEvents": [
 		"onCommand:extension.DataItem",
 		"onCommand:extension.OnAfterGetRecord",
-		"onCommand:extension.openReportWindow"
+		"onCommand:extension.Trigger",
+		"onCommand:extension.Keys"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -33,6 +34,14 @@
 			{
 				"command": "extension.OnAfterGetRecord",
 				"title": "OnAfterGetRecord Jumper"
+			},
+			{
+				"command": "extension.Trigger",
+				"title": "Trigger Jumper"
+			},
+			{
+				"command": "extension.Keys",
+				"title": "Keys Jumper"
 			}
 		],
 		"keybindings": [
@@ -43,6 +52,14 @@
 			{
 				"command": "extension.OnAfterGetRecord",
 				"key": "ctrl+alt+g"
+			},
+			{
+				"command": "extension.Trigger",
+				"key": "ctrl+alt+t"
+			},
+			{
+				"command": "extension.Keys",
+				"key": "ctrl+alt+k"
 			}
 		]
 	},

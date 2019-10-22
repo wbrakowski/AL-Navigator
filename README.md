@@ -6,11 +6,16 @@ Various navigation functions to make developing objects for Business Central eas
 
 - DataItem Jumping
 - OnAfterGetRecord Jumping
+- Trigger Jumping
+- Keys Jumping
+
 
 ## Usage
 
-- Use the shortcut Ctrl + Alt + D to jump through data items in your .al report file 
-- Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al  file 
+- Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
+- Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al file 
+- Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
+- Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
 
 ## Known Issues
 
