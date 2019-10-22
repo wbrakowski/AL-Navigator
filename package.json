@@ -12,7 +12,6 @@
 		"type": "git",
 		"url": "https://github.com/wbrakowski/report-helper-functions"
 	},
-
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -46,7 +45,6 @@
 				"key": "ctrl+alt+g"
 			}
 		]
-
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
