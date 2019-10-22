@@ -14,19 +14,11 @@ export module ReportJumper {
    function jumpToNextTextOccurence(text: string)
    {
     let editor = window.activeTextEditor;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 148723f... Few Changes
     if (editor === undefined) {
         return;
     }
     
-<<<<<<< HEAD
-=======
->>>>>>> 46fc6f5... few changes
-=======
->>>>>>> 148723f... Few Changes
+
     let currentLineNo = editor.selection.active.line + 1;
     let onAfterGetRecLineNo = 1;
     for (let i = currentLineNo; i < editor.document.lineCount; i++) {
