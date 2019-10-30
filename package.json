@@ -1,8 +1,8 @@
 {
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
-	"description": "Various functions to help developing busines central reports",
-	"version": "0.0.3",
+	"description": "Various functions to help navigating through busines central and developing extensions",
+	"version": "0.0.4",
 	"publisher": "wbrakowski",
 	"author": {
 		"name": "Waldemar Brakowski",
@@ -22,7 +22,8 @@
 		"onCommand:extension.DataItem",
 		"onCommand:extension.OnAfterGetRecord",
 		"onCommand:extension.Trigger",
-		"onCommand:extension.Keys"
+		"onCommand:extension.Keys",
+		"onLanguage:al"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
