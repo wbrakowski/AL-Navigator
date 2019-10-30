@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Various functions to help navigating through busines central and developing extensions",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"publisher": "wbrakowski",
 	"author": {
 		"name": "Waldemar Brakowski",
