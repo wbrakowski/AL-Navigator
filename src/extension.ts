@@ -31,11 +31,16 @@ export function activate(context: vscode.ExtensionContext) {
 	let jumpToKeysCommand = commands.registerCommand("extension.Keys", () => {
 		FileJumper.jumpToKeys();
 	  });
+
+	let jumpToActionsCommand = commands.registerCommand("extension.Actions", () => {
+		FileJumper.jumpToNextActions();
+	});
 	
 	context.subscriptions.push(jumpToNextdataItemCmd);
 	context.subscriptions.push(jumpToOnAfterGetRecCmd);
 	context.subscriptions.push(jumpToNextTriggerCommand);
 	context.subscriptions.push(jumpToKeysCommand);
+	context.subscriptions.push(jumpToActionsCommand);
 
     return alNavigatorExtensionContext;
 }

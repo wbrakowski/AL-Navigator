@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { ALAddProcedureStubCodeCommand } from './addProcedureStubCodeCommand';
 import { ALNavigatorExtensionContext } from './alNavigatorExtensionContext';
-import { ALFileOperations } from './alFileOperations';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     protected _alNavigatorExtensionContext : ALNavigatorExtensionContext;
@@ -15,7 +14,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     provideCodeActions(document: vscode.TextDocument, range: vscode.Range | vscode.Selection, context: vscode.CodeActionContext, token: vscode.CancellationToken): vscode.ProviderResult<(vscode.Command | vscode.CodeAction)[]> {
         let actions: vscode.CodeAction[] = [];
 
-        if (ALFileOperations.checkIfSelectionIsNotExistingProcedureCall(document, range)) {
+        if (this._addProcedureStub.alFileOperations.checkIfSelectionIsNotExistingProcedureCall(document, range)) {
 
             let action : vscode.CodeAction = new vscode.CodeAction("Add Procedure Stub", vscode.CodeActionKind.QuickFix);
             action.command = { 
