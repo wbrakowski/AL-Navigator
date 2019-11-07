@@ -17,6 +17,7 @@ export class WorkSpaceALFile {
         this.filePath = file.fsPath;
         this.fileName = this.getFileNameFromPath(this.filePath);
         this.fileText = this.getTextFromFile();
+        console.log(this.fileText);
         this.objectName = this.extractObjectNameFromText(this.fileText);
         //this.objectType = this.extractObjectTypeFromText(this.fileText);
     }
@@ -40,13 +41,15 @@ export class WorkSpaceALFile {
     }
 
     private getTextFromFile(): string {
-        //vscode.workspace.openTextDocument(this.filePath).then((document) => {
-        //vscode.workspace.openTextDocument(this.fileName).then((document) => {
-        vscode.workspace.
+        // TODO
+        let fileText : string = "";
         vscode.workspace.openTextDocument(this.uri).then((document) => {
-           return(document.getText());
+            //vscode.window.showTextDocument(document).then();
+            fileText = document.getText();
+            //return(document.getText());
           });
-        return "";
+        //return "";
+        return fileText;
     }
 
     private extractObjectNameFromText(text: string) : string {
@@ -74,4 +77,4 @@ export class WorkSpaceALFile {
     //     return ObjectType.Codeunit;
     // }
 
-}
+ }
