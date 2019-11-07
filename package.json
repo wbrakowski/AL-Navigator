@@ -23,6 +23,7 @@
 		"onCommand:extension.OnAfterGetRecord",
 		"onCommand:extension.Trigger",
 		"onCommand:extension.Keys",
+		"onCommand:extension.Actions",
 		"onLanguage:al"
 	],
 	"main": "./out/extension.js",
@@ -43,6 +44,10 @@
 			{
 				"command": "extension.Keys",
 				"title": "Keys Jumper"
+			},
+			{
+				"command": "extension.Actions",
+				"title": "Actions Jumper"
 			}
 		],
 		"keybindings": [
@@ -61,6 +66,10 @@
 			{
 				"command": "extension.Keys",
 				"key": "ctrl+alt+k"
+			},
+			{
+				"command": "extension.Actions",
+				"key": "ctrl+alt+a"
 			}
 		]
 	},
