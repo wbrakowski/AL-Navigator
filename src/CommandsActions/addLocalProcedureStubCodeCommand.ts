@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALNavigatorExtensionContext } from './alNavigatorExtensionContext';
-import { ALSyntaxWriter } from './alSyntaxWriter';
-import { ALFileOperations} from './alFileOperations';
+import { ALSyntaxWriter } from '../alSyntaxWriter';
+import { ALFileOperations} from '../alFileOperations';
 
-export class ALAddProcedureStubCodeCommand extends ALCodeCommand {
+export class ALAddLocalProcedureStubCodeCommand extends ALCodeCommand {
     private _alFileOperations : ALFileOperations;
     get alFileOperations(): ALFileOperations {
         return this._alFileOperations;
@@ -13,31 +12,34 @@ export class ALAddProcedureStubCodeCommand extends ALCodeCommand {
         this._alFileOperations = value;
     }
 
-    constructor(context : ALNavigatorExtensionContext, commandName: string) {
+    constructor(context : vscode.ExtensionContext, commandName: string, alFileOperations: ALFileOperations) {
         super(context, commandName);
-        this._alFileOperations = new ALFileOperations();
+        this._alFileOperations = alFileOperations;
     }
     
     protected async runAsync(range: vscode.Range) {
         let writer: ALSyntaxWriter = new ALSyntaxWriter();
         
         writer.incIndent();
-        let procedureStub: string = this._alFileOperations.buildProcedureStubText();
-        writer.writeProcedureStub(procedureStub);
+        let procedureStub: string = this._alFileOperations.buildProcedureStubText(true);
+
+        writer.writeProcedureStub(procedureStub);  
+
         let lineNo = this._alFileOperations.procedureStubStartingLineNo();
         let source = writer.toString();
 
-        await this.insertContentAsync(source, lineNo);
+        let editor = vscode.window.activeTextEditor;
+        await this.insertContentAsync(source, lineNo, editor);
     }
 
-    protected async insertContentAsync(content: string, lineNo: number) {
+    protected async insertContentAsync(content: string, lineNo: number, editor : vscode.TextEditor | undefined) {
         content = '\n' + content; 
 
-        if (!vscode.window.activeTextEditor) {
+        if (!editor) {
             return;
         }
 
-        await vscode.window.activeTextEditor.edit(editBuilder => {
+        await editor.edit(editBuilder => {
             editBuilder.insert(new vscode.Position(lineNo, 0), content);
         });
     }

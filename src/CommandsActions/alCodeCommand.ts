@@ -1,15 +1,14 @@
 import * as vscode from 'vscode';
-import {ALNavigatorExtensionContext} from "./alNavigatorExtensionContext";
 
 export class ALCodeCommand {    
-    protected _alNavigatorExtensionContext : ALNavigatorExtensionContext;  
+    protected _alNavigatorExtensionContext : vscode.ExtensionContext;  
 
     public name: string;
     
-    constructor(context : ALNavigatorExtensionContext, commandName: string) {
+    constructor(context : vscode.ExtensionContext, commandName: string) {
         this._alNavigatorExtensionContext = context;
         this.name = commandName;
-        this._alNavigatorExtensionContext.vscodeExtensionContext.subscriptions.push(
+        this._alNavigatorExtensionContext.subscriptions.push(
             vscode.commands.registerCommand(
                 commandName,
                 () => this.run()

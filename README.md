@@ -23,6 +23,7 @@ Various navigation functions to make developing objects for Business Central eas
 - Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al file 
 - Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
 - Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
+- Use the shortcut Ctrl + Alt + a to jump to actions in a page .al file
 
 ## Known Issues
 

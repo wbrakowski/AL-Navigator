@@ -19,6 +19,6 @@ Bugfixing
 ## [0.1.2]
 
 - Add correct procedure stub with return value
-- Add procedure stub in files that are not currently opened when calling a function from a different object
+- Add procedure stub in workspace files that are not currently opened when calling a function from a different object
 - New feature jumping to actions with shortcut ctrl + alt + a
 

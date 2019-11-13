@@ -4,23 +4,25 @@ import { WorkSpaceALFile} from './workspaceALFile';
     
   export class ALFileOperations {
     private _workspaceALFiles : WorkSpaceALFile[]; 
+    public currentSelectionProcedureName : string = "";
+    public currentRemoteALFile: WorkSpaceALFile | undefined;
+
 
     constructor() {
         this._workspaceALFiles = this.populateALFilesArray();
     }
 
-  
+    public repopulateALFIlesArray() {
+        this._workspaceALFiles = this.populateALFilesArray();
+    }
 
     public procedureStubStartingLineNo() : number {
         let searchText : string = "}";
         let foundLineNo : number = this.findNextTextOccurence(searchText, true, 0);
 
-        let lineNo : number;
+        let lineNo : number = -1;
 
-        if (foundLineNo <= 0) {
-            lineNo = -1;
-        }
-        else {
+        if (foundLineNo >= 0) {
             lineNo = foundLineNo;
         }
 
@@ -52,7 +54,7 @@ import { WorkSpaceALFile} from './workspaceALFile';
         return foundLineNo;
     }
 
-    public buildProcedureStubText(): string {
+    public buildProcedureStubText(startingWithLocal: boolean): string {
         let editor = vscode.window.activeTextEditor;
         if (!editor) {
             return "";
@@ -64,7 +66,9 @@ import { WorkSpaceALFile} from './workspaceALFile';
         let parameterNames = this.extractParameterNamesFromText(currentLineText);
         let returnValueName = this.extractReturnValueNameFromText(currentLineText).trimLeft();
         let returnValueType = this.findTypeForName(returnValueName);
-        let procedureStub = "local procedure " + procedureName + "(";
+        let procedureStub : string;
+        startingWithLocal? procedureStub = "local procedure " + procedureName + "(" : procedureStub = "procedure " + procedureName + "(";
+        
         let parameterType : string;
         let i : number = 0;
         if (parameterNames.length === 0) {
@@ -85,7 +89,27 @@ import { WorkSpaceALFile} from './workspaceALFile';
             procedureStub += " : " + returnValueType;
         }
 
-        return procedureStub;
+        let indentPart = "    ";
+
+        let procedureStubWithBody: string = procedureStub;
+        procedureStubWithBody += "\n";
+        procedureStubWithBody += indentPart;
+        procedureStubWithBody += "begin";
+        procedureStubWithBody += "\n";
+        procedureStubWithBody += indentPart;
+        procedureStubWithBody += indentPart;
+
+        let errorText : string = 'TODO: Implement ' + procedureStub;        
+        procedureStubWithBody += "// " + errorText;
+        procedureStubWithBody += "\n";
+        procedureStubWithBody += indentPart;
+        procedureStubWithBody += indentPart;
+        procedureStubWithBody += "Error('" + errorText + "');";
+        procedureStubWithBody += "\n";
+        procedureStubWithBody += indentPart;
+        procedureStubWithBody += "end;";
+
+        return procedureStubWithBody;
     }
 
     private findTypeForName(parameterName: string): string {
@@ -141,13 +165,22 @@ import { WorkSpaceALFile} from './workspaceALFile';
     }
 
     private extractProcedureNameFromText(text: string) : string {
-        let openingBracketPos : number = text.indexOf("(");
-        let closingBracketPos : number = text.indexOf(")");
+        let textToCheck : string = "";
+        let indexDot : number = text.indexOf(".");
+        if (indexDot > -1) {
+            textToCheck = text.substr(indexDot + 1);
+        }
+        else {
+            textToCheck = text;
+        }
+
+        let openingBracketPos : number = textToCheck.indexOf("(");
+        let closingBracketPos : number = textToCheck.indexOf(")");
         if (openingBracketPos < -1 || closingBracketPos < -1) {
             return "";
         }
 
-        let textBeforeOpeningBracket = text.substring(0, openingBracketPos);
+        let textBeforeOpeningBracket = textToCheck.substring(0, openingBracketPos);
         let procedureName : string = textBeforeOpeningBracket.trimLeft();
 
         let indexEqualSign = procedureName.indexOf("=");
@@ -206,7 +239,8 @@ import { WorkSpaceALFile} from './workspaceALFile';
         return variableName;
     }
 
-    public checkIfSelectionIsNotExistingProcedureCall(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
+    public checkIfSelectionIsNotExistingLocalProcedureCall(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
+        this.ClearCurrentSelectionValues();
         let editor = vscode.window.activeTextEditor;
         if (!editor) {
             return false;
@@ -222,19 +256,51 @@ import { WorkSpaceALFile} from './workspaceALFile';
                 return true;
             }
         }
-
-        //TODO: also activate functionality if procedure is for other object than the currently opened
-        
-        // if (checkIfTextIsGlobalProcedureCall(currLineText)) {
-        //     let procedureOwnerVariableName = extractProcedureOwnerVariableNameFromText(currLineText);
-        //     let procedureOwnerVariableType = findTypeForName(procedureOwnerVariableName).trimLeft();
-        //     findProcedureOwnerFile(procedureOwnerVariableType);
-        //     if (!checkIfGlobalProcedureAlreadyExists(currLineText)) {
-        //         return true;
-        //     }
-        // }
         
         return false;
+    }
+
+    private ClearCurrentSelectionValues() : void {
+        this.currentRemoteALFile = undefined;
+        this.currentSelectionProcedureName = "";
+    }
+
+    public checkIfSelectionIsNotExistingRemoteProcedureCall(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
+        this.ClearCurrentSelectionValues();
+        let editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return false;
+        }
+
+        let currLine = editor.document.lineAt(range.start.line);
+        let currLineText = currLine.text.trimLeft();
+        if (this.checkIfTextIsComment(currLineText)) {
+            return false;
+        }
+        
+        if (this.checkIfTextIsGlobalProcedureCall(currLineText)) {
+            let procedureName : string = this.extractProcedureNameFromText(currLineText);
+            let procedureOwnerVariableName = this.extractProcedureOwnerVariableNameFromText(currLineText);
+            let procedureOwnerVariableType = this.findTypeForName(procedureOwnerVariableName).trimLeft();
+            let indexSpace = procedureOwnerVariableType.indexOf(" ");
+            let objectType = procedureOwnerVariableType.substr(0, indexSpace);
+            let objectName = procedureOwnerVariableType.substr(indexSpace + 1);
+            objectName = this.removeDoubleQuotesFromString(objectName);
+            let remoteALFile = this._workspaceALFiles.find(i => i.objectName === objectName);
+            if (remoteALFile) {
+                if (!remoteALFile.procedures.includes(procedureName)) {
+                    this.currentSelectionProcedureName = procedureName;
+                    this.currentRemoteALFile = remoteALFile;
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    private removeDoubleQuotesFromString(text : string) : string {
+        return text.replace(/"/g,"");
     }
 
  
@@ -265,24 +331,6 @@ import { WorkSpaceALFile} from './workspaceALFile';
         }
     }
 
-    private checkIfGlobalProcedureAlreadyExists(text: string) : boolean {
-        let procedureName : string = this.extractProcedureNameFromText(text);
-
-        let editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return false;
-        }
-
-        let currFileTextUpperCase : string = editor.document.getText().toUpperCase();
-        let searchText : string = "PROCEDURE " + procedureName.toUpperCase();
-
-        if (currFileTextUpperCase.indexOf(searchText) > -1) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
 
     private checkIfTextIsLocalProcedureCall(text: string) : boolean {
         if (text.indexOf(".") > -1) {
@@ -374,13 +422,11 @@ import { WorkSpaceALFile} from './workspaceALFile';
         let searchPattern : string = '**/*.al*';
         console.group('searchpattern: ' + searchPattern);
 
-// TODO
         this.getAlFilesFromCurrentWorkspace(searchPattern).then(Files => {
             try {
                 Files.forEach(file => {
                     let workspaceALFile : WorkSpaceALFile = new WorkSpaceALFile(file);
                     workspaceALFiles.push(workspaceALFile);
-                    console.log(file.fsPath);
                 });
                 } 
             catch (error) {
@@ -392,33 +438,4 @@ import { WorkSpaceALFile} from './workspaceALFile';
 
         return workspaceALFiles;
     }
-        
-
-    // private findProcedureOwnerFile(objectTypeObjectName : string) : string{
-    //     let objectTypeObjectNameUpperCase = objectTypeObjectName.toUpperCase();
-    //     let spaceIndex : number = objectTypeObjectName.indexOf(" ");
-    //     if (spaceIndex > -1) {
-    //         let objectType : string = objectTypeObjectName.substring(0, spaceIndex);
-    //         let objectName : string = objectTypeObjectName.substring(spaceIndex + 1, objectTypeObjectName.length);
-    //         //let searchPattern : string = '**/*{*' + objectName + '*}.al*';
-    //         let searchPattern : string = '**/*.al*';
-    //         console.group('searchpattern: ' + searchPattern);
-    //         this.getAlFilesFromCurrentWorkspace(searchPattern).then(Files => {
-    //             try {
-    //                 Files.forEach(file => {
-                        
-    //                     console.log(file.fsPath);
-    //                 });
-    //             } catch (error) {
-    //                 vscode.window.showErrorMessage(error.message);
-    //             }
-
-    //             //WorkspaceFiles.ReopenFilesInEditor(renamedfiles);
-    //         });    
-    //     }
-    //     return "";
-    // }
-
-
-
   }

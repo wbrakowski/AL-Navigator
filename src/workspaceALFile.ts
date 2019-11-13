@@ -1,80 +1,107 @@
 import * as vscode from 'vscode';
-
-enum ObjectType {Table = 1, TableExtension = 2, Page = 3, PageExtension = 4, Report = 5, Codeunit = 6}
-enum ObjectTypeString {'TABLE' = 1, 'TABLEEXTENSION' = 2, 'PAGE' = 3, 'PAGEEXTENSION' = 4, 'REPORT' = 5, 'CODEUNIT' = 6}
+import * as fs from 'fs';
+import { ALFileOperations } from './alFileOperations';
 
 export class WorkSpaceALFile {
     public uri: vscode.Uri;
     public filePath: string;
     public fileName: string;
     public fileText: string;
-    //public objectType: ObjectType;
-    public objectName: string;
-    //public objectNo: number;
+    public objectType: string = "";
+    public objectName: string= "";
+    public objectID: string = "";
+    public procedures: string[] = new Array();
     
     constructor(file : vscode.Uri) {
         this.uri = file;
         this.filePath = file.fsPath;
         this.fileName = this.getFileNameFromPath(this.filePath);
         this.fileText = this.getTextFromFile();
-        console.log(this.fileText);
-        this.objectName = this.extractObjectNameFromText(this.fileText);
-        //this.objectType = this.extractObjectTypeFromText(this.fileText);
+        this.getObjectInfoFromText();
+        console.log(this.fileName);
+        console.log(this.objectType);
+        console.log(this.objectName);
+        console.log(this.objectID);
+        console.log(this.procedures.toString());
     }
 
     private getFileNameFromPath(path : string) : string {
         return path.replace(/^.*[\\\/]/, '');
     }
 
-    private writeProcedureStubInALFIle(file: vscode.Uri, procedureStub: string) : string {
-        // TODO
-        const textEdits: vscode.TextEdit[] = [];
-        textEdits.push(vscode.TextEdit.insert(new vscode.Position(0, 0), procedureStub));
-
-        const workEdits = new vscode.WorkspaceEdit();
-        workEdits.set(file, textEdits); 
-        vscode.workspace.applyEdit(workEdits); 
-
-        //vscode.workspace.openTextDocument(filePath).then(newdoc => vscode.window.showTextDocument(newdoc, { preserveFocus: true, viewColumn: vscode.ViewColumn.Active, preview: false }))
-
-        return "";
-    }
-
     private getTextFromFile(): string {
-        // TODO
-        let fileText : string = "";
-        vscode.workspace.openTextDocument(this.uri).then((document) => {
-            //vscode.window.showTextDocument(document).then();
-            fileText = document.getText();
-            //return(document.getText());
-          });
-        //return "";
-        return fileText;
+        return fs.readFileSync(this.uri.fsPath).toString();
     }
 
-    private extractObjectNameFromText(text: string) : string {
-        for(let ots in ObjectTypeString) {
-            if (isNaN(Number(ots))) {
-                let otsIndex : number = text.indexOf(ots);
-                if(otsIndex > -1) {
-                    let objectName : string = text.substr(otsIndex + 1);
-                    console.log(objectName);
-                    return objectName;
+    public checkIfProcedureExistsInFile(procedureName : string): boolean {
+        return (this.procedures.indexOf(procedureName) > -1);
+    }
+
+    private getObjectInfoFromText() {
+        let firstLineFileText = this.fileText.split('\n', 1)[0];
+        var patternObjectType = new RegExp('(codeunit |page |pagecustomization |pageextension |profile |query |report |requestpage |table |tableextension |xmlport |enum |enumextension |controladdin)', "i");
+        //let procedureNamePattern = '[\\w]*';
+        let procedureNamePattern = '[\\w]*';
+        var patternProcedure = new RegExp(`(procedure) +(${procedureNamePattern})`, "gi");
+
+        let objectTypeArr = firstLineFileText.match(patternObjectType);
+        let procedureArr = this.fileText.match(patternProcedure);
+
+        var objectNamePattern = '"[^"]*"'; // All characters except "
+        var objectNameNoQuotesPattern = '[\\w]*';
+        
+
+        if (!objectTypeArr) {
+             return;
+        }
+
+        if (objectTypeArr) {
+            switch (objectTypeArr[0].trim().toLowerCase()) {
+                case 'page':
+                case 'codeunit':
+                case 'query':
+                case 'report':
+                case 'requestpage':
+                case 'table':
+                case 'xmlport':
+                case 'enum': {
+
+                    var patternObject = new RegExp(`(${objectTypeArr[0].trim().toLowerCase()}) +([0-9]+) +(${objectNamePattern}|${objectNameNoQuotesPattern})([^"\n]*"[^"\n]*)?`, "i");
+                    let currObject = firstLineFileText.match(patternObject);
+                    if (currObject === null) {
+                        return;
+                    }
+
+                    this.objectType = currObject[1];
+                    this.objectID = currObject[2];
+                    this.objectName = currObject[3];
+
+                    break;
+                }
+                case 'pageextension':
+                case 'tableextension':
+                default: {
+                    return;
+                }
+            }
+
+            this.objectType = this.objectType.trim().toString();
+            this.objectID = this.objectID.trim().toString();
+            this.objectName = this.objectName.trim().toString().replace(/"/g, '');
+        }
+
+        if (!objectTypeArr) {
+            return;
+       }
+
+       if (procedureArr) {
+            for(let i = 0; i < procedureArr.length; i++) {
+                let lastSpaceIndex : number = procedureArr[i].lastIndexOf(" ");
+                let procedureName : string = procedureArr[i].substring(lastSpaceIndex + 1);
+                if (procedureName) {
+                    this.procedures.push(procedureName);
                 }
             }
         }
-        return "";
     }
-
-    // private extractObjectTypeFromText(text: string) : ObjectType {
-    //     for(let ots in ObjectTypeString) {
-    //         if (isNaN(Number(ots))) {
-    //             if(text.indexOf(ots) > -1) {
-    //                 return (ObjectType[ots]);
-    //             }
-    //         }
-    //     }
-    //     return ObjectType.Codeunit;
-    // }
-
  }

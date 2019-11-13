@@ -29,27 +29,17 @@ export class ALSyntaxWriter {
         }
     }
 
-    public setIndent(value : number) {
-        let text : string = " ";
-        this.indentText = text.repeat(value);
-    }
-
     public writeLine(line : string) {
         this.content += (this.indentText + line + "\n");
     }
 
-    public writeStartBlock() {
-        this.writeLine("{");
-        this.incIndent();
-    }
-
     public writeProcedureStub(procedureStub: string) {
         this.writeLine(procedureStub);
-        this.writeLine("begin");
-        this.incIndent();
-        this.writeLine("// TODO: Implement " + procedureStub);
-        this.writeLine("Error('TODO')");
-        this.decIndent();
-        this.writeLine("end;");
+        // this.writeLine("begin");
+        // this.incIndent();
+        // this.writeLine("// TODO: Implement " + procedureStub);
+        // this.writeLine("Error('TODO');");
+        // this.decIndent();
+        // this.writeLine("end;");
     }
 }
