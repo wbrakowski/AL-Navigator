@@ -201,8 +201,9 @@ import { WorkSpaceALFile} from './workspaceALFile';
 
         let textBetweenBrackets = text.substring(openingBracketPos + 1, closingBracketPos);
         let nextCommaPos : number = textBetweenBrackets.indexOf(",");
+        let parameterNameToPush : string = "";
         if (nextCommaPos > -1) {
-            let parameterNameToPush : string  = textBetweenBrackets.substring(0, nextCommaPos);
+            parameterNameToPush  = textBetweenBrackets.substring(0, nextCommaPos);
             do {
                 if (parameterNameToPush !== "") {
                     parameterNames.push(parameterNameToPush);
@@ -220,6 +221,12 @@ import { WorkSpaceALFile} from './workspaceALFile';
                 }
                 
             } while (nextCommaPos > -1);
+        }
+        else {
+            if (textBetweenBrackets !== "") {
+                parameterNameToPush = textBetweenBrackets;
+                parameterNames.push(parameterNameToPush);
+            }
         }
 
         return parameterNames;
@@ -247,7 +254,7 @@ import { WorkSpaceALFile} from './workspaceALFile';
         }
 
         let currLine = editor.document.lineAt(range.start.line);
-        let currLineText = currLine.text.trimLeft();
+        let currLineText = currLine.text.trim();
         if (this.checkIfTextIsComment(currLineText)) {
             return false;
         }

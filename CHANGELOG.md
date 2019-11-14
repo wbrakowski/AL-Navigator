@@ -22,3 +22,7 @@ Bugfixing
 - Add procedure stub in workspace files that are not currently opened when calling a function from a different object
 - New feature jumping to actions with shortcut ctrl + alt + a
 
+## [0.1.3]
+
+- Bugfixing, finding out variable type for procedure stub creation did not work all the time
+
