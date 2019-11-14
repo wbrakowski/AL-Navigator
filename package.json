@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Various functions to help navigating through al objects and developing extensions",
-	"version": "0.1.2",
+	"version": "0.1.3",
 	"publisher": "wbrakowski",
 	"author": {
 		"name": "Waldemar Brakowski",
