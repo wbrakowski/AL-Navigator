@@ -9,6 +9,7 @@ Various navigation functions to make developing objects for Business Central eas
 - OnAfterGetRecord Jumping
 - Trigger Jumping
 - Keys Jumping
+- Actions Jumping
 
 ## Usage
 
@@ -16,8 +17,6 @@ Various navigation functions to make developing objects for Business Central eas
 
 
 ![Create Procedure Stub](resources/CreateProcedureStub.gif)
-
-
 
 - Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
 - Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al file 
