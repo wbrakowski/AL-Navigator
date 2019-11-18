@@ -18,11 +18,11 @@ export class WorkSpaceALFile {
         this.fileName = this.getFileNameFromPath(this.filePath);
         this.fileText = this.getTextFromFile();
         this.getObjectInfoFromText();
-        console.log(this.fileName);
-        console.log(this.objectType);
-        console.log(this.objectName);
-        console.log(this.objectID);
-        console.log(this.procedures.toString());
+        // console.log(this.fileName);
+        // console.log(this.objectType);
+        // console.log(this.objectName);
+        // console.log(this.objectID);
+        // console.log(this.procedures.toString());
     }
 
     private getFileNameFromPath(path : string) : string {
@@ -39,17 +39,13 @@ export class WorkSpaceALFile {
 
     private getObjectInfoFromText() {
         let firstLineFileText = this.fileText.split('\n', 1)[0];
-        var patternObjectType = new RegExp('(codeunit |page |pagecustomization |pageextension |profile |query |report |requestpage |table |tableextension |xmlport |enum |enumextension |controladdin)', "i");
-        //let procedureNamePattern = '[\\w]*';
+        var patternObjectType = new RegExp('(codeunit |page |pagecustomization |pageextension |report |table |tableextension |xmlport)', "i");
         let procedureNamePattern = '[\\w]*';
-        var patternProcedure = new RegExp(`(procedure) +(${procedureNamePattern})`, "gi");
-
-        let objectTypeArr = firstLineFileText.match(patternObjectType);
-        let procedureArr = this.fileText.match(patternProcedure);
-
         var objectNamePattern = '"[^"]*"'; // All characters except "
         var objectNameNoQuotesPattern = '[\\w]*';
-        
+        var patternProcedure = new RegExp(`(procedure) +(${procedureNamePattern})`, "gi");
+        let objectTypeArr = firstLineFileText.match(patternObjectType);
+        let procedureArr = this.fileText.match(patternProcedure);
 
         if (!objectTypeArr) {
              return;
@@ -57,15 +53,15 @@ export class WorkSpaceALFile {
 
         if (objectTypeArr) {
             switch (objectTypeArr[0].trim().toLowerCase()) {
-                case 'page':
                 case 'codeunit':
-                case 'query':
+                case 'page':
+                case 'pagecustomization':
+                case 'pageextension':
                 case 'report':
-                case 'requestpage':
                 case 'table':
-                case 'xmlport':
-                case 'enum': {
-
+                case 'tableextension':
+                case 'xmlport': 
+                {
                     var patternObject = new RegExp(`(${objectTypeArr[0].trim().toLowerCase()}) +([0-9]+) +(${objectNamePattern}|${objectNameNoQuotesPattern})([^"\n]*"[^"\n]*)?`, "i");
                     let currObject = firstLineFileText.match(patternObject);
                     if (currObject === null) {
@@ -78,13 +74,10 @@ export class WorkSpaceALFile {
 
                     break;
                 }
-                case 'pageextension':
-                case 'tableextension':
                 default: {
                     return;
                 }
             }
-
             this.objectType = this.objectType.trim().toString();
             this.objectID = this.objectID.trim().toString();
             this.objectName = this.objectName.trim().toString().replace(/"/g, '');

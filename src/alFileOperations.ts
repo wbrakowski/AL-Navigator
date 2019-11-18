@@ -4,12 +4,17 @@ import { WorkSpaceALFile} from './workspaceALFile';
     
   export class ALFileOperations {
     private _workspaceALFiles : WorkSpaceALFile[]; 
+    private indentText : string;
+    private indentPart : string;
+    public content : string;
     public currentSelectionProcedureName : string = "";
     public currentRemoteALFile: WorkSpaceALFile | undefined;
 
-
     constructor() {
         this._workspaceALFiles = this.populateALFilesArray();
+        this.content = "";
+        this.indentText = "";
+        this.indentPart = "    ";
     }
 
     public repopulateALFIlesArray() {
@@ -19,7 +24,6 @@ import { WorkSpaceALFile} from './workspaceALFile';
     public procedureStubStartingLineNo() : number {
         let searchText : string = "}";
         let foundLineNo : number = this.findNextTextOccurence(searchText, true, 0);
-
         let lineNo : number = -1;
 
         if (foundLineNo >= 0) {
@@ -30,11 +34,11 @@ import { WorkSpaceALFile} from './workspaceALFile';
     }
 
     private findNextTextOccurence(searchText : string, returnLastOccurence : boolean, startingLineNo: number) : number {
-        let editor = vscode.window.activeTextEditor;
+        let editor = this.getActiveTextEditor();
         if (!editor) {
             return -1;
         }
-        
+
         let currentLineNo = startingLineNo;
         let foundLineNo : number = -1;
         
@@ -55,7 +59,7 @@ import { WorkSpaceALFile} from './workspaceALFile';
     }
 
     public buildProcedureStubText(startingWithLocal: boolean): string {
-        let editor = vscode.window.activeTextEditor;
+        let editor = this.getActiveTextEditor();
         if (!editor) {
             return "";
         }
@@ -444,5 +448,44 @@ import { WorkSpaceALFile} from './workspaceALFile';
 
 
         return workspaceALFiles;
+    }
+
+    private getActiveTextEditor() : vscode.TextEditor | undefined {
+        let editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage("No active editor found.");
+         }
+        return editor;
+    }
+
+    public toString() : string {
+        return this.content;
+    }
+
+    public incIndent() {
+        this.indentText += this.indentPart;
+    }
+
+    public decIndent() {
+        if (this.indentText.length > this.indentPart.length){
+            this.indentText = this.indentText.substr(0, this.indentText.length - this.indentPart.length);
+        }
+        else {
+            this.indentText = "";
+        }
+    }
+
+    public writeLine(line : string) {
+        this.content += (this.indentText + line + "\n");
+    }
+
+    public writeProcedureStub(procedureStub: string) {
+        this.writeLine(procedureStub);
+    }
+
+    public clearContent() {
+        this.content = "";
+        this.indentText = "";
+        this.indentPart = "    ";
     }
   }

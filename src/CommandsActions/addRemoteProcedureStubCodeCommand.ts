@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALSyntaxWriter } from '../alSyntaxWriter';
 import { ALFileOperations} from '../alFileOperations';
 import * as fs from 'fs';
 

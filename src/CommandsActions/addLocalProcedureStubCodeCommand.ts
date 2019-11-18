@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALSyntaxWriter } from '../alSyntaxWriter';
 import { ALFileOperations} from '../alFileOperations';
 
 export class ALAddLocalProcedureStubCodeCommand extends ALCodeCommand {
@@ -18,15 +17,15 @@ export class ALAddLocalProcedureStubCodeCommand extends ALCodeCommand {
     }
     
     protected async runAsync(range: vscode.Range) {
-        let writer: ALSyntaxWriter = new ALSyntaxWriter();
-        
-        writer.incIndent();
+        this._alFileOperations.clearContent();
+
+        this.alFileOperations.incIndent();
         let procedureStub: string = this._alFileOperations.buildProcedureStubText(true);
 
-        writer.writeProcedureStub(procedureStub);  
+        this.alFileOperations.writeProcedureStub(procedureStub);  
 
         let lineNo = this._alFileOperations.procedureStubStartingLineNo();
-        let source = writer.toString();
+        let source = this.alFileOperations.toString();
 
         let editor = vscode.window.activeTextEditor;
         await this.insertContentAsync(source, lineNo, editor);
