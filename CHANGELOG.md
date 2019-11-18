@@ -26,3 +26,8 @@ Bugfixing
 
 - Bugfixing, finding out variable type for procedure stub creation did not work all the time
 
+## [0.1.4]
+
+- Updated explanation gif for procedure stub
+- Refactoring 
+
