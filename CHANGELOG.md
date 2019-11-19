@@ -29,5 +29,6 @@ Bugfixing
 ## [0.1.4]
 
 - Updated explanation gif for procedure stub
+- Better parameter type detection (when passed parameter is now deeclared as local variable but was also passed as parameter)
 - Refactoring 
 

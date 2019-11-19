@@ -67,7 +67,7 @@ import { WorkSpaceALFile} from './workspaceALFile';
         let currentLineNo = editor.selection.active.line;
         let currentLineText = this.getCurrentLineText(currentLineNo);
         let procedureName = this.extractProcedureNameFromText(currentLineText);
-        let parameterNames = this.extractParameterNamesFromText(currentLineText);
+        let parameterNames = this.extractParamsFromText(currentLineText, false, false);
         let returnValueName = this.extractReturnValueNameFromText(currentLineText).trimLeft();
         let returnValueType = this.findTypeForName(returnValueName);
         let procedureStub : string;
@@ -116,13 +116,12 @@ import { WorkSpaceALFile} from './workspaceALFile';
         return procedureStubWithBody;
     }
 
-    private findTypeForName(parameterName: string): string {
+    public findTypeForName(parameterName: string): string {
         let editor = vscode.window.activeTextEditor;
         if (!editor || !parameterName) {
             return "";
         }
-
-        // Find local var section
+  // Find local var section
 		let selectedRange: vscode.Range = editor.selection;
 		let lastLineNo: number = selectedRange.end.line;
         let foundLocalVarLineNo: number = -1;
@@ -195,7 +194,8 @@ import { WorkSpaceALFile} from './workspaceALFile';
         return procedureName;
     }
 
-    private extractParameterNamesFromText(text: string) : string[] {
+    private extractParamsFromText(text: string, removeVarFlag: boolean, removeParamType: boolean) : string[] {
+        // TODO: Change this to RegExp
         let parameterNames : string[] = [];
         let openingBracketPos : number = text.indexOf("(");
         let closingBracketPos : number = text.indexOf(")");
@@ -203,7 +203,7 @@ import { WorkSpaceALFile} from './workspaceALFile';
             return [];
         }
 
-        let textBetweenBrackets = text.substring(openingBracketPos + 1, closingBracketPos);
+        let textBetweenBrackets = text.substring(openingBracketPos + 1, closingBracketPos).trim();
         let nextCommaPos : number = textBetweenBrackets.indexOf(",");
         let parameterNameToPush : string = "";
         if (nextCommaPos > -1) {
@@ -232,7 +232,6 @@ import { WorkSpaceALFile} from './workspaceALFile';
                 parameterNames.push(parameterNameToPush);
             }
         }
-
         return parameterNames;
     }
 
@@ -488,4 +487,278 @@ import { WorkSpaceALFile} from './workspaceALFile';
         this.indentText = "";
         this.indentPart = "    ";
     }
-  }
+
+
+    public getCurrentLineTextFromRange(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : string {
+        let editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return "";
+        }
+
+        let currLine = editor.document.lineAt(range.start.line);
+        let currLineText : string = currLine.text.trimLeft();
+        if (this.checkIfTextIsComment(currLineText)) {
+            return "";
+        }
+        else {
+            return currLineText;
+        }
+    }
+
+    public getCurrLineLocalVarsAndParams(document: vscode.TextDocument, range: vscode.Range | vscode.Selection, currLineText: string) : string[] {
+        let localVarsAndParams: string[] = new Array();
+        let localVarSectionStartLineNo : number = this.findLocalVarSectionStartLineNo(range) + 1;
+
+        if (localVarSectionStartLineNo >= 0) {
+            let endOfLocalVarSection : number = this.findLocalVarSectionEndLineNo(localVarSectionStartLineNo);
+            if (endOfLocalVarSection >= 0) {
+                localVarsAndParams = this.getVariableNamesFromLocalVarSection(localVarSectionStartLineNo, endOfLocalVarSection);
+                let localParams: string[] = this.getParamNamesFromCurrSection(document, range, localVarSectionStartLineNo-2);
+                localVarsAndParams = localVarsAndParams.concat(localParams);
+            }
+
+        }
+        return localVarsAndParams;
+    }
+
+    public getParamNamesFromCurrSection(document: vscode.TextDocument, range: vscode.Range | vscode.Selection, paramsLineNo : number) : string[] {
+        let paramLineText = this.getCurrentLineText(paramsLineNo);
+        return(this.extractParamsFromText(paramLineText, true, true));
+    }
+
+    public findLocalVarSectionStartLineNo(range: vscode.Range | vscode.Selection) : number {
+        let editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return -1;
+        }
+
+        let lastLineNo: number = range.end.line;
+        let foundLocalVarLineNo: number = -1;
+        for (let i = lastLineNo; i >= 0; i--) {
+            let currLine: vscode.TextLine = editor.document.lineAt(i);
+            let currLineText: string = currLine.text.trim();
+            if (currLineText.toUpperCase() === "VAR") {
+                foundLocalVarLineNo = i;
+                break;
+            } else if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
+                if (i === lastLineNo) {
+                    foundLocalVarLineNo = i + 1;
+                }
+                break;
+            }
+        }
+        return foundLocalVarLineNo;
+    }
+
+    public findLocalVarSectionEndLineNo(startLineNo: number) : number {
+        let editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            return -1;
+        }
+
+        let varSectionEndLineNo: number = -1;
+        for (let i = startLineNo; i <= editor.document.lineCount-1; i++) {
+            let currLine: vscode.TextLine = editor.document.lineAt(i);
+            let currLineText: string = currLine.text.trim();
+            if (currLineText.toUpperCase() === "BEGIN") {
+                varSectionEndLineNo = i + 1;
+                break;
+            } 
+        }
+        return varSectionEndLineNo;
+    }
+
+    private getVariableNamesFromLocalVarSection(startLineNo : number, endLineNo : number) : string[] {
+        let localVariables: string[] = new Array();
+
+        let editor = vscode.window.activeTextEditor;
+        if (editor) {
+            for (let i = startLineNo; i <= endLineNo; i++) {
+                let currLine : vscode.TextLine = editor.document.lineAt(i);
+                let currLineText = currLine.text.trim();
+                let colonIndex : number = currLineText.indexOf(":");
+                let variableName = currLineText.substring(0, colonIndex);
+                if (variableName) {
+                    localVariables.push(variableName);
+                    console.log(variableName);
+                }
+            }
+        }
+        return localVariables;
+    }
+
+    public detectCurrentLineVariables(text: string) : string[] {
+        let vars: string[] = new Array();
+        if (text) {
+            let trimmedText = text.trim();
+            //let varNamePattern = '(\\w\\S*)'; // All characters except "
+            let varNamePattern = '(\\w[a-zA-Z]*)'; // All characters except "
+            let varNameRegExp = new RegExp(varNamePattern, "gi");
+            let varNames = trimmedText.match(varNameRegExp);
+            if (varNames) {
+                for(let i = 0; i < varNames.length; i++) {
+                    if (!this.isKeyWord(varNames[i])) {
+                        vars.push(varNames[i]);
+                    }
+                }
+            }
+        }
+        return vars;
+    }
+
+    private isKeyWord(value: String): boolean {
+        return this.getAllKeywordsLowerCased().indexOf(value.toLowerCase()) !== -1;
+    }
+    
+    private getAllKeywordsLowerCased(): String[] {
+        var lowerCasedNames = this.getAllKeywords().map(value => {
+            return value.toLowerCase();
+        });
+        return lowerCasedNames;
+    }
+    
+    private getAllKeywords(): String[] {
+        let keywords: String[] = [
+            "Action",
+            "and",
+            "AssertError",
+            "BigText",
+            "Blob",
+            "begin",
+            "case",
+            "div",
+            "do",
+            "downto",
+            "BigInteger",
+            "Binary",
+            "Boolean",
+            "Codeunit",
+            "Commit",
+            "Confirm",
+            "Count",
+            "DateFormula",
+            "Char",
+            "Code",
+            "CalcFields",
+            "CalcSums",
+            "codeunit",
+            "Date",
+            "DateTime",
+            "Decimal",
+            "Duration",
+            "DateTime",
+            "Dialog",
+            "else",
+            "end",
+            "exit",
+            "FieldCaption",
+            "FieldRef",
+            "File",
+            "for",
+            "Format",
+            "Guid",
+            "InStream",
+            "Integer",
+            "if",
+            "in",
+            "KeyRef",
+            "mod",
+            "OutStream",
+            "Option",
+            "of",
+            "or",
+            "procedure",
+            "Page",
+            "Record",
+            "RecordId",
+            "RecordRef",
+            "Report",
+            "repeat",
+            "System",
+            "TestField",
+            "Text",
+            "Time",
+            "Validate",
+            "Variant",
+            "not",
+            "TableFilter",
+            "then",
+            "to",
+            "until",
+            "while",
+            "with",
+            "with",
+            "var",
+            "temporary",
+            "true",
+            "false",
+            "XmlPort",
+            "TextConst",
+            "Error",
+            "Message",
+            "SetRange",
+            "SetFilter",
+            "RunModal",
+            "Run",
+            "SetTableView",
+            "field",
+            "SetRecord",
+            "ConvertStr",
+            "CopyStr",
+            "GetRecord",
+            "LookupMode",
+            "const",
+            "Clear",
+            "filter",
+            "LowerCase",
+            "StrSubstNo",
+            "TextEncoding",
+            "Enum",
+            "Label",
+            "Count",
+            "StrLen",
+            "sorting",
+            "Next",
+            "Evaluate",
+            "SelectStr",
+            "Editable",
+            "FieldError",
+            "Round",
+            "GuiAllowed",
+            "FindSet",
+            "FindFirst",
+            "FindLast",
+            "extends",
+            "Find",
+            "IsEmpty",
+            "Reset",
+            "DeleteAll",
+            "Insert",
+            "HasValue",
+            "Delete",
+            "Init",
+            "Get",
+            "Skip",
+            "GetFilters",
+            "UseRequestPage",
+            "Preview",
+            "TableCaption",
+            "record",
+            "page",
+            "pagecustomization",
+            "grid",
+            "profile",
+            "pageextension",
+            "tableextension",
+            "table",
+            "query",
+            "report",
+            "UserId",
+            "Update",
+            "where",
+            "xmlport",
+        ];
+        
+        return keywords;
+    }
+}

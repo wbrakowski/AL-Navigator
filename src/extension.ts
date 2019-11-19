@@ -6,7 +6,6 @@ import * as vscode from 'vscode';
 import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
 import { FileJumper } from './fileJumper/fileJumper';
 import { ALCodeActionsProvider } from './CommandsActions/alCodeActionsProvider';
-//import { ALNavigatorExtensionContext } from './alNavigatorExtensionContext';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
