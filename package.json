@@ -31,23 +31,27 @@
 		"commands": [
 			{
 				"command": "extension.DataItem",
-				"title": "DataItem Jumper"
+				"title": "Jump: Next DataItem"
 			},
 			{
 				"command": "extension.OnAfterGetRecord",
-				"title": "OnAfterGetRecord Jumper"
+				"title": "Jump: Next OnAfterGetRecord"
 			},
 			{
 				"command": "extension.Trigger",
-				"title": "Trigger Jumper"
+				"title": "Jump: Next trigger"
 			},
 			{
 				"command": "extension.Keys",
-				"title": "Keys Jumper"
+				"title": "Jump: Keys section"
 			},
 			{
 				"command": "extension.Actions",
-				"title": "Actions Jumper"
+				"title": "Jump: Actions section"
+			},
+			{
+				"command": "extension.LastLocalVarLine",
+				"title": "Jump: Last local var line"
 			}
 		],
 		"keybindings": [
@@ -70,6 +74,10 @@
 			{
 				"command": "extension.Actions",
 				"key": "ctrl+alt+a"
+			},
+			{
+				"command": "extension.LastLocalVarLine",
+				"key": "ctrl+alt+l"
 			}
 		]
 	},

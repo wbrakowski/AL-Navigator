@@ -4,8 +4,8 @@
 
 import * as vscode from 'vscode';
 import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
-import { FileJumper } from './fileJumper/fileJumper';
-import { ALCodeActionsProvider } from './CommandsActions/alCodeActionsProvider';
+import { FileJumper } from './filejumper/fileJumper';
+import { ALCodeActionsProvider } from './commandsactions/alCodeActionsProvider';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -26,6 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToKeys();
 	  });
 
+	let jumpToLastLocalVarLineCommand = commands.registerCommand("extension.LastLocalVarLine", () => {
+		FileJumper.jumpToLastLocalVarLine();
+	  });
+
 	let jumpToActionsCommand = commands.registerCommand("extension.Actions", () => {
 		FileJumper.jumpToNextActions();
 	});
@@ -36,6 +40,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToOnAfterGetRecCmd);
 	context.subscriptions.push(jumpToNextTriggerCommand);
 	context.subscriptions.push(jumpToKeysCommand);
+	context.subscriptions.push(jumpToLastLocalVarLineCommand);
 	context.subscriptions.push(jumpToActionsCommand);
 }
 

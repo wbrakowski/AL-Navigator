@@ -29,6 +29,9 @@ Bugfixing
 ## [0.1.4]
 
 - Updated explanation gif for procedure stub
-- Better parameter type detection (when passed parameter is now deeclared as local variable but was also passed as parameter)
+- New gif for automatic variable declaration
+- Better parameter type detection (when parameter to be passed is not declared as local variable but was also passed as parameter)
+- New Feature: jump to last line in local var block (for declaring variables)
+- New Feature: Variable Declarator. Recognizes standard objects and declares variables automatically, also objects from workspace files.
 - Refactoring 
 

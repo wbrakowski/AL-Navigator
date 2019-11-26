@@ -1,69 +1,63 @@
-import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
+import { workspace, ExtensionContext, commands, window, Selection, Range, Position, TextLine, TextEditor } from 'vscode';
+import { ALFileCrawler } from '../alFileCrawler';
 
 export module FileJumper {
    export function jumpToNextDataItem() {
-    let text : string = "DATAITEM(";
-    jumpToNextTextOccurence(text);
+        let text : string = "DATAITEM(";        
+        jumpToNextTextOccurence(text);
    }
 
    export function jumpToNextOnAfterGetRecordTrigger(){
-    let text : string = "TRIGGER ONAFTERGETRECORD(";
-    jumpToNextTextOccurence(text);
+        let text : string = "TRIGGER ONAFTERGETRECORD(";
+        jumpToNextTextOccurence(text);
    }
 
    export function jumpToKeys(){
-    let text : string = "KEYS";
-    jumpToNextTextOccurence(text);
+        let text : string = "KEYS";
+        jumpToNextTextOccurence(text);
    }
 
    export function jumpToNextTrigger(){
-    let text : string = "TRIGGER ON";
-    jumpToNextTextOccurence(text);
+        let text : string = "TRIGGER ON";
+        jumpToNextTextOccurence(text);
    }
 
    export function jumpToNextActions(){
-    let text : string = "ACTIONS";
-    jumpToNextTextOccurence(text);
+        let text : string = "ACTIONS";
+        jumpToNextTextOccurence(text);
    }
 
+   export function jumpToLastLocalVarLine() {
+       let editor = window.activeTextEditor;
+       let startNo: number = ALFileCrawler.findLocalVarSectionStartLineNo();
+       if (startNo > 0) {
+            let endNo = ALFileCrawler.findLocalVarSectionEndLineNo(startNo);
+            jumpToLine(endNo);
+       }
+   }
 
    function jumpToNextTextOccurence(text: string)
    {
-        let editor = window.activeTextEditor;
+       let lineNo: number = ALFileCrawler.findNextTextLineNo(text, false);
+       if (lineNo === -1) {
+            //let infoText : string = `Line with text "${ text }" not found after current line. Search started at line 1.`;
+            //window.showInformationMessage(infoText);
+            lineNo = ALFileCrawler.findNextTextLineNo(text, false, 0);
+       }
+    
+        jumpToLine(lineNo);
+    }
+
+    function jumpToLine(no: number): void {
+     let editor = window.activeTextEditor;
         if (!editor) {
             return;
         }
 
-        let currentLineNo = editor.selection.active.line + 1;
-        let foundLineNo = 0;
-        let lineFound : boolean = false;
-        for (let i = currentLineNo; i < editor.document.lineCount; i++) {
-            let currLine = editor.document.lineAt(i);
-            let currLineText = currLine.text.toUpperCase();
-            currLineText = currLineText.trimLeft();
-            currLineText = currLineText.substr(0, text.length);
-            if (currLineText.indexOf(text) > -1) {
-                foundLineNo = i;
-                lineFound = true;
-                break;
-            }
-        }
-        if (!lineFound) {
-            let infoText : string = `Line with text "${ text }" not found after line no. ${ currentLineNo }. Search will start at line 1.`;
-            window.showInformationMessage(infoText);
-        }
-        let range = editor.document.lineAt(foundLineNo).range;
+        let range = editor.document.lineAt(no).range;
         editor.selection = new Selection(range.end, range.end);
-
         let revealRange : Range;
-
-        if(lineFound) {
-            revealRange = new Range(new Position(range.end.line - 10, 0), new Position(range.end.line + 10, 0));
-        } 
-        else {
-            revealRange = new Range(new Position(0, 0), new Position(0, 0));   
-        }
+        revealRange = new Range(new Position(range.end.line - 10, 0), new Position(range.end.line + 10, 0));
         editor.revealRange(revealRange);    
-        
     }
 }

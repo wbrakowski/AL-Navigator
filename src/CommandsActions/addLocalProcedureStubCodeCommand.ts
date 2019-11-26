@@ -1,31 +1,41 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALFileOperations} from '../alFileOperations';
+import { ALFiles} from '../alFiles';
+import { ALWriter } from '../alWriter';
 
 export class ALAddLocalProcedureStubCodeCommand extends ALCodeCommand {
-    private _alFileOperations : ALFileOperations;
-    get alFileOperations(): ALFileOperations {
-        return this._alFileOperations;
+    private _alFiles : ALFiles;
+    get alFiles(): ALFiles {
+        return this._alFiles;
     }
-    set alFileOperations(value : ALFileOperations){
-        this._alFileOperations = value;
+    set alFiles(value : ALFiles){
+        this._alFiles = value;
     }
 
-    constructor(context : vscode.ExtensionContext, commandName: string, alFileOperations: ALFileOperations) {
+    private _alWriter : ALWriter;
+    get alWriter(): ALWriter {
+        return this._alWriter;
+    }
+    set alWriter(value : ALWriter){
+        this._alWriter = value;
+    }
+
+    constructor(context : vscode.ExtensionContext, commandName: string, alFiles: ALFiles, alWriter: ALWriter) {
         super(context, commandName);
-        this._alFileOperations = alFileOperations;
+        this._alFiles = alFiles;
+        this._alWriter = alWriter;
     }
     
     protected async runAsync(range: vscode.Range) {
-        this._alFileOperations.clearContent();
+        this._alFiles.clearContent();
 
-        this.alFileOperations.incIndent();
-        let procedureStub: string = this._alFileOperations.buildProcedureStubText(true);
+        this._alFiles.incIndent();
+        let procedureStub: string = this._alFiles.buildProcedureStubText(true);
 
-        this.alFileOperations.writeProcedureStub(procedureStub);  
+        this._alFiles.writeProcedureStub(procedureStub);  
 
-        let lineNo = this._alFileOperations.procedureStubStartingLineNo();
-        let source = this.alFileOperations.toString();
+        let lineNo = this._alFiles.procedureStubStartingLineNo();
+        let source = this._alFiles.toString();
 
         let editor = vscode.window.activeTextEditor;
         await this.insertContentAsync(source, lineNo, editor);

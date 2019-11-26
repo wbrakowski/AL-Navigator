@@ -1,17 +1,19 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALFileOperations} from '../alFileOperations';
-import { VariableCreator } from '../VariableCreator/variableCreator';
+import { ALFiles} from '../alFiles';
+import { VariableCreator } from '../variablecreator/variableCreator';
+import { ALWriter } from '../alWriter';
+import { ALFileCrawler } from '../alFileCrawler';
 
 export class AddLocalVariableCodeCommand extends ALCodeCommand {
     public localVarNameToDeclare: string;
     public localVarTypeToDeclare: string;
-    private _alFileOperations : ALFileOperations;
-    get alFileOperations(): ALFileOperations {
-        return this._alFileOperations;
+    private _alFiles : ALFiles;
+    get alFiles(): ALFiles {
+        return this._alFiles;
     }
-    set alFileOperations(value : ALFileOperations){
-        this._alFileOperations = value;
+    set alFiles(value : ALFiles){
+        this._alFiles = value;
     }
     private _varCreator: VariableCreator;
     get varCreator(): VariableCreator {
@@ -20,11 +22,19 @@ export class AddLocalVariableCodeCommand extends ALCodeCommand {
     set varCreator(value : VariableCreator){
         this._varCreator = value;
     }
+    private _alWriter : ALWriter;
+    get alWriter(): ALWriter {
+        return this._alWriter;
+    }
+    set alWriter(value : ALWriter){
+        this._alWriter = value;
+    }
 
-    constructor(context : vscode.ExtensionContext, commandName: string, alFileOperations: ALFileOperations, varCreator : VariableCreator) {
+    constructor(context : vscode.ExtensionContext, commandName: string, alFiles: ALFiles, alWriter: ALWriter) {
         super(context, commandName);
-        this._alFileOperations = alFileOperations;
-        this._varCreator = varCreator;
+        this._alFiles = alFiles;
+        this._alWriter = alWriter;
+        this._varCreator = new VariableCreator(alFiles, alWriter);
         this.localVarNameToDeclare = "";
         this.localVarTypeToDeclare = "";
     }
@@ -35,17 +45,26 @@ export class AddLocalVariableCodeCommand extends ALCodeCommand {
     }
     
     protected async runAsync(range: vscode.Range) {
-        this._alFileOperations.clearContent();
+        let source: string = "";
+        this._alFiles.clearContent();
 
-        let localVarStartLineNo = this._alFileOperations.findLocalVarSectionStartLineNo(range);
-        let localVarEndLineNo = this._alFileOperations.findLocalVarSectionEndLineNo(localVarStartLineNo);
+        let localVarStartLineNo = ALFileCrawler.findLocalVarSectionStartLineNo();
+        if (localVarStartLineNo === -1) {
+            localVarStartLineNo = this._alFiles.findLocalProcedureStartLineNo(range);
+            if (localVarStartLineNo > -1) {
+                source = "    " + "var" + "\n";
+            }
+        }
+
+        let localVarEndLineNo = ALFileCrawler.findLocalVarSectionEndLineNo(localVarStartLineNo);
 
         if (localVarEndLineNo < 0) {
             return;
         }
 
-        let lineNo = localVarEndLineNo - 1;
-        let source = "          " + this.localVarNameToDeclare + ": " + this.localVarTypeToDeclare + ";";
+        let lineNo = localVarEndLineNo + 1;
+        
+        source += "        " + this.localVarNameToDeclare + ": " + this.localVarTypeToDeclare + ";";
 
         let editor = vscode.window.activeTextEditor;
         await this.insertContentAsync(source, lineNo, editor);

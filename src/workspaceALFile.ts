@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { ALFileOperations } from './alFileOperations';
+import { ALFiles } from './alFiles';
 
 export class WorkSpaceALFile {
     public uri: vscode.Uri;
@@ -10,6 +10,7 @@ export class WorkSpaceALFile {
     public objectType: string = "";
     public objectName: string= "";
     public objectID: string = "";
+    public objectNo: number = 0;
     public procedures: string[] = new Array();
     
     constructor(file : vscode.Uri) {
@@ -34,7 +35,7 @@ export class WorkSpaceALFile {
     }
 
     public checkIfProcedureExistsInFile(procedureName : string): boolean {
-        return (this.procedures.indexOf(procedureName) > -1);
+        return (this.procedures.includes(procedureName));
     }
 
     private getObjectInfoFromText() {
@@ -80,6 +81,7 @@ export class WorkSpaceALFile {
             }
             this.objectType = this.objectType.trim().toString();
             this.objectID = this.objectID.trim().toString();
+            this.objectNo = +this.objectID;
             this.objectName = this.objectName.trim().toString().replace(/"/g, '');
         }
 

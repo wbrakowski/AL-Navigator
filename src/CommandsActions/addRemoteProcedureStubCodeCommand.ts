@@ -1,51 +1,37 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALFileOperations} from '../alFileOperations';
-import * as fs from 'fs';
+import { ALFiles} from '../alFiles';
+import { ALWriter } from '../alWriter';
 
 export class ALAddRemoteProcedureStubCodeCommand extends ALCodeCommand {
-    private _alFileOperations : ALFileOperations;
-    get alFileOperations(): ALFileOperations {
-        return this._alFileOperations;
+    private _alFiles : ALFiles;
+    get alFiles(): ALFiles {
+        return this._alFiles;
     }
-    set alFileOperations(value : ALFileOperations){
-        this._alFileOperations = value;
+    set alFiles(value : ALFiles){
+        this._alFiles = value;
     }
-    public targetALFileName: string = "";
-    public targetALObjectName: string = "";
-    public targetALProcedureName: string = "";
-    public targetALFilePath: string = "";
+    private _alWriter : ALWriter;
+    get alWriter(): ALWriter {
+        return this._alWriter;
+    }
+    set alWriter(value : ALWriter){
+        this._alWriter = value;
+    }
 
-    constructor(context : vscode.ExtensionContext, commandName: string, alFileOperations: ALFileOperations) {
+    constructor(context : vscode.ExtensionContext, commandName: string, alFiles: ALFiles, alWriter: ALWriter) {
         super(context, commandName);
-        this._alFileOperations = alFileOperations;
+        this._alFiles = alFiles;
+        this._alWriter = alWriter;
     }
     
     protected async runAsync(range: vscode.Range) {
-        let procedureStub: string = this._alFileOperations.buildProcedureStubText(false);
+        let procedureStub: string = this._alFiles.buildProcedureStubText(false);
         if (procedureStub) {
-            this.writeStubInFile(this.targetALFilePath, procedureStub);
+            this._alWriter.writeStubInFile(procedureStub);
         }
     }
 
-    private writeStubInFile(fileName : string, stub: string) {
-        let fileText : string = fs.readFileSync(fileName, 'utf-8');
-        let lastIndexClosingBracket = fileText.lastIndexOf("}");
-        if (lastIndexClosingBracket === -1) {
-            console.error("The file seems to be not properly built. Could not find closing bracket.");
-        }
-        else {
-            let textBeforeLastBracket : string = fileText.substring(0, lastIndexClosingBracket);
-            let textAfterLastBracket : string = fileText.substring(lastIndexClosingBracket + 1);
-            let fileTextWithStub : string = textBeforeLastBracket + "\n" + "   " + stub + "\n" + "}";
-            if (textAfterLastBracket) {
-                fileTextWithStub += textAfterLastBracket;
-            }
-            fs.writeFileSync(fileName, fileTextWithStub, 'utf-8');
-            this._alFileOperations.repopulateALFIlesArray();
-            console.log('Stub added.');
-        }
-        
-    }
+   
 }
 

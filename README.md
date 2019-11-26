@@ -18,6 +18,14 @@ Various navigation functions to make developing objects for Business Central eas
 
 ![Create Procedure Stub](resources/CreateProcedureStub.gif)
 
+
+- Automatic local variable declaration of all standard tables and codeunit names
+  Use the Quick Fix lamp (Ctrl + .) to automatically add variables
+
+
+![Create Local Variable](resources/VarDeclaration.gif)
+
+
 - Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
 - Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al file 
 - Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
