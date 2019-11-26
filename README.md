@@ -20,7 +20,7 @@ Various navigation functions to make developing objects for Business Central eas
 
 
 - Automatic local variable declaration of all standard tables and codeunit names
-  Use the Quick Fix lamp (Ctrl + .) to automatically add variables
+- Use the Quick Fix lamp (Ctrl + .) to automatically add variables
 
 
 ![Create Local Variable](resources/VarDeclaration.gif)
