@@ -31,6 +31,7 @@ Various navigation functions to make developing objects for Business Central eas
 - Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
 - Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
 - Use the shortcut Ctrl + Alt + a to jump to actions in a page .al file
+- Use the shortcut Ctrl + Alt + l to jump to last line of local var section (fast way to declare new variables)
 
 ## Known Issues
 
