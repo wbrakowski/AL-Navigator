@@ -10,6 +10,7 @@ Various navigation functions to make developing objects for Business Central eas
 - Trigger Jumping
 - Keys Jumping
 - Actions Jumping
+- Var Section Jumping
 
 ## Usage
 
