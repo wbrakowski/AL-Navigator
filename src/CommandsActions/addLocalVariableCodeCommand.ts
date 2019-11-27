@@ -4,6 +4,7 @@ import { ALFiles} from '../alFiles';
 import { VariableCreator } from '../variablecreator/variableCreator';
 import { ALWriter } from '../alWriter';
 import { ALFileCrawler } from '../alFileCrawler';
+import { TextBuilder } from '../textBuilder';
 
 export class AddLocalVariableCodeCommand extends ALCodeCommand {
     public localVarNameToDeclare: string;
@@ -45,42 +46,14 @@ export class AddLocalVariableCodeCommand extends ALCodeCommand {
     }
     
     protected async runAsync(range: vscode.Range) {
-        let source: string = "";
-        this._alFiles.clearContent();
-
-        let localVarStartLineNo = ALFileCrawler.findLocalVarSectionStartLineNo();
-        if (localVarStartLineNo === -1) {
-            localVarStartLineNo = this._alFiles.findLocalProcedureStartLineNo(range);
-            if (localVarStartLineNo > -1) {
-                source = "    " + "var" + "\n";
-            }
-        }
-
-        let localVarEndLineNo = ALFileCrawler.findLocalVarSectionEndLineNo(localVarStartLineNo);
-
-        if (localVarEndLineNo < 0) {
-            return;
-        }
-
-        let lineNo = localVarEndLineNo + 1;
-        
-        source += "        " + this.localVarNameToDeclare + ": " + this.localVarTypeToDeclare + ";";
+        this._alWriter.clearContent();
+        let source = TextBuilder.buildLocalVarDeclaration(range, this.localVarNameToDeclare, this.localVarTypeToDeclare);
+        let lineNo = ALFileCrawler.findLocalVarSectionEndLineNo(true)+1;
 
         let editor = vscode.window.activeTextEditor;
-        await this.insertContentAsync(source, lineNo, editor);
+        await this._alWriter.insertContentAsync(source, lineNo, editor);
     }
 
-    protected async insertContentAsync(content: string, lineNo: number, editor : vscode.TextEditor | undefined) {
-        content = content + "\n"; 
-
-        if (!editor) {
-            return;
-        }
-
-        await editor.edit(editBuilder => {
-            editBuilder.insert(new vscode.Position(lineNo, 0), content);
-        });
-    }
 
 }
 

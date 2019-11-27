@@ -6,102 +6,21 @@ import { StringFunctions } from './stringFunctions';
      
   export class ALFiles {
     public workspaceALFiles : WorkSpaceALFile[]; 
-    private indentText : string;
-    private indentPart : string;
-    public content : string;
     public currentSelectionProcedureName : string = "";
     public currentRemoteALFile: WorkSpaceALFile | undefined;
 
     constructor() {
         this.workspaceALFiles = this.populateALFilesArray();
-        this.content = "";
-        this.indentText = "";
-        this.indentPart = "    ";
     }
 
     public repopulateALFIlesArray() {
         this.workspaceALFiles = this.populateALFilesArray();
     }
-
-    public procedureStubStartingLineNo() : number {
-        let searchText : string = "}";
-        let foundLineNo : number = ALFileCrawler.findNextTextLineNo(searchText, true, 0);
-        let lineNo : number = -1;
-
-        if (foundLineNo >= 0) {
-            lineNo = foundLineNo;
-        }
-
-        return lineNo;
+    
+    private ClearCurrentSelectionValues() : void {
+        this.currentRemoteALFile = undefined;
+        this.currentSelectionProcedureName = "";
     }
-
-
-    public buildProcedureStubText(startingWithLocal: boolean): string {
-        let editor = this.getActiveTextEditor();
-        if (!editor) {
-            return "";
-        }
-
-        let currentLineNo = editor.selection.active.line;
-        let currentLineText = ALFileCrawler.getText(currentLineNo);
-        let procedureName = ALFileCrawler.extractProcedureName(currentLineText);
-        let parameterNames = ALFileCrawler.extractParams(currentLineText, false, false);
-        let returnValueName = ALFileCrawler.extractReturnValueName(currentLineText).trimLeft();
-        let returnValueType = ALFileCrawler.findParamType(returnValueName);
-        let procedureStub : string;
-        startingWithLocal? procedureStub = "local procedure " + procedureName + "(" : procedureStub = "procedure " + procedureName + "(";
-        
-        let parameterType : string;
-        let i : number = 0;
-        if (parameterNames.length === 0) {
-            procedureStub += ")";
-        } 
-        else {
-            while (i < parameterNames.length) {
-                {
-                    parameterType = ALFileCrawler.findParamType(parameterNames[i]);
-                    procedureStub += parameterNames[i] + " :" + parameterType;
-                    parameterNames[i + 1] === undefined ? procedureStub += ")" : procedureStub += "; ";
-                    i++;
-                }
-            }
-        }
-
-        if (returnValueType) {
-            procedureStub += " : " + returnValueType;
-        }
-
-        let indentPart = "    ";
-
-        let procedureStubWithBody: string = procedureStub;
-        procedureStubWithBody += "\n";
-        procedureStubWithBody += indentPart;
-        procedureStubWithBody += "begin";
-        procedureStubWithBody += "\n";
-        procedureStubWithBody += indentPart;
-        procedureStubWithBody += indentPart;
-
-        let errorText : string = 'TODO: Implement ' + procedureStub;        
-        procedureStubWithBody += "// " + errorText;
-        procedureStubWithBody += "\n";
-        procedureStubWithBody += indentPart;
-        procedureStubWithBody += indentPart;
-        procedureStubWithBody += "Error('" + errorText + "');";
-        procedureStubWithBody += "\n";
-        procedureStubWithBody += indentPart;
-        procedureStubWithBody += "end;";
-
-        return procedureStubWithBody;
-    }
-
-    
-
-    
-
-  
-
-    
-
     public localProcCanBeCreated(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
         this.ClearCurrentSelectionValues();
         let editor = vscode.window.activeTextEditor;
@@ -121,11 +40,6 @@ import { StringFunctions } from './stringFunctions';
         }
         
         return false;
-    }
-
-    private ClearCurrentSelectionValues() : void {
-        this.currentRemoteALFile = undefined;
-        this.currentSelectionProcedureName = "";
     }
 
     public RemoteProcCanBeCreated(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
@@ -216,80 +130,25 @@ import { StringFunctions } from './stringFunctions';
         return workspaceALFiles;
     }
 
-    private getActiveTextEditor() : vscode.TextEditor | undefined {
-        let editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            vscode.window.showErrorMessage("No active editor found.");
-         }
-        return editor;
-    }
+    getVarNameToDeclare(document: vscode.TextDocument, range: vscode.Range | vscode.Selection): string {
+        let currLineText = ALFileCrawler.getLineText(document, range);
+        let currLineDetectedVars = ALFileCrawler.extractVars(currLineText);
+        let localVarsAndParams = ALFileCrawler.extractLocalVarsAndParams();
 
-    public toString() : string {
-        return this.content;
-    }
-
-    public incIndent() {
-        this.indentText += this.indentPart;
-    }
-
-    public decIndent() {
-        if (this.indentText.length > this.indentPart.length){
-            this.indentText = this.indentText.substr(0, this.indentText.length - this.indentPart.length);
-        }
-        else {
-            this.indentText = "";
-        }
-    }
-
-    public writeLine(line : string) {
-        this.content += (this.indentText + line + "\n");
-    }
-
-    public writeProcedureStub(procedureStub: string) {
-        this.writeLine(procedureStub);
-    }
-
-    public clearContent() {
-        this.content = "";
-        this.indentText = "";
-        this.indentPart = "    ";
-    }
-
-
-    public getCurrentLineTextFromRange(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : string {
-        let editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return "";
+        function containsAllElements(arr: string[], arr2: string[]): boolean {
+            return arr.every(i => arr2.includes(i));
         }
 
-        let currLine = editor.document.lineAt(range.start.line);
-        let currLineText : string = currLine.text.trimLeft();
-        if (ALFileCrawler.isComment(currLineText)) {
-            return "";
-        }
-        else {
-            return currLineText;
-        }
-    }
-
-   
-
-    public findLocalProcedureStartLineNo(range: vscode.Range | vscode.Selection) : number {
-        let editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return -1;
-        }
-        
-        let lastLineNo: number = range.end.line;
-        let foundLocalProcLineNo: number = -1;
-        for (let i = lastLineNo; i >= 0; i--) {
-            let currLine: vscode.TextLine = editor.document.lineAt(i);
-            let currLineText: string = currLine.text.trim();
-           if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
-                foundLocalProcLineNo = i;
-                break;
+        let allVarsDeclared: boolean = containsAllElements(currLineDetectedVars, localVarsAndParams);
+        if (!allVarsDeclared) {
+            for(let i = 0; i< currLineDetectedVars.length; i++) {
+                let detVarIndex = localVarsAndParams.indexOf(currLineDetectedVars[i]);
+                if (detVarIndex < 0) {
+                    let varNameToDeclare = currLineDetectedVars[i];
+                    return varNameToDeclare;
+                }
             }
         }
-        return foundLocalProcLineNo;
+        return "";
     }
 }

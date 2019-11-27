@@ -38,6 +38,10 @@ Various navigation functions to make developing objects for Business Central eas
 
 Currently none.
 
+## Requirements
+
+- AL Language extension for VS Code
+
 ## Git Repository
 
 https://github.com/wbrakowski/AL-Navigator

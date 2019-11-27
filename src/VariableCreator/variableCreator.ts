@@ -62,10 +62,11 @@ export class VariableCreator {
         // }
 
         //let alVariable = this._alVariables.find(i => i.longVarName.toUpperCase() === varName.toUpperCase());
-        let alVariable = this._alVariables.find(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
+        let alVariable = this._alVariables.find(i => varName.toUpperCase() === (i.longVarName.toUpperCase()));
         if (!alVariable) {
+            alVariable = this._alVariables.find(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
             // this._alVariables.find(i => i.shortVarName.toUpperCase() === varName.toUpperCase());
-            this._alVariables.find(i => varName.toUpperCase().includes(i.shortVarName.toUpperCase()));
+            //this._alVariables.find(i => varName.toUpperCase().includes(i.shortVarName.toUpperCase()));
         }
         if (alVariable) {
             return true;
@@ -94,10 +95,11 @@ export class VariableCreator {
         // }
 
         // let alVariable = this._alVariables.find(i => i.longVarName.toUpperCase() === varName.toUpperCase());
-        let alVariable = this._alVariables.find(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
+        let alVariable = this._alVariables.find(i => varName.toUpperCase() === i.longVarName.toUpperCase());
         if (!alVariable) {
+            alVariable = this._alVariables.find(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
             // this._alVariables.find(i => i.shortVarName.toUpperCase() === varName.toUpperCase());
-            this._alVariables.find(i => varName.toUpperCase().includes(i.shortVarName.toUpperCase()));
+            //this._alVariables.find(i => varName.toUpperCase().includes(i.shortVarName.toUpperCase()));
         }
         if (alVariable) {
             let objName = alVariable.objectName;

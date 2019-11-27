@@ -31,7 +31,7 @@ export module FileJumper {
        let editor = window.activeTextEditor;
        let startNo: number = ALFileCrawler.findLocalVarSectionStartLineNo();
        if (startNo > 0) {
-            let endNo = ALFileCrawler.findLocalVarSectionEndLineNo(startNo);
+            let endNo = ALFileCrawler.findLocalVarSectionEndLineNo(false, startNo);
             jumpToLine(endNo);
        }
    }

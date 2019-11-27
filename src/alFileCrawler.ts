@@ -1,4 +1,4 @@
-import { TextLine, TextEditor, window, Range, Selection } from 'vscode';
+import { TextLine, TextEditor, window, Range, Selection, TextDocument } from 'vscode';
 import { ALKeywordHelper } from './alKeyWordHelper';
 import { FileJumper } from './filejumper/fileJumper';
 
@@ -27,14 +27,19 @@ export module ALFileCrawler {
         return foundLineNo;
     }
 
-    export function findLocalVarSectionEndLineNo(startLineNo: number) : number {
+    export function findLocalVarSectionEndLineNo(procedureNoIfNoVarFound: boolean, startLineNo?: number) : number {
         let editor = window.activeTextEditor;
         if (!editor) {
             return -1;
         }
 
         let endLineNo: number = -1;
-        for (let i = startLineNo; i <= editor.document.lineCount-1; i++) {
+
+        let startNo: number = startLineNo? startLineNo :  findLocalVarSectionStartLineNo();
+        if (startNo < 0 && procedureNoIfNoVarFound) {
+            startNo = ALFileCrawler.findLocalProcedureStartLineNo();
+        }
+        for (let i = startNo; i <= editor.document.lineCount-1; i++) {
             let currLine: TextLine = editor.document.lineAt(i);
             let currLineText: string = currLine.text.trim().toUpperCase();
             if (currLineText === "BEGIN") {
@@ -66,6 +71,19 @@ export module ALFileCrawler {
          }
          return foundLineNo;
      }
+
+     export function findProcStubStartingLineNo() : number {
+        let searchText : string = "}";
+        let foundLineNo : number = findNextTextLineNo(searchText, true, 0);
+        let lineNo : number = -1;
+
+        if (foundLineNo >= 0) {
+            lineNo = foundLineNo;
+        }
+
+        return lineNo;
+    }
+
      //#endregion
      //#region text checking
      export function isLocalProcedureCall(text: string) : boolean {
@@ -257,7 +275,7 @@ export module ALFileCrawler {
         let varSectionStartLineNo : number = findLocalVarSectionStartLineNo() + 1;
 
         if (varSectionStartLineNo > 0) {
-            let varSectionEndLineNo : number = findLocalVarSectionEndLineNo(varSectionStartLineNo);
+            let varSectionEndLineNo : number = findLocalVarSectionEndLineNo(false, varSectionStartLineNo);
             if (varSectionEndLineNo > 0) {
                 varsAndParams = extractLocalVarNames(varSectionStartLineNo, varSectionEndLineNo);
                 let localParams: string[] = extractParamNamesFromSection(varSectionStartLineNo-2);
@@ -310,7 +328,7 @@ export module ALFileCrawler {
 			currLineText  = currLine.text.trim();
 			if (currLineText.toUpperCase() === "VAR") {
                 foundLocalVarLineNo = i;
-                endLineNo = findLocalVarSectionEndLineNo(foundLocalVarLineNo);
+                endLineNo = findLocalVarSectionEndLineNo(false, foundLocalVarLineNo);
 				break;
 			} else if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
 				if (i === lastLineNo) {
@@ -358,6 +376,43 @@ export module ALFileCrawler {
         }
         return parameterType;
     }
+
+    export function getLineText(document: TextDocument, range: Range | Selection) : string {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return "";
+        }
+
+        let currLine = editor.document.lineAt(range.start.line);
+        let currLineText : string = currLine.text.trimLeft();
+        if (isComment(currLineText)) {
+            return "";
+        }
+        else {
+            return currLineText;
+        }
+    }
+
+    export function findLocalProcedureStartLineNo() : number {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return -1;
+        }
+        
+        let lastLineNo: number = editor.selection.end.line;
+        let foundLocalProcLineNo: number = -1;
+        for (let i = lastLineNo; i >= 0; i--) {
+            let currLine: TextLine = editor.document.lineAt(i);
+            let currLineText: string = currLine.text.trim();
+           if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
+                foundLocalProcLineNo = i;
+                break;
+            }
+        }
+        return foundLocalProcLineNo;
+    }
+
+    
 
 
 }
