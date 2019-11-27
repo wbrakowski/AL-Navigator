@@ -1,6 +1,7 @@
 import { TextLine, TextEditor, window, Range, Selection, TextDocument } from 'vscode';
 import { ALKeywordHelper } from './alKeyWordHelper';
 import { FileJumper } from './filejumper/fileJumper';
+import { delimiter } from 'path';
 
 export module ALFileCrawler {
     //#region text search
@@ -311,70 +312,84 @@ export module ALFileCrawler {
         return(line.text);
     }
 
-    export function findParamType(parameterName: string): string {
-        let editor = window.activeTextEditor;
-        if (!editor || !parameterName) {
+    export function findParamType(paramName: string): string {
+        if (!paramName) {
             return "";
         }
-        // Find local var section
-		let selectedRange: Range = editor.selection;
-		let lastLineNo: number = selectedRange.end.line;
-        let foundLocalVarLineNo: number = -1;
-        let currLine : TextLine;
-        let currLineText : string;
-        let endLineNo: number = 0;
-		for (let i = lastLineNo; i >= 0; i--) {
-			currLine = editor.document.lineAt(i);
-			currLineText  = currLine.text.trim();
-			if (currLineText.toUpperCase() === "VAR") {
-                foundLocalVarLineNo = i;
-                endLineNo = findLocalVarSectionEndLineNo(false, foundLocalVarLineNo);
-				break;
-			} else if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
-				if (i === lastLineNo) {
-					foundLocalVarLineNo = i + 1;
-				}
-				break;
-			}
+        let paramType = getParamTypeFromLocalVars(paramName);
+        if (!paramType) {
+            let paramLineNo = findLocalProcedureStartLineNo();
+            paramType = getParamTypeFromProcLine(paramLineNo, paramName);
         }
-
-        let parameterType : string = "";
         
-        let parameterNameLineNo : number;
-        // Local var section found
-        if (foundLocalVarLineNo >= 0) {
-            //parameterNameLineNo = this.findNextTextOccurence(parameterName.toUpperCase(), false, foundLocalVarLineNo);
-            parameterNameLineNo = findNextTextLineNo(parameterName.toUpperCase(), false, foundLocalVarLineNo, endLineNo + 1);
-            if (parameterNameLineNo > -1) {
-                currLine = editor.document.lineAt(parameterNameLineNo);
-                let currLineTextUpperCase = currLine.text.toUpperCase();
-                let colonIndex : number = currLineTextUpperCase.indexOf(":");
-                parameterType = currLine.text.substring(colonIndex + 1, currLine.text.length - 1);
+        return paramType;
+    }
+
+    export function getParamTypeFromLocalVars(paramName: string): string {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return "";
+        }
+        let startNo = findLocalVarSectionStartLineNo()+1;
+        if (startNo < 0) {
+            return "";
+        }
+        let endNo = findLocalVarSectionEndLineNo(false, startNo);
+        for (let i = startNo; i <= endNo; i++) {
+            let currLine = editor.document.lineAt(i);
+            let currLineText = currLine.text.toUpperCase(); 
+            let colonIndex : number = currLineText.indexOf(":");
+            if (currLineText.includes(paramName.toUpperCase())) {
+                let paramType = currLine.text.substring(colonIndex + 1, currLine.text.length - 1);
+                return paramType;
+            }
+        }
+        return "";
+    }
+
+    export function getParamTypeFromProcLine(lineNo: number,paramName: string): string {
+        let editor = window.activeTextEditor;
+        if (!editor || lineNo < 0) {
+            return "";
+        }
+        let paramType: string = ""; 
+        let currLine: TextLine = editor.document.lineAt(lineNo);
+        let currLineText = currLine.text.toUpperCase();
+        let paramNameIndex: number = currLineText.indexOf(paramName.toUpperCase());
+        let colonIndex : number = currLineText.indexOf(":", paramNameIndex);
+        if(colonIndex > -1) {
+            var semiColonIndex : number = currLineText.indexOf(";", colonIndex);
+            if (semiColonIndex > -1) {
+                paramType = currLine.text.substring(colonIndex + 1, semiColonIndex);
             }
             else {
-                // Type not found in local var section, check parameters of current function
-                parameterNameLineNo = findNextTextLineNo(parameterName.toUpperCase(), false, foundLocalVarLineNo - 1, endLineNo + 1);
-                if (parameterNameLineNo > -1) {
-                    currLine = editor.document.lineAt(parameterNameLineNo);
-                    let currLineTextUpperCase = currLine.text.toUpperCase();
-                    let parameterNameIndex: number = currLineTextUpperCase.indexOf(parameterName.toUpperCase());
-                    let colonIndex : number = currLineTextUpperCase.indexOf(":", parameterNameIndex);
-                    if(colonIndex > -1) {
-                        var semiColonIndex : number = currLineTextUpperCase.indexOf(";", colonIndex);
-                        if (semiColonIndex > -1) {
-                            parameterType = currLine.text.substring(colonIndex + 1, semiColonIndex);
-                        }
-                        else {
-                            let bracketIndex : number = currLineTextUpperCase.indexOf(")", colonIndex);
-                            if (bracketIndex > -1) {
-                                parameterType = currLine.text.substring(colonIndex + 1, bracketIndex);
-                            }
-                        }
-                    }
+                let bracketIndex : number = currLineText.indexOf(")", colonIndex);
+                if (bracketIndex > -1) {
+                    paramType = currLine.text.substring(colonIndex + 1, bracketIndex);
                 }
             }
         }
-        return parameterType;
+        return paramType;
+    }
+
+    export function paramPassedByRef(paramName: string): boolean {
+        let lineNo = findLocalProcedureStartLineNo();
+        let text = getText(lineNo).toUpperCase();
+
+        let paramNameIndex = text.indexOf(paramName.toUpperCase());
+        if (paramNameIndex < 0) {
+            return false;
+        }
+        let textToCheck = text.substring(0, paramNameIndex);
+        let lastBracketIndex = textToCheck.lastIndexOf("(");
+        let lastSemiColonIndex = textToCheck.lastIndexOf(";"); 
+        if (lastBracketIndex < 0 && lastSemiColonIndex < 0) {
+            return false;
+        }
+
+        let delimiterIndex = lastBracketIndex > lastSemiColonIndex? lastBracketIndex : lastSemiColonIndex;
+        textToCheck = textToCheck.substring(delimiterIndex);
+        return textToCheck.includes("VAR");
     }
 
     export function getLineText(document: TextDocument, range: Range | Selection) : string {
@@ -411,8 +426,4 @@ export module ALFileCrawler {
         }
         return foundLocalProcLineNo;
     }
-
-    
-
-
 }

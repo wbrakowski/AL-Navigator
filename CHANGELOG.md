@@ -35,3 +35,8 @@ Bugfixing
 - New Feature: Variable Declarator. Recognizes standard objects and declares variables automatically, also objects from workspace files.
 - Refactoring 
 
+## [0.1.5]
+
+- Better recognition for parameters passed by reference
+- Refactoring
+

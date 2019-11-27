@@ -1,6 +1,7 @@
 import { window, Range } from "vscode";
 import { ALFileCrawler } from "./alFileCrawler";
 import { StringFunctions } from "./stringFunctions";
+import { stringify } from "querystring";
 
 export module TextBuilder {
     let indent: string = "  ";
@@ -29,6 +30,9 @@ export module TextBuilder {
             while (i < parameterNames.length) {
                 {
                     parameterType = ALFileCrawler.findParamType(parameterNames[i]);
+                    if (ALFileCrawler.paramPassedByRef(parameterNames[i])) {
+                        procedureStub += "var ";
+                    }
                     procedureStub += parameterNames[i] + " :" + parameterType;
                     parameterNames[i + 1] === undefined ? procedureStub += ")" : procedureStub += "; ";
                     i++;
