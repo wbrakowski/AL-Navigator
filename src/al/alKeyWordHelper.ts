@@ -1,3 +1,5 @@
+// Thanks to Waldo and/or Rasmus Aaen (whoever wrote this first ;-)
+
 export module ALKeywordHelper {
 
     export function isKeyWord(value: String): boolean {

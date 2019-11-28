@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { TextDecoder } from 'util';
 import { ALFile} from './alFile';
 import { ALFileCrawler } from './alFileCrawler';
 import { StringFunctions } from '../stringFunctions';
@@ -13,6 +12,25 @@ import { ALObjectStorage } from './alObjectStorage';
     constructor() {
         this.populateALFilesArray();
         this.alStdObjects = ALObjectStorage.getALStdObjects();
+
+        let watcher = vscode.workspace.createFileSystemWatcher('**/*.al');
+        watcher.onDidCreate(async (e: vscode.Uri) => {
+            if (e.fsPath.indexOf('.vscode') === -1) {
+                await this.update();
+            }
+        });
+
+        watcher.onDidChange(async (e: vscode.Uri) => {
+            if (e.fsPath.indexOf('.vscode') === -1) {
+                await this.update();
+            }
+        });
+
+        watcher.onDidDelete(async (e: vscode.Uri) => {
+            if (e.fsPath.indexOf('.vscode') === -1) {
+                await this.update();
+            }
+        });
     }
 
     public localProcCanBeCreated(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
@@ -140,5 +158,9 @@ import { ALObjectStorage } from './alObjectStorage';
         else {
             return "";
         }
+    }
+
+    public async update() {
+        this.populateALFilesArray();
     }
 }
