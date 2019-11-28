@@ -1,5 +1,5 @@
 import { workspace, ExtensionContext, commands, window, Selection, Range, Position, TextLine, TextEditor } from 'vscode';
-import { ALFileCrawler } from '../alFileCrawler';
+import { ALFileCrawler } from '../al/alFileCrawler';
 
 export module FileJumper {
    export function jumpToNextDataItem() {
@@ -40,11 +40,8 @@ export module FileJumper {
    {
        let lineNo: number = ALFileCrawler.findNextTextLineNo(text, false);
        if (lineNo === -1) {
-            //let infoText : string = `Line with text "${ text }" not found after current line. Search started at line 1.`;
-            //window.showInformationMessage(infoText);
             lineNo = ALFileCrawler.findNextTextLineNo(text, false, 0);
        }
-    
         jumpToLine(lineNo);
     }
 

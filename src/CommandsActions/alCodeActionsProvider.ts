@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import { ALAddRemoteProcedureStubCodeCommand } from './addRemoteProcedureStubCodeCommand';
 import { ALAddLocalProcedureStubCodeCommand } from './addLocalProcedureStubCodeCommand';
 import { AddLocalVariableCodeCommand } from './addLocalVariableCodeCommand';
-import { ALFiles } from '../alFiles';
-import { VariableCreator} from '../variablecreator/variableCreator';
-import { ALWriter } from '../alWriter';
-import { ALFileCrawler } from '../alFileCrawler';
+import { ALFiles } from '../al/alFiles';
+import { ALWriter } from '../al/alWriter';
+import { ALFileCrawler } from '../al/alFileCrawler';
+import { ALFile } from '../al/alFile';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     protected _alFiles : ALFiles = new ALFiles();
@@ -32,25 +32,26 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
             };
             actions.push(action);
         } 
-        else if (this._alFiles.RemoteProcCanBeCreated(document, range)) {
-            if (this._alFiles.currentRemoteALFile) {
-                this._alWriter.targetALFileName = this._alFiles.currentRemoteALFile.fileName;
-                this._alWriter.targetALObjectName = this._alFiles.currentRemoteALFile.objectName;
-                this._alWriter.targetALProcedureName = this._alFiles.currentSelectionProcedureName;
-                this._alWriter.targetALFilePath = this._alFiles.currentRemoteALFile.filePath;
-                let action : vscode.CodeAction = new vscode.CodeAction("Add Procedure Stub in " + this._alWriter.targetALObjectName,  vscode.CodeActionKind.QuickFix);
+
+        let alFile = this._alFiles.geCurrLineRemoteALFile(document, range);
+        let procedureName : string = ALFileCrawler.extractProcedureNameFromCurrLine();
+        if (alFile && !ALFileCrawler.procedureExistsInALFile(alFile, procedureName)) {
+                this._alWriter.targetALFileName = alFile.fileName;
+                this._alWriter.targetALObjectName = alFile.alObject.objectName;
+                this._alWriter.targetALProcedureName = procedureName;
+                this._alWriter.targetALFilePath = alFile.filePath;
+                let action : vscode.CodeAction = new vscode.CodeAction("Add Procedure Stub in " + alFile.alObject.objectName,  vscode.CodeActionKind.QuickFix);
                 action.command = { 
                     command: this._addRemoteProcedureStub.name, title: 'Add Procedure Stub' 
                 };
                 actions.push(action);
-            }
         }
 
-        let varNameToDeclare = this._alFiles.getVarNameToDeclare(document, range);
-        if ((varNameToDeclare) && (this._addLocalVariable.varCreator.variableNameExists(varNameToDeclare))) {
+        let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(document, range);
+        if ((varNameToDeclare) && (this._alFiles.variableNameExists(varNameToDeclare))) {
             this._addLocalVariable.clearVarsToDeclare();
             this._addLocalVariable.localVarNameToDeclare = varNameToDeclare;
-            this._addLocalVariable.localVarTypeToDeclare = this._addLocalVariable.varCreator.getObjectTypeAndNameFromVarName(varNameToDeclare);
+            this._addLocalVariable.localVarTypeToDeclare = this._alFiles.getObjectTypeAndNameFromVarName(varNameToDeclare);
             let action : vscode.CodeAction = new vscode.CodeAction("Add local variable " + varNameToDeclare,  vscode.CodeActionKind.QuickFix);
             action.command = { 
                 command: this._addLocalVariable.name, title: 'Add local variable' 

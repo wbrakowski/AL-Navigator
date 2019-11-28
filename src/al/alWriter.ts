@@ -18,7 +18,6 @@ export class ALWriter {
     }
 
     async insertContentAsync(content: string, lineNo: number, editor : TextEditor | undefined) {
-        // content = '\n' + content; 
         content += '\n'; 
         if (!editor) {
             return;

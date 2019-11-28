@@ -1,5 +1,5 @@
 import { window, Range } from "vscode";
-import { ALFileCrawler } from "./alFileCrawler";
+import { ALFileCrawler } from "./al/alFileCrawler";
 import { StringFunctions } from "./stringFunctions";
 import { stringify } from "querystring";
 

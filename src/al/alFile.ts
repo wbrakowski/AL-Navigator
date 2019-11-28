@@ -1,16 +1,13 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { ALFiles } from './alFiles';
+import { ALObject } from './alObject';
 
-export class WorkSpaceALFile {
+export class ALFile {
     public uri: vscode.Uri;
     public filePath: string;
     public fileName: string;
     public fileText: string;
-    public objectType: string = "";
-    public objectName: string= "";
-    public objectID: string = "";
-    public objectNo: number = 0;
+    public alObject: ALObject = new ALObject();
     public procedures: string[] = new Array();
     
     constructor(file : vscode.Uri) {
@@ -19,11 +16,6 @@ export class WorkSpaceALFile {
         this.fileName = this.getFileNameFromPath(this.filePath);
         this.fileText = this.getTextFromFile();
         this.getObjectInfoFromText();
-        // console.log(this.fileName);
-        // console.log(this.objectType);
-        // console.log(this.objectName);
-        // console.log(this.objectID);
-        // console.log(this.procedures.toString());
     }
 
     private getFileNameFromPath(path : string) : string {
@@ -34,7 +26,7 @@ export class WorkSpaceALFile {
         return fs.readFileSync(this.uri.fsPath).toString();
     }
 
-    public checkIfProcedureExistsInFile(procedureName : string): boolean {
+    public procedureExistsInFile(procedureName : string): boolean {
         return (this.procedures.includes(procedureName));
     }
 
@@ -69,9 +61,9 @@ export class WorkSpaceALFile {
                         return;
                     }
 
-                    this.objectType = currObject[1];
-                    this.objectID = currObject[2];
-                    this.objectName = currObject[3];
+                    this.alObject.objectType = currObject[1];
+                    this.alObject.objectID = currObject[2];
+                    this.alObject.objectName = currObject[3];
 
                     break;
                 }
@@ -79,10 +71,10 @@ export class WorkSpaceALFile {
                     return;
                 }
             }
-            this.objectType = this.objectType.trim().toString();
-            this.objectID = this.objectID.trim().toString();
-            this.objectNo = +this.objectID;
-            this.objectName = this.objectName.trim().toString().replace(/"/g, '');
+            this.alObject.objectType = this.alObject.objectType.trim().toString();
+            this.alObject.objectID = this.alObject.objectID.trim().toString();
+            this.alObject.objectNo = +this.alObject.objectID;
+            this.alObject.objectName = this.alObject.objectName.trim().toString().replace(/"/g, '');
         }
 
         if (!objectTypeArr) {

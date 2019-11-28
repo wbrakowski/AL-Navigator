@@ -1,7 +1,6 @@
 import { TextLine, TextEditor, window, Range, Selection, TextDocument } from 'vscode';
 import { ALKeywordHelper } from './alKeyWordHelper';
-import { FileJumper } from './filejumper/fileJumper';
-import { delimiter } from 'path';
+import { ALFile } from './alFile';
 
 export module ALFileCrawler {
     //#region text search
@@ -177,6 +176,11 @@ export module ALFileCrawler {
         return procedureName;
     }
 
+    export function extractProcedureNameFromCurrLine() : string {
+        let text: string = getCurrLineText();
+        return extractProcedureName(text);
+    }
+
     export function extractParams(text: string, removeVarFlag: boolean, removeParamType: boolean) : string[] {
         // TODO: Change this to RegExp
         let parameterNames : string[] = [];
@@ -218,7 +222,7 @@ export module ALFileCrawler {
         return parameterNames;
     }
 
-    export function extractProcedureOwnerVariableNameFromText(text: string) : string {
+    export function extractVarNameFromProcCall(text: string) : string {
         let variableName : string = "";
         let dotIndex : number = text.indexOf(".");
         if (dotIndex > -1) {
@@ -244,7 +248,6 @@ export module ALFileCrawler {
                 let variableName = currLineText.substring(0, colonIndex);
                 if (variableName) {
                     localVariables.push(variableName);
-                    //console.log(variableName);
                 }
             }
         }
@@ -255,9 +258,7 @@ export module ALFileCrawler {
         let vars: string[] = new Array();
         if (text) {
             let trimmedText = text.trim();
-            //let varNamePattern = '(\\w\\S*)'; // All characters except "
             let varNamePattern = '(\\w[a-zA-Z]*)'; // All characters except "
-            // let varNamePattern = '(\\w["a-zA-Z]*)'; // All characters except : and =
             let varNameRegExp = new RegExp(varNamePattern, "gi");
             let varNames = trimmedText.match(varNameRegExp);
             if (varNames) {
@@ -392,6 +393,18 @@ export module ALFileCrawler {
         return textToCheck.includes("VAR");
     }
 
+    export function getCurrLineText(): string {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return "";
+        }
+
+        let currLine = editor.document.lineAt(editor.selection.start.line);
+        let currLineText : string = currLine.text;
+        
+        return currLineText;
+    }
+
     export function getLineText(document: TextDocument, range: Range | Selection) : string {
         let editor = window.activeTextEditor;
         if (!editor) {
@@ -426,4 +439,36 @@ export module ALFileCrawler {
         }
         return foundLocalProcLineNo;
     }
+
+    
+    export function procedureExistsInALFile(file: ALFile, procedureName: string): boolean {
+        if (!file) {
+            return false;
+        }
+
+        return (file.procedures.includes(procedureName));
+    }
+
+    export function getVarNameToDeclare(document: TextDocument, range: Range | Selection): string {
+        let currLineText = ALFileCrawler.getLineText(document, range);
+        let currLineDetectedVars = ALFileCrawler.extractVars(currLineText);
+        let localVarsAndParams = ALFileCrawler.extractLocalVarsAndParams();
+
+        function containsAllElements(arr: string[], arr2: string[]): boolean {
+            return arr.every(i => arr2.includes(i));
+        }
+
+        let allVarsDeclared: boolean = containsAllElements(currLineDetectedVars, localVarsAndParams);
+        if (!allVarsDeclared) {
+            for(let i = 0; i< currLineDetectedVars.length; i++) {
+                let detVarIndex = localVarsAndParams.indexOf(currLineDetectedVars[i]);
+                if (detVarIndex < 0) {
+                    let varNameToDeclare = currLineDetectedVars[i];
+                    return varNameToDeclare;
+                }
+            }
+        }
+        return "";
+    }
+    
 }

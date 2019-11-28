@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALFiles} from '../alFiles';
-import { ALWriter } from '../alWriter';
+import { ALWriter } from '../al/alWriter';
 import { TextBuilder } from '../textBuilder';
 
 export class ALAddRemoteProcedureStubCodeCommand extends ALCodeCommand {
@@ -19,7 +18,7 @@ export class ALAddRemoteProcedureStubCodeCommand extends ALCodeCommand {
     }
     
     protected async runAsync(range: vscode.Range) {
-        let procedureStub: string = TextBuilder.buildProcedureStubText(false);
+        let procedureStub = TextBuilder.buildProcedureStubText(false);
         if (procedureStub) {
             this._alWriter.writeStubInFile(procedureStub);
         }

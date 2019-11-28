@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALFiles} from '../alFiles';
-import { ALWriter } from '../alWriter';
-import { ALFileCrawler } from '../alFileCrawler';
+import { ALWriter } from '../al/alWriter';
+import { ALFileCrawler } from '../al/alFileCrawler';
 import { TextBuilder } from '../textBuilder';
 
 export class ALAddLocalProcedureStubCodeCommand extends ALCodeCommand {

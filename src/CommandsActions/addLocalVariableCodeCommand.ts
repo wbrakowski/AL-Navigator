@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import {ALCodeCommand} from "./alCodeCommand";
-import { ALFiles} from '../alFiles';
-import { VariableCreator } from '../variablecreator/variableCreator';
-import { ALWriter } from '../alWriter';
-import { ALFileCrawler } from '../alFileCrawler';
+import { ALFiles} from '../al/alFiles';
+import { ALObjectStorage } from '../al/alObjectStorage';
+import { ALWriter } from '../al/alWriter';
+import { ALFileCrawler } from '../al/alFileCrawler';
 import { TextBuilder } from '../textBuilder';
 
 export class AddLocalVariableCodeCommand extends ALCodeCommand {
@@ -15,13 +15,6 @@ export class AddLocalVariableCodeCommand extends ALCodeCommand {
     }
     set alFiles(value : ALFiles){
         this._alFiles = value;
-    }
-    private _varCreator: VariableCreator;
-    get varCreator(): VariableCreator {
-        return this._varCreator;
-    }
-    set varCreator(value : VariableCreator){
-        this._varCreator = value;
     }
     private _alWriter : ALWriter;
     get alWriter(): ALWriter {
@@ -35,7 +28,6 @@ export class AddLocalVariableCodeCommand extends ALCodeCommand {
         super(context, commandName);
         this._alFiles = alFiles;
         this._alWriter = alWriter;
-        this._varCreator = new VariableCreator(alFiles, alWriter);
         this.localVarNameToDeclare = "";
         this.localVarTypeToDeclare = "";
     }
@@ -47,11 +39,11 @@ export class AddLocalVariableCodeCommand extends ALCodeCommand {
     
     protected async runAsync(range: vscode.Range) {
         this._alWriter.clearContent();
-        let source = TextBuilder.buildLocalVarDeclaration(range, this.localVarNameToDeclare, this.localVarTypeToDeclare);
+        let content = TextBuilder.buildLocalVarDeclaration(range, this.localVarNameToDeclare, this.localVarTypeToDeclare);
         let lineNo = ALFileCrawler.findLocalVarSectionEndLineNo(true)+1;
 
         let editor = vscode.window.activeTextEditor;
-        await this._alWriter.insertContentAsync(source, lineNo, editor);
+        await this._alWriter.insertContentAsync(content, lineNo, editor);
     }
 
 
