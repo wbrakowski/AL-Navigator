@@ -13,24 +13,26 @@ import { ALObjectStorage } from './alObjectStorage';
         this.populateALFilesArray();
         this.alStdObjects = ALObjectStorage.getALStdObjects();
 
-        let watcher = vscode.workspace.createFileSystemWatcher('**/*.al');
-        watcher.onDidCreate(async (e: vscode.Uri) => {
-            if (e.fsPath.indexOf('.vscode') === -1) {
-                await this.update();
-            }
-        });
+        // TODO Check performance
 
-        watcher.onDidChange(async (e: vscode.Uri) => {
-            if (e.fsPath.indexOf('.vscode') === -1) {
-                await this.update();
-            }
-        });
+        // let watcher = vscode.workspace.createFileSystemWatcher('**/*.al');
+        // watcher.onDidCreate(async (e: vscode.Uri) => {
+        //     if (e.fsPath.indexOf('.vscode') === -1) {
+        //         await this.update();
+        //     }
+        // });
 
-        watcher.onDidDelete(async (e: vscode.Uri) => {
-            if (e.fsPath.indexOf('.vscode') === -1) {
-                await this.update();
-            }
-        });
+        // watcher.onDidChange(async (e: vscode.Uri) => {
+        //     if (e.fsPath.indexOf('.vscode') === -1) {
+        //         await this.update();
+        //     }
+        // });
+
+        // watcher.onDidDelete(async (e: vscode.Uri) => {
+        //     if (e.fsPath.indexOf('.vscode') === -1) {
+        //         await this.update();
+        //     }
+        // });
     }
 
     public localProcCanBeCreated(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
