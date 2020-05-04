@@ -15,6 +15,8 @@ Create variables in an easy way and navigate through al files with awesome short
 
 ## Usage
 
+![Shortcuts](resources/Shortcuts.png)
+
 - Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
 - Use the shortcut Ctrl + Alt + j to jump through OnAfterGetRecord triggers in your .al file 
 - Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 

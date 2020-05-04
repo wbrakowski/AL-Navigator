@@ -2,10 +2,10 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Various functions to help navigating through al objects and developing extensions",
-	"version": "0.1.7",
+	"version": "0.1.8",
 	"publisher": "wbrakowski",
 	"url": "https://github.com/wbrakowski/al-navigator",
-	"icon": "C:\Users\wbrakowski8911\Desktop\OneDrive - Cosmo Consult AG\Prog\VS Code Extensions\AL-Navigator\resources\ALNavigatorLogo.png",
+	"icon": "resources/ALNavigatorLogo.png",
 	"author": {
 		"name": "Waldemar Brakowski",
 		"email": "wbrakowski@gmail.com"
