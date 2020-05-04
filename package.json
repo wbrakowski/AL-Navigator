@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Various functions to help navigating through al objects and developing extensions",
-	"version": "0.1.8",
+	"version": "0.1.9",
 	"publisher": "wbrakowski",
 	"url": "https://github.com/wbrakowski/al-navigator",
 	"icon": "resources/ALNavigatorLogo.png",

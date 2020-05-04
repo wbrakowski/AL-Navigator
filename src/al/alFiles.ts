@@ -77,7 +77,7 @@ import { close } from 'fs';
                     let workspaceALFile : ALFile = new ALFile(file);
                     workspaceALFiles.push(workspaceALFile);
                     this.alObjects.push(workspaceALFile.alObject);
-                    console.log(workspaceALFile.alObject);
+                    // console.log(workspaceALFile.alObject);
                 });
                 } 
             catch (error) {
