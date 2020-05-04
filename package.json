@@ -1,11 +1,11 @@
 {
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
-	"description": "Various functions to help navigating through al objects and developing extensions",
-	"version": "0.1.9",
+	"description": "Create variables in an easy way and navigate through al files with awesome shortcuts.",
+	"version": "0.2.1",
 	"publisher": "wbrakowski",
 	"url": "https://github.com/wbrakowski/al-navigator",
-	"icon": "resources/ALNavigatorLogo.png",
+	"icon": "resources/alpaca-icon_128_128.png",
 	"author": {
 		"name": "Waldemar Brakowski",
 		"email": "wbrakowski@gmail.com"

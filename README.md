@@ -51,3 +51,6 @@ Currently none.
 ## Git Repository
 
 https://github.com/wbrakowski/AL-Navigator
+
+## Picture Attribution
+<a href="https://vectorified.com/alpaca-icon">Alpaca Icon</a>
