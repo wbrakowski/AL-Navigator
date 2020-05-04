@@ -100,7 +100,7 @@ export module ALFileCrawler {
         return endLineNo;
     }
 
-    export function findNextTextLineNo(text: string, findLastNo: boolean, startNo?: number, endNo?: number) : number
+    export function findNextTextLineNo(text: string, findLastNo: boolean, startNo?: number, endNo?: number, excludesText?: string) : number
     {
         let editor = window.activeTextEditor;
          if (!editor) {
@@ -109,13 +109,19 @@ export module ALFileCrawler {
          let currLineNo = startNo !== undefined ? startNo : editor.selection.active.line + 1;
          let endLineNo = endNo !== undefined ? endNo : editor.document.lineCount;
          let foundLineNo = -1;
+         let ignoreLine;
          for (let i = currLineNo; i < endLineNo; i++) {
              let currLine = editor.document.lineAt(i);
              let currLineText = currLine.text.toUpperCase().trimLeft();
              if (currLineText.includes(text)) {
-                foundLineNo = i; 
-                 if (!findLastNo) {
-                    return foundLineNo;
+                 if (excludesText){
+                     ignoreLine = currLineText.includes(excludesText);
+                 }
+                 if (!ignoreLine) {
+                    foundLineNo = i; 
+                    if (!findLastNo) {
+                        return foundLineNo;
+                    }
                  }
              }
          }

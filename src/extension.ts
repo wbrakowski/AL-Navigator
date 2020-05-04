@@ -26,6 +26,19 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToKeys();
 	  });
 
+	  let jumpToModifyCommand = commands.registerCommand("extension.OnModify", () => {
+		FileJumper.jumpToNextOnModifyTrigger();
+	  });
+
+	  let jumpToDeleteCommand = commands.registerCommand("extension.OnDelete", () => {
+		FileJumper.jumpToNextOnDeleteTrigger();
+	  });
+
+	  let jumpToInsertCommand = commands.registerCommand("extension.OnInsert", () => {
+		FileJumper.jumpToNextOnInsertTrigger();
+	  });
+
+
 	let jumpToLastLocalVarLineCommand = commands.registerCommand("extension.LastLocalVarLine", () => {
 		FileJumper.jumpToLastLocalVarLine();
 	  });
@@ -47,6 +60,10 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToLastLocalVarLineCommand);
 	context.subscriptions.push(jumpToLastGlobalVarLineCommand);
 	context.subscriptions.push(jumpToActionsCommand);
+	context.subscriptions.push(jumpToInsertCommand);
+	context.subscriptions.push(jumpToDeleteCommand);
+	context.subscriptions.push(jumpToModifyCommand);
+
 }
 
 // this method is called when your extension is deactivated

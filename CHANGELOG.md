@@ -49,3 +49,9 @@ Bugfixing
 - New feature: You can now jump to the last line of the global var section (Ctrl + Alt + g)
 - Jumping through triggers now on new keyboard shortcut (Ctrl + Alt + j)
 
+## [0.2.2]
+
+- Optimized DataItem Jumping so it does not jump into OnPreDataItems
+- New feature: Jumpting to OnDeleteTrigger (Ctrl + Alt + d + d)
+- New feature: Jumpting to OnModifyTrigger (Ctrl + Alt + m + m)
+- New feature: Jumpting to OnInsertTrigger (Ctrl + Alt + i + i)

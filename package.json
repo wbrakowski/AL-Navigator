@@ -44,6 +44,18 @@
 				"title": "AL Navigator: Next trigger"
 			},
 			{
+				"command": "extension.OnDelete",
+				"title": "AL Navigator: OnDelete"
+			},
+			{
+				"command": "extension.OnModify",
+				"title": "AL Navigator: OnModify"
+			},
+			{
+				"command": "extension.OnInsert",
+				"title": "AL Navigator: OnInsert"
+			},
+			{
 				"command": "extension.Keys",
 				"title": "AL Navigator: Keys section"
 			},
@@ -72,6 +84,18 @@
 			{
 				"command": "extension.Trigger",
 				"key": "ctrl+alt+t"
+			},
+			{
+				"command": "extension.OnModify",
+				"key": "ctrl+o ctrl+m"
+			},
+			{
+				"command": "extension.OnDelete",
+				"key": "ctrl+o ctrl+d"
+			},
+			{
+				"command": "extension.OnInsert",
+				"key": "ctrl+o ctrl+i"
 			},
 			{
 				"command": "extension.Keys",

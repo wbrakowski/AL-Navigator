@@ -20,6 +20,9 @@ Create variables in an easy way and navigate through al files with awesome short
 - Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
 - Use the shortcut Ctrl + Alt + j to jump through OnAfterGetRecord triggers in your .al file 
 - Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
+- Use the shortcut Ctrl + o + d to jump to the OnDeleteTrigger
+- Use the shortcut Ctrl + o + m to jump to the OnModifyTrigger
+- Use the shortcut Ctrl + o + i to jump to the OnInsertTrigger
 - Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
 - Use the shortcut Ctrl + Alt + a to jump to next action in a page .al file
 - Use the shortcut Ctrl + Alt + l to jump to last line of local var section (fast way to declare new variables)
@@ -37,7 +40,9 @@ Create variables in an easy way and navigate through al files with awesome short
 ![Create Procedure Stub](resources/CreateProcedureStub.gif)
 
 
-- UPDATE 04.05.2020: Seems like someone else decided to rebuild that feature in a more stable way so I removed it.
+- UPDATE 04.05.2020: Seems like someone else decided to also build the same feature in a more stable way.
+- Check out the extension "AL CodeActions" if you want to automatically create procedures in the future :-)
+ 
 
 
 ## Known Issues

@@ -4,7 +4,8 @@ import { ALFileCrawler } from '../al/alFileCrawler';
 export module FileJumper {
    export function jumpToNextDataItem() {
         let text : string = "DATAITEM(";        
-        jumpToNextTextOccurence(text);
+        let excludeText : string = 'ON';
+        jumpToNextTextOccurence(text, excludeText);
    }
 
    export function jumpToNextOnAfterGetRecordTrigger(){
@@ -22,10 +23,25 @@ export module FileJumper {
         jumpToNextTextOccurence(text);
    }
 
+   export function jumpToNextOnDeleteTrigger(){
+     let text : string = "TRIGGER ONDELETE";
+     jumpToNextTextOccurence(text);
+     }
+
+     export function jumpToNextOnModifyTrigger(){
+          let text : string = "TRIGGER ONMODIFY";
+          jumpToNextTextOccurence(text);
+     }
+     export function jumpToNextOnInsertTrigger(){
+          let text : string = "TRIGGER ONINSERT";
+          jumpToNextTextOccurence(text);
+     }
+
    export function jumpToNextActions(){
      //    let text : string = "ACTIONS";
         let text : string = "ACTION";
-        jumpToNextTextOccurence(text);
+        let excludeText : string = 'ON';
+        jumpToNextTextOccurence(text, excludeText);
    }
 
    export function jumpToLastLocalVarLine() {
@@ -46,9 +62,9 @@ export module FileJumper {
      }
  }
 
-   function jumpToNextTextOccurence(text: string)
+   function jumpToNextTextOccurence(text: string, excludeText?: string)
    {
-       let lineNo: number = ALFileCrawler.findNextTextLineNo(text, false);
+       let lineNo: number = ALFileCrawler.findNextTextLineNo(text, false, undefined, undefined, excludeText);
        if (lineNo === -1) {
             lineNo = ALFileCrawler.findNextTextLineNo(text, false, 0);
        }
