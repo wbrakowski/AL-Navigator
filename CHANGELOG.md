@@ -40,3 +40,13 @@ Bugfixing
 - Better recognition for parameters passed by reference
 - Refactoring
 
+## [0.1.6]
+
+- Renaming of functions. They can now be found by searching AL Navigator in command window
+- New extension image
+- Removed feature "Add Procedure Stub"
+- Automatic variable declaration now also for pages
+- Feature changed: You can now through all actions instead of just jumping to the start of the actions section
+- New feature: You can now jump to the last line of the global var section (Ctrl + Alt + g)
+- Jumping through triggers now on new keyboard shortcut (Ctrl + Alt + j)
+

@@ -72,9 +72,13 @@ export class ALFile {
                 }
             }
             this.alObject.objectType = this.alObject.objectType.trim().toString();
+            if (this.alObject.objectType = 'table') {
+                this.alObject.objectType = 'Record';
+            }
             this.alObject.objectID = this.alObject.objectID.trim().toString();
             this.alObject.objectNo = +this.alObject.objectID;
             this.alObject.objectName = this.alObject.objectName.trim().toString().replace(/"/g, '');
+            this.alObject.longVarName = this.alObject.objectName.replace(/[^a-zA-Z]/g, "");
         }
 
         if (!objectTypeArr) {

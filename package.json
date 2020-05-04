@@ -4,6 +4,7 @@
 	"description": "Various functions to help navigating through al objects and developing extensions",
 	"version": "0.1.4",
 	"publisher": "wbrakowski",
+	"url": "https://github.com/wbrakowski/al-navigator",
 	"author": {
 		"name": "Waldemar Brakowski",
 		"email": "wbrakowski@gmail.com"
@@ -31,27 +32,31 @@
 		"commands": [
 			{
 				"command": "extension.DataItem",
-				"title": "Jump: Next DataItem"
+				"title": "AL Navigator: Next DataItem"
 			},
 			{
 				"command": "extension.OnAfterGetRecord",
-				"title": "Jump: Next OnAfterGetRecord"
+				"title": "AL Navigator: Next OnAfterGetRecord"
 			},
 			{
 				"command": "extension.Trigger",
-				"title": "Jump: Next trigger"
+				"title": "AL Navigator: Next trigger"
 			},
 			{
 				"command": "extension.Keys",
-				"title": "Jump: Keys section"
+				"title": "AL Navigator: Keys section"
 			},
 			{
 				"command": "extension.Actions",
-				"title": "Jump: Actions section"
+				"title": "AL Navigator: Next Action"
 			},
 			{
 				"command": "extension.LastLocalVarLine",
-				"title": "Jump: Last local var line"
+				"title": "AL Navigator: Last local var line"
+			},
+			{
+				"command": "extension.LastGlobalVarLine",
+				"title": "AL Navigator: Last global var line"
 			}
 		],
 		"keybindings": [
@@ -61,7 +66,7 @@
 			},
 			{
 				"command": "extension.OnAfterGetRecord",
-				"key": "ctrl+alt+g"
+				"key": "ctrl+alt+j"
 			},
 			{
 				"command": "extension.Trigger",
@@ -78,7 +83,12 @@
 			{
 				"command": "extension.LastLocalVarLine",
 				"key": "ctrl+alt+l"
+			},
+			{
+				"command": "extension.LastGlobalVarLine",
+				"key": "ctrl+alt+g"
 			}
+
 		]
 	},
 	"scripts": {

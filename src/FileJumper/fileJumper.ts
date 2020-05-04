@@ -23,7 +23,8 @@ export module FileJumper {
    }
 
    export function jumpToNextActions(){
-        let text : string = "ACTIONS";
+     //    let text : string = "ACTIONS";
+        let text : string = "ACTION";
         jumpToNextTextOccurence(text);
    }
 
@@ -35,6 +36,15 @@ export module FileJumper {
             jumpToLine(endNo);
        }
    }
+
+   export function jumpToLastGlobalVarLine() {
+     let editor = window.activeTextEditor;
+     let startNo: number = ALFileCrawler.findGlobalVarSectionStartLineNo();
+     if (startNo > 0) {
+          let endNo = ALFileCrawler.findGlobalVarSectionEndLineNo(startNo);
+          jumpToLine(endNo);
+     }
+ }
 
    function jumpToNextTextOccurence(text: string)
    {

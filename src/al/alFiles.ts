@@ -1,17 +1,19 @@
 import * as vscode from 'vscode';
 import { ALFile} from './alFile';
-import { ALFileCrawler } from './alFileCrawler';
 import { StringFunctions } from '../stringFunctions';
 import { ALObject } from './alObject';
 import { ALObjectStorage } from './alObjectStorage';
+import { close } from 'fs';
      
   export class ALFiles {
     public workspaceALFiles: ALFile[] = new Array(); 
-    public alStdObjects: ALObject[] = new Array();
+    public alObjects: ALObject[] = new Array();
 
     constructor() {
+        this.alObjects = ALObjectStorage.getALStdObjects();
         this.populateALFilesArray();
-        this.alStdObjects = ALObjectStorage.getALStdObjects();
+        
+        
 
         // TODO Check performance
 
@@ -33,52 +35,6 @@ import { ALObjectStorage } from './alObjectStorage';
         //         await this.update();
         //     }
         // });
-    }
-
-    public localProcCanBeCreated(document: vscode.TextDocument, range: vscode.Range | vscode.Selection) : boolean {
-        let editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return false;
-        }
-
-        let currLine = editor.document.lineAt(range.start.line);
-        let currLineText = currLine.text.trim();
-        if (ALFileCrawler.isComment(currLineText)) {
-            return false;
-        }
-        if (ALFileCrawler.isLocalProcedureCall(currLineText)) {
-            if (!ALFileCrawler.localProcedureAlreadyExists(currLineText)) {
-                return true;
-            }
-        }
-        
-        return false;
-    }
-
-
-    public geCurrLineRemoteALFile(document: vscode.TextDocument, range: vscode.Range | vscode.Selection): ALFile | undefined {
-        let editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return undefined;
-        }
-
-        let currLine = editor.document.lineAt(range.start.line);
-        let currLineText = currLine.text.trimLeft();
-        if (ALFileCrawler.isComment(currLineText)) {
-            return undefined;
-        }
-        
-        if (ALFileCrawler.isGlobalProcedureCall(currLineText)) {
-            let varName = ALFileCrawler.extractVarNameFromProcCall(currLineText).trim();
-            let varType = ALFileCrawler.findParamType(varName).trimLeft();
-            let indexSpace = varType.indexOf(" ");
-            let objectName = varType.substr(indexSpace + 1);
-            objectName = StringFunctions.removeDoubleQuotesFromString(objectName);
-            let remoteALFile = this.workspaceALFiles.find(i => i.alObject.objectName === objectName);
-            return remoteALFile;
-            
-        }
-        return undefined;
     }
 
     private getCurrentWorkspaceFolder(): vscode.WorkspaceFolder | undefined{
@@ -120,6 +76,8 @@ import { ALObjectStorage } from './alObjectStorage';
                 Files.forEach(file => {
                     let workspaceALFile : ALFile = new ALFile(file);
                     workspaceALFiles.push(workspaceALFile);
+                    this.alObjects.push(workspaceALFile.alObject);
+                    console.log(workspaceALFile.alObject);
                 });
                 } 
             catch (error) {
@@ -133,9 +91,10 @@ import { ALObjectStorage } from './alObjectStorage';
  
 
     public variableNameExists(varName : string) : boolean {
-        let alVariable = this.alStdObjects.find(i => varName.toUpperCase() === (i.longVarName.toUpperCase()));
+        let alVariable = this.alObjects.find(i => varName.toUpperCase() === (i.longVarName.toUpperCase()));
+        // TODO: Check this one day: Cloest match?
         if (!alVariable) {
-            alVariable = this.alStdObjects.find(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
+            alVariable = this.alObjects.find(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
         }
         if (alVariable) {
             return true;
@@ -146,10 +105,29 @@ import { ALObjectStorage } from './alObjectStorage';
     }
 
     public getObjectTypeAndNameFromVarName(varName: string) : string {
-        let alVariable = this.alStdObjects.find(i => varName.toUpperCase() === i.longVarName.toUpperCase());
-        if (!alVariable) {
-            alVariable = this.alStdObjects.find(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
-        }
+        // Search std objects
+        let alVariable = this.alObjects.find(i => varName.toUpperCase() === i.longVarName.toUpperCase());
+        // TODO: Check this one day ;-)
+        // Cannot find 100% match, try to find cloest match
+        // if (!alVariable) {
+        //     let results = this.alObjects.filter(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
+        //     let closestDistance = 0;
+        //     for (let i = 0;i < results.length;i++) {
+        //         let distance = StringFunctions.LevenshteinDistance(varName.toUpperCase(), results[i].longVarName.toUpperCase());
+        //         if (closestDistance === 0) {
+        //             closestDistance = distance;
+        //             console.log(closestDistance);
+
+        //             alVariable = results[i];
+        //         }
+        //         else 
+        //             if (distance < closestDistance) {
+        //                 closestDistance = distance;
+        //                 console.log(closestDistance);
+        //                 alVariable = results[i];
+        //         }
+        //     }
+        // }
         if (alVariable) {
             let objName = alVariable.objectName;
             if (StringFunctions.containsSpecialChars(objName)) {

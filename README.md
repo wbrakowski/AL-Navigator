@@ -28,11 +28,12 @@ Various navigation functions to make developing objects for Business Central eas
 
 
 - Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
-- Use the shortcut Ctrl + Alt + g to jump through OnAfterGetRecord triggers in your .al file 
+- Use the shortcut Ctrl + Alt + j to jump through OnAfterGetRecord triggers in your .al file 
 - Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
 - Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
-- Use the shortcut Ctrl + Alt + a to jump to actions in a page .al file
+- Use the shortcut Ctrl + Alt + a to jump to next action in a page .al file
 - Use the shortcut Ctrl + Alt + l to jump to last line of local var section (fast way to declare new variables)
+- Use the shortcut Ctrl + Alt + g to jump to the last line of global var section (fast way to declare new variables)
 
 ## Known Issues
 

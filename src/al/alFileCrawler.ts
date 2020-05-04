@@ -50,6 +50,56 @@ export module ALFileCrawler {
         return endLineNo;
     }
 
+    export function findGlobalVarSectionStartLineNo() : number {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return -1;
+        }
+        let foundLineNo = -1;
+        let ignoreNext;
+        for (let i = 0; i < editor.document.lineCount; i++) {
+            let currLine = editor.document.lineAt(i);
+            let currLineText = currLine.text.trim().toUpperCase();
+            if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
+				ignoreNext = true;
+			} else if (currLineText.toUpperCase() === "VAR") {
+				if (ignoreNext) {
+					ignoreNext = false;
+				} else {
+					foundLineNo = i;
+					break;
+				}
+
+			} else if (currLineText.toUpperCase().indexOf("BEGIN") >= 0) {
+				ignoreNext = false;
+			}
+        }
+        return foundLineNo;
+    }
+
+    export function findGlobalVarSectionEndLineNo(startLineNo?: number) : number {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return -1;
+        }
+
+        let endLineNo: number = -1;
+
+        let startNo: number = startLineNo? startLineNo :  findGlobalVarSectionStartLineNo();
+        if (startNo < 0) {
+            return -1;
+        }
+        for (let i = startNo; i <= editor.document.lineCount-1; i++) {
+            let currLine: TextLine = editor.document.lineAt(i);
+            let currLineText: string = currLine.text.trim().toUpperCase();
+            if (currLineText.includes('PROCEDURE') || currLineText.includes('TRIGGER') ) {
+                endLineNo = i-2;
+                break;
+            } 
+        }
+        return endLineNo;
+    }
+
     export function findNextTextLineNo(text: string, findLastNo: boolean, startNo?: number, endNo?: number) : number
     {
         let editor = window.activeTextEditor;
@@ -72,36 +122,8 @@ export module ALFileCrawler {
          return foundLineNo;
      }
 
-     export function findProcStubStartingLineNo() : number {
-        let searchText : string = "}";
-        let foundLineNo : number = findNextTextLineNo(searchText, true, 0);
-        let lineNo : number = -1;
-
-        if (foundLineNo >= 0) {
-            lineNo = foundLineNo;
-        }
-
-        return lineNo;
-    }
-
      //#endregion
      //#region text checking
-     export function isLocalProcedureCall(text: string) : boolean {
-        let textBeforeBracket: string = "";
-        let indexBracket : number = text.indexOf("(");
-        if (indexBracket > 0) {
-            textBeforeBracket = text.substring(0, indexBracket - 1);
-        }
-        else {
-            return false;
-        }
-        
-        if (textBeforeBracket.indexOf(".") > -1) {
-            return false;
-        }
-
-        return containsProcedureSigns(text);
-    }
 
     function containsProcedureSigns(text: string) : boolean {
         let textUpperCase = text.toUpperCase();
@@ -120,66 +142,12 @@ export module ALFileCrawler {
         return true;
     }
 
-    export function isGlobalProcedureCall(text: string) : boolean {
-        if (text.indexOf(".") < 0) {
-            return false;
-        }
-
-        if (!containsProcedureSigns(text)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    export function localProcedureAlreadyExists(text: string) : boolean {
-        let procedureName = extractProcedureName(text);
-
-        let editor = window.activeTextEditor;
-        if (!editor) {
-            return false;
-        }
-
-        let currFileText = editor.document.getText().toUpperCase();
-        let searchText = "PROCEDURE " + procedureName.toUpperCase();
-
-        return(currFileText.includes(searchText));
-    }
-
     export function isComment(textToCheck : string) : boolean {
         return(textToCheck.includes("//"));
     }
      //#endregion
      //#region text disscetion
-     export function extractProcedureName(text: string) : string {
-        let openingBracketPos : number = text.indexOf("(");
-        let closingBracketPos : number = text.indexOf(")");
-        if (openingBracketPos < -1 || closingBracketPos < -1) {
-            return "";
-        }
 
-        let textBeforeOpeningBracket = text.substring(0, openingBracketPos);
-        let textToCheck: string = textBeforeOpeningBracket;
-        
-        let indexDot : number = textBeforeOpeningBracket.indexOf(".");
-        if (indexDot > -1) {
-            textToCheck = textBeforeOpeningBracket.substr(indexDot + 1);
-        }
-       
-        let procedureName : string = textToCheck.trimLeft();
-
-        let indexEqualSign = procedureName.indexOf("=");
-        if (indexEqualSign > -1) {
-            procedureName = procedureName.substr(indexEqualSign + 1).trimLeft();
-        }
-
-        return procedureName;
-    }
-
-    export function extractProcedureNameFromCurrLine() : string {
-        let text: string = getCurrLineText();
-        return extractProcedureName(text);
-    }
 
     export function extractParams(text: string, removeVarFlag: boolean, removeParamType: boolean) : string[] {
         // TODO: Change this to RegExp

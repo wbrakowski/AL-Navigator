@@ -30,6 +30,10 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToLastLocalVarLine();
 	  });
 
+	  let jumpToLastGlobalVarLineCommand = commands.registerCommand("extension.LastGlobalVarLine", () => {
+		FileJumper.jumpToLastGlobalVarLine();
+	  });
+
 	let jumpToActionsCommand = commands.registerCommand("extension.Actions", () => {
 		FileJumper.jumpToNextActions();
 	});
@@ -41,6 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToNextTriggerCommand);
 	context.subscriptions.push(jumpToKeysCommand);
 	context.subscriptions.push(jumpToLastLocalVarLineCommand);
+	context.subscriptions.push(jumpToLastGlobalVarLineCommand);
 	context.subscriptions.push(jumpToActionsCommand);
 }
 
