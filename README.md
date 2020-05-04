@@ -1,6 +1,6 @@
 # al-navigator README
 
-Various navigation functions to make developing objects for Business Central easier.
+Create variables in an easy way and navigate through al files with awesome shortcuts.
 
 ## Features
 
