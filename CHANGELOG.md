@@ -37,6 +37,10 @@ Bugfixing
 
 ## [0.1.5]
 
+- Refactoring
+
+## [0.1.6]
+
 - Renaming of functions. They can now be found by searching AL Navigator in command window
 - New extension image
 - Removed feature "Add Procedure Stub" because someone rebuilt it in a better way
