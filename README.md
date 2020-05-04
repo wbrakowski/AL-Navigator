@@ -35,7 +35,7 @@ Various navigation functions to make developing objects for Business Central eas
 ![Create Procedure Stub](resources/CreateProcedureStub.gif)
 
 
-- UPDATE 04.05.2020: Seems like someone else decided to rebuild that feature in a more stable way so removed it.
+- UPDATE 04.05.2020: Seems like someone else decided to rebuild that feature in a more stable way so I removed it.
 
 
 ## Known Issues
