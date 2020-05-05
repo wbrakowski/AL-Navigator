@@ -1,6 +1,6 @@
 # al-navigator README
 
-Create variables in an easy way and navigate through al files with awesome shortcuts.
+Create variables like a boss and navigate through al files with awesome shortcuts.
 
 ## Features
 
