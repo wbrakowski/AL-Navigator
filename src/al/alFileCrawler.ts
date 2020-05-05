@@ -92,7 +92,7 @@ export module ALFileCrawler {
         for (let i = startNo; i <= editor.document.lineCount-1; i++) {
             let currLine: TextLine = editor.document.lineAt(i);
             let currLineText: string = currLine.text.trim().toUpperCase();
-            if (currLineText.includes('PROCEDURE') || currLineText.includes('TRIGGER') ) {
+            if (currLineText.includes('PROCEDURE') || currLineText.includes('TRIGGER') || currLineText.includes('}')) {
                 endLineNo = i-2;
                 break;
             } 
