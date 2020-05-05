@@ -4,30 +4,19 @@ Create variables like a boss and navigate through al files with awesome shortcut
 
 ## Features
 
-- Automatic creation of variables
-- DataItem Jumping
-- OnAfterGetRecord Jumping
-- Trigger Jumping
-- Keys Jumping
-- Actions Jumping
-- Var Section Jumping
-- Create Procedure Stub (removed)
-
-## Usage
-
 ![Shortcuts](resources/Shortcuts.png)
 
-- Use the shortcut Ctrl + Alt + l to jump to last line of local var section (fast way to    declare new variables)
-- Use the shortcut Ctrl + Alt + g to jump to the last line of global var section (fast way to declare new variables)
-- Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
-- Use the shortcut Ctrl + Alt + a to jump to next action in a page .al file
-- Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
-- Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
-- Use the shortcut Ctrl + Alt + j to jump through OnAfterGetRecord triggers in your .al file 
+- Ctrl + Alt + l: jump to last line of local var section (fast way to    declare new variables)
+- Ctrl + Alt + g: jump to the last line of global var section (fast way to declare new variables)
+- Ctrl + Alt + k: jump to the keys section in your .al file 
+- Ctrl + Alt + a: jump to next action in a page .al file
+- Ctrl + Alt + t: jump through all triggers in your .al file 
+- Ctrl + Alt + d: jump through data items in your .al report file 
+- Ctrl + Alt + j: jump through OnAfterGetRecord triggers in your .al file 
 
-- Use the shortcut Ctrl + o + d to jump to the OnDeleteTrigger
-- Use the shortcut Ctrl + o + m to jump to the OnModifyTrigger
-- Use the shortcut Ctrl + o + i to jump to the OnInsertTrigger
+- Ctrl + o + d: jump to the OnDeleteTrigger
+- Ctrl + o + m: jump to the OnModifyTrigger
+- Ctrl + o + i: jump to the OnInsertTrigger
 
 
 
