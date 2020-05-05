@@ -39,7 +39,7 @@ export module FileJumper {
 
    export function jumpToNextActions(){
      //    let text : string = "ACTIONS";
-        let text : string = "ACTION";
+        let text : string = "ACTION(";
         let excludeText : string = 'ON';
         jumpToNextTextOccurence(text, excludeText);
    }

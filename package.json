@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables in an easy way and navigate through al files with awesome shortcuts.",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"publisher": "wbrakowski",
 	"url": "https://github.com/wbrakowski/al-navigator",
 	"icon": "resources/alpaca-icon_128_128.png",

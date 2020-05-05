@@ -17,16 +17,20 @@ Create variables in an easy way and navigate through al files with awesome short
 
 ![Shortcuts](resources/Shortcuts.png)
 
+- Use the shortcut Ctrl + Alt + l to jump to last line of local var section (fast way to    declare new variables)
+- Use the shortcut Ctrl + Alt + g to jump to the last line of global var section (fast way to declare new variables)
+- Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
+- Use the shortcut Ctrl + Alt + a to jump to next action in a page .al file
+- Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
 - Use the shortcut Ctrl + Alt + d to jump through data items in your .al report file 
 - Use the shortcut Ctrl + Alt + j to jump through OnAfterGetRecord triggers in your .al file 
-- Use the shortcut Ctrl + Alt + t to jump through all triggers in your .al file 
+
 - Use the shortcut Ctrl + o + d to jump to the OnDeleteTrigger
 - Use the shortcut Ctrl + o + m to jump to the OnModifyTrigger
 - Use the shortcut Ctrl + o + i to jump to the OnInsertTrigger
-- Use the shortcut Ctrl + Alt + k to jump to the keys section in your .al file 
-- Use the shortcut Ctrl + Alt + a to jump to next action in a page .al file
-- Use the shortcut Ctrl + Alt + l to jump to last line of local var section (fast way to declare new variables)
-- Use the shortcut Ctrl + Alt + g to jump to the last line of global var section (fast way to declare new variables)
+
+
+
 
 - Automatic local variable declaration of all standard tables, pages and reports (also objects from workspace files)
 - Use the Quick Fix lamp (Ctrl + .) to automatically add variables
