@@ -40,7 +40,7 @@ export module FileJumper {
    export function jumpToNextActions(){
      //    let text : string = "ACTIONS";
         let text : string = "ACTION(";
-        let excludeText : string = 'ON';
+        let excludeText : string = 'TRIGGER';
         jumpToNextTextOccurence(text, excludeText);
    }
 
