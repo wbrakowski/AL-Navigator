@@ -45,9 +45,6 @@ Check out the extension "AL CodeActions" if you want to automatically create pro
  
 
 
-## Known Issues
-
-Currently none.
 
 ## Requirements
 
