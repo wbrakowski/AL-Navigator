@@ -1,4 +1,4 @@
-# al-navigator README
+# AL Navigator
 
 Create variables like a boss and navigate through al files with awesome shortcuts.
 
@@ -8,7 +8,7 @@ Create variables like a boss and navigate through al files with awesome shortcut
 
 CodeAction for AL0118: Automatic local variable declaration of all standard tables, pages and reports (also objects from workspace files).
 
-Use the Quick Fix lamp (Ctrl + .) to automatically add variables
+Use the Quick Fix lamp (Ctrl + .) to automatically add variables.
 
 Update 08.05.2020: Massive improvement of this feature through better recognition of relevant lines where it can be applied.
 
