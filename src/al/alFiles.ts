@@ -113,7 +113,7 @@ import { isUndefined, isNull } from 'util';
         }
     }
 
-    public getObjectTypeAndNameFromVarName(varName: string) : string {
+    public async getObjectTypeAndNameFromVarName(varName: string) : Promise<string | undefined>{
         // Search std objects
         let alVariable = this.alObjects.find(i => varName.toUpperCase() === i.longVarName.toUpperCase());
         // TODO: Check this one day ;-)
