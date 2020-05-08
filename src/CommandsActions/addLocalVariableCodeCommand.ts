@@ -4,7 +4,7 @@ import { ALFiles} from '../al/alFiles';
 import { ALObjectStorage } from '../al/alObjectStorage';
 import { ALWriter } from '../al/alWriter';
 import { ALFileCrawler } from '../al/alFileCrawler';
-import { TextBuilder } from '../textBuilder';
+import { TextBuilder } from '../additional/textBuilder';
 
 export class AddLocalVariableCodeCommand extends ALCodeCommand {
     public localVarNameToDeclare: string;

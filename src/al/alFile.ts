@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { ALObject } from './alObject';
+import { StringFunctions} from '../additional/stringFunctions';
 
 export class ALFile {
     public uri: vscode.Uri;
@@ -71,8 +72,8 @@ export class ALFile {
                     return;
                 }
             }
-            this.alObject.objectType = this.alObject.objectType.trim().toString();
-            if (this.alObject.objectType = 'table') {
+            this.alObject.objectType = StringFunctions.titleCaseWord(this.alObject.objectType.trim().toString());
+            if (this.alObject.objectType === 'Table') {
                 this.alObject.objectType = 'Record';
             }
             this.alObject.objectID = this.alObject.objectID.trim().toString();

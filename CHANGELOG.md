@@ -55,3 +55,7 @@ Bugfixing
 - New feature: Jumpting to OnDeleteTrigger (Ctrl + Alt + d + d)
 - New feature: Jumpting to OnModifyTrigger (Ctrl + Alt + m + m)
 - New feature: Jumpting to OnInsertTrigger (Ctrl + Alt + i + i)
+
+## [0.2.4]
+
+- Massive Improvement of variable creation feature. It now recognizes way better if a variable can or should be created.

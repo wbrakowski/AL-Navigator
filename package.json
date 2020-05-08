@@ -2,17 +2,29 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables like a boss and navigate through al files with awesome shortcuts.",
-	"version": "0.2.3",
+	"version": "0.2.4",
 	"publisher": "wbrakowski",
+	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
 	"icon": "resources/alpaca-icon_128_128.png",
 	"author": {
 		"name": "Waldemar Brakowski",
 		"email": "wbrakowski@gmail.com"
 	},
+	"keywords": [
+		"AL",
+		"AL Extensions",
+		"Business Central",
+		"CISDE",
+		"Dynamics NAV"
+	],
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/wbrakowski/al-navigator"
+	},
+	"bugs": {
+		"email": "wbrakowski@gmail.com",
+		"url": "https://github.com/wbrakowski/AL-Navigator/issues"
 	},
 	"engines": {
 		"vscode": "^1.39.0"
@@ -133,5 +145,8 @@
 		"typescript": "^3.3.1",
 		"tslint": "^5.12.1",
 		"vscode-test": "^1.2.0"
-	}
+	},
+	"extensionDependencies": [
+		"andrzejzwierzchowski.al-code-outline"
+	]
 }

@@ -1,19 +1,28 @@
 import * as vscode from 'vscode';
 import { ALFile} from './alFile';
-import { StringFunctions } from '../stringFunctions';
+import { StringFunctions } from '../additional/stringFunctions';
 import { ALObject } from './alObject';
 import { ALObjectStorage } from './alObjectStorage';
 import { close } from 'fs';
+import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
+import { DiagnosticCodes } from '../additional/diagnosticCodes';
+import { isUndefined, isNull } from 'util';
      
   export class ALFiles {
+
+    private _document: vscode.TextDocument | undefined;
+    set document(doc: vscode.TextDocument | undefined) {
+        this._document = doc;
+    }
+    get document() : vscode.TextDocument | undefined {
+        return this._document;
+    }
     public workspaceALFiles: ALFile[] = new Array(); 
     public alObjects: ALObject[] = new Array();
 
     constructor() {
         this.alObjects = ALObjectStorage.getALStdObjects();
         this.populateALFilesArray();
-        
-        
 
         // TODO Check performance
 
@@ -77,7 +86,7 @@ import { close } from 'fs';
                     let workspaceALFile : ALFile = new ALFile(file);
                     workspaceALFiles.push(workspaceALFile);
                     this.alObjects.push(workspaceALFile.alObject);
-                    // console.log(workspaceALFile.alObject);
+                    console.log(workspaceALFile.alObject);
                 });
                 } 
             catch (error) {
@@ -142,5 +151,41 @@ import { close } from 'fs';
 
     public async update() {
         this.populateALFilesArray();
+    }
+
+    public getRelevantDiagnosticOfCurrentPosition(range: vscode.Range) {
+        if (isUndefined(this.document)) {
+            return undefined;
+        }
+        let diagnostics = vscode.languages.getDiagnostics(this.document.uri).filter(d => {
+            let isAL = this.checkDiagnosticsLanguage(d);
+            let samePos = this.checkDiagnosticsPosition(d, range);
+            let validCode: boolean = this.checkDiagnosticsCode(d);
+            return isAL && samePos && validCode;
+        });
+
+
+        return diagnostics.length === 1 ? diagnostics[0] : undefined;
+    }
+
+    private checkDiagnosticsLanguage(d: vscode.Diagnostic): boolean {
+        if (isUndefined(d.source)) {
+            return false;
+        }
+        return d.source.toLowerCase() === 'al';
+    }
+    private checkDiagnosticsCode(d: vscode.Diagnostic): boolean {
+        if (isUndefined(d.code)) {
+            return false;
+        }
+        let supportedDiagnosticCodes: string[] = [];
+        for (var enumMember in DiagnosticCodes) {
+            supportedDiagnosticCodes.push(enumMember.toString());
+        }
+        return supportedDiagnosticCodes.includes(d.code.toString());
+    }
+
+    private checkDiagnosticsPosition(d: vscode.Diagnostic, range: vscode.Range): boolean {
+        return d.range.contains(range);
     }
 }

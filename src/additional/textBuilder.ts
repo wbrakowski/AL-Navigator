@@ -1,5 +1,5 @@
 import { Range } from "vscode";
-import { ALFileCrawler } from "./al/alFileCrawler";
+import { ALFileCrawler } from "../al/alFileCrawler";
 import { StringFunctions } from "./stringFunctions";
 
 export module TextBuilder {

@@ -6,10 +6,14 @@ import * as vscode from 'vscode';
 import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
 import { FileJumper } from './filejumper/fileJumper';
 import { ALCodeActionsProvider } from './commandsactions/alCodeActionsProvider';
+import { CustomConsole } from './additional/console';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	CustomConsole.customConsole = vscode.window.createOutputChannel("AL Navigator");
+	console.log('Congratulations, AL Navigator is ready to rumble!');
+
 	let jumpToNextdataItemCmd = commands.registerCommand("extension.DataItem", () => {
 		FileJumper.jumpToNextDataItem();
 	});
@@ -18,51 +22,53 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextOnAfterGetRecordTrigger();
 	});
 
-	let jumpToNextTriggerCommand = commands.registerCommand("extension.Trigger", () => {
+	let jumpToNextTriggerCmd = commands.registerCommand("extension.Trigger", () => {
 		FileJumper.jumpToNextTrigger();
 	  });
 
-	let jumpToKeysCommand = commands.registerCommand("extension.Keys", () => {
+	let jumpToKeysCmd = commands.registerCommand("extension.Keys", () => {
 		FileJumper.jumpToKeys();
 	  });
 
-	  let jumpToModifyCommand = commands.registerCommand("extension.OnModify", () => {
+	  let jumpToModifyCmd = commands.registerCommand("extension.OnModify", () => {
 		FileJumper.jumpToNextOnModifyTrigger();
 	  });
 
-	  let jumpToDeleteCommand = commands.registerCommand("extension.OnDelete", () => {
+	  let jumpToDeleteCmd = commands.registerCommand("extension.OnDelete", () => {
 		FileJumper.jumpToNextOnDeleteTrigger();
 	  });
 
-	  let jumpToInsertCommand = commands.registerCommand("extension.OnInsert", () => {
+	  let jumpToInsertCmd = commands.registerCommand("extension.OnInsert", () => {
 		FileJumper.jumpToNextOnInsertTrigger();
 	  });
 
 
-	let jumpToLastLocalVarLineCommand = commands.registerCommand("extension.LastLocalVarLine", () => {
+	let jumpToLastLocalVarLineCmd = commands.registerCommand("extension.LastLocalVarLine", () => {
 		FileJumper.jumpToLastLocalVarLine();
 	  });
 
-	  let jumpToLastGlobalVarLineCommand = commands.registerCommand("extension.LastGlobalVarLine", () => {
+	  let jumpToLastGlobalVarLinecmd = commands.registerCommand("extension.LastGlobalVarLine", () => {
 		FileJumper.jumpToLastGlobalVarLine();
 	  });
 
-	let jumpToActionsCommand = commands.registerCommand("extension.Actions", () => {
+	let jumpToActionsCmd = commands.registerCommand("extension.Actions", () => {
 		FileJumper.jumpToNextActions();
 	});
-	let alCodeActionsProvider : ALCodeActionsProvider = new ALCodeActionsProvider(context);
-	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', alCodeActionsProvider));
+	
+	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context), {
+		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
+	}));
 	
 	context.subscriptions.push(jumpToNextdataItemCmd);
 	context.subscriptions.push(jumpToOnAfterGetRecCmd);
-	context.subscriptions.push(jumpToNextTriggerCommand);
-	context.subscriptions.push(jumpToKeysCommand);
-	context.subscriptions.push(jumpToLastLocalVarLineCommand);
-	context.subscriptions.push(jumpToLastGlobalVarLineCommand);
-	context.subscriptions.push(jumpToActionsCommand);
-	context.subscriptions.push(jumpToInsertCommand);
-	context.subscriptions.push(jumpToDeleteCommand);
-	context.subscriptions.push(jumpToModifyCommand);
+	context.subscriptions.push(jumpToNextTriggerCmd);
+	context.subscriptions.push(jumpToKeysCmd);
+	context.subscriptions.push(jumpToLastLocalVarLineCmd);
+	context.subscriptions.push(jumpToLastGlobalVarLinecmd);
+	context.subscriptions.push(jumpToActionsCmd);
+	context.subscriptions.push(jumpToInsertCmd);
+	context.subscriptions.push(jumpToDeleteCmd);
+	context.subscriptions.push(jumpToModifyCmd);
 
 }
 
