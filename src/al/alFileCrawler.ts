@@ -1,4 +1,4 @@
-import { TextLine, TextEditor, window, Range, Selection, TextDocument } from 'vscode';
+import { TextLine, TextEditor, window, Range, Selection, TextDocument, TextEditorCursorStyle } from 'vscode';
 import { ALKeywordHelper } from './alKeyWordHelper';
 import { ALFile } from './alFile';
 
@@ -37,7 +37,7 @@ export module ALFileCrawler {
 
         let startNo: number = startLineNo? startLineNo :  findLocalVarSectionStartLineNo();
         if (startNo < 0 && procedureNoIfNoVarFound) {
-            startNo = ALFileCrawler.findLocalProcedureStartLineNo();
+            startNo = ALFileCrawler.findProcedureStartLineNo();
         }
         for (let i = startNo; i <= editor.document.lineCount-1; i++) {
             let currLine: TextLine = editor.document.lineAt(i);
@@ -293,7 +293,7 @@ export module ALFileCrawler {
         }
         let paramType = getParamTypeFromLocalVars(paramName);
         if (!paramType) {
-            let paramLineNo = findLocalProcedureStartLineNo();
+            let paramLineNo = findProcedureStartLineNo();
             paramType = getParamTypeFromProcLine(paramLineNo, paramName);
         }
         
@@ -348,7 +348,7 @@ export module ALFileCrawler {
     }
 
     export function paramPassedByRef(paramName: string): boolean {
-        let lineNo = findLocalProcedureStartLineNo();
+        let lineNo = findProcedureStartLineNo();
         let text = getText(lineNo).toUpperCase();
 
         let paramNameIndex = text.indexOf(paramName.toUpperCase());
@@ -395,7 +395,7 @@ export module ALFileCrawler {
         }
     }
 
-    export function findLocalProcedureStartLineNo() : number {
+    export function findProcedureStartLineNo() : number {
         let editor = window.activeTextEditor;
         if (!editor) {
             return -1;
@@ -444,5 +444,14 @@ export module ALFileCrawler {
         }
         return "";
     }
+
     
+    export function findGlobalVarCreationPos(): number {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return -1;
+        }
+        // return editor.selection.end.line - 1;
+        return editor.document.lineCount - 1;
+    }
 }

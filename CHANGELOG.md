@@ -59,3 +59,7 @@ Bugfixing
 ## [0.2.4]
 
 - Massive Improvement of variable creation feature. It now recognizes way better if a variable can or should be created.
+
+## [0.2.5]
+
+- Feature added: variables can also be created as global variable
