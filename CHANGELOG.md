@@ -63,3 +63,4 @@ Bugfixing
 ## [0.2.5]
 
 - Feature added: variables can also be created as global variable
+- Bug fix: Variable Creation does now also work for AL Files created after opening the project

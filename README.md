@@ -6,7 +6,7 @@ Create variables like a boss and navigate through al files with awesome shortcut
 
 ### Create Variables
 
-CodeAction for AL0118: Automatic local variable declaration of all standard tables, pages and reports (also objects from workspace files).
+CodeAction for AL0118: Automatic local/global variable declaration of all standard tables, codeunits, pages and reports (also objects from workspace files).
 
 Use the Quick Fix lamp (Ctrl + .) to automatically add variables.
 

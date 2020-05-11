@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { ALFiles } from '../al/alFiles';
-import { ALFileCrawler } from '../al/alFileCrawler';
+import { ALFiles } from './alFiles';
+import { ALFileCrawler } from './alFileCrawler';
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
-import { ALVariable } from '../al/alVariable';
+import { ALVariable } from './alVariable';
 import { TextBuilder } from '../additional/textBuilder';
-import { ALFile } from '../al/alFile';
+import { ALFile } from './alFile';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     protected _alFiles : ALFiles = new ALFiles();

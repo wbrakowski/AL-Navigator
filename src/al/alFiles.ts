@@ -3,10 +3,9 @@ import { ALFile} from './alFile';
 import { StringFunctions } from '../additional/stringFunctions';
 import { ALObject } from './alObject';
 import { ALObjectStorage } from './alObjectStorage';
-import { close } from 'fs';
 import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
-import { isUndefined, isNull } from 'util';
+import { UpdateTypes } from '../additional/updateTypes';
      
   export class ALFiles {
 
@@ -24,26 +23,24 @@ import { isUndefined, isNull } from 'util';
         this.alObjects = ALObjectStorage.getALStdObjects();
         this.populateALFilesArray();
 
-        // TODO Check performance
+        let watcher = vscode.workspace.createFileSystemWatcher('**/*.al');
+        watcher.onDidCreate(async (e: vscode.Uri) => {
+            if (e.fsPath.indexOf('.vscode') === -1) {
+                await this.update(e, UpdateTypes.insert);
+            }
+        });
 
-        // let watcher = vscode.workspace.createFileSystemWatcher('**/*.al');
-        // watcher.onDidCreate(async (e: vscode.Uri) => {
-        //     if (e.fsPath.indexOf('.vscode') === -1) {
-        //         await this.update();
-        //     }
-        // });
+        watcher.onDidChange(async (e: vscode.Uri) => {
+            if (e.fsPath.indexOf('.vscode') === -1) {
+                await this.update(e, UpdateTypes.modify);
+            }
+        });
 
-        // watcher.onDidChange(async (e: vscode.Uri) => {
-        //     if (e.fsPath.indexOf('.vscode') === -1) {
-        //         await this.update();
-        //     }
-        // });
-
-        // watcher.onDidDelete(async (e: vscode.Uri) => {
-        //     if (e.fsPath.indexOf('.vscode') === -1) {
-        //         await this.update();
-        //     }
-        // });
+        watcher.onDidDelete(async (e: vscode.Uri) => {
+            if (e.fsPath.indexOf('.vscode') === -1) {
+                await this.update(e, UpdateTypes.delete);
+            }
+        });
     }
 
     private getCurrentWorkspaceFolder(): vscode.WorkspaceFolder | undefined{
@@ -86,7 +83,7 @@ import { isUndefined, isNull } from 'util';
                     let workspaceALFile : ALFile = new ALFile(file);
                     workspaceALFiles.push(workspaceALFile);
                     this.alObjects.push(workspaceALFile.alObject);
-                    console.log(workspaceALFile.alObject);
+                    // console.log(workspaceALFile.alObject);
                 });
                 } 
             catch (error) {
@@ -149,12 +146,25 @@ import { isUndefined, isNull } from 'util';
         }
     }
 
-    public async update() {
-        this.populateALFilesArray();
+    public async update(uri: vscode.Uri, updateType: UpdateTypes) {
+        switch (updateType) {
+            case UpdateTypes.delete:
+            case UpdateTypes.modify: {
+                let deleteIndex: number = this.workspaceALFiles.findIndex(i => i.uri === uri);
+                if (deleteIndex > 0) {
+                    // TODO
+                    // Remove object from workspace al Files
+                    this.alObjects = this.alObjects.splice(deleteIndex, 1);
+                }
+            }
+        }
+        let workspaceALFile : ALFile = new ALFile(uri);
+        this.workspaceALFiles.push(workspaceALFile);
+        this.alObjects.push(workspaceALFile.alObject);
     }
 
     public getRelevantDiagnosticOfCurrentPosition(range: vscode.Range) {
-        if (isUndefined(this.document)) {
+        if (!this.document) {
             return undefined;
         }
         let diagnostics = vscode.languages.getDiagnostics(this.document.uri).filter(d => {
@@ -169,13 +179,13 @@ import { isUndefined, isNull } from 'util';
     }
 
     private checkDiagnosticsLanguage(d: vscode.Diagnostic): boolean {
-        if (isUndefined(d.source)) {
+        if (!d.source) {
             return false;
         }
         return d.source.toLowerCase() === 'al';
     }
     private checkDiagnosticsCode(d: vscode.Diagnostic): boolean {
-        if (isUndefined(d.code)) {
+        if (!d.code) {
             return false;
         }
         let supportedDiagnosticCodes: string[] = [];

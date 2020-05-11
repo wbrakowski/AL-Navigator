@@ -5,7 +5,7 @@
 import * as vscode from 'vscode';
 import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
 import { FileJumper } from './filejumper/fileJumper';
-import { ALCodeActionsProvider } from './commandsactions/alCodeActionsProvider';
+import { ALCodeActionsProvider } from './al/alCodeActionsProvider';
 import { CustomConsole } from './additional/console';
 
 // this method is called when your extension is activated
