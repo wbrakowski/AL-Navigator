@@ -55,7 +55,7 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextActions();
 	});
 	
-	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(), {
+	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context), {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
 	

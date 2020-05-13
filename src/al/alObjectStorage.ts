@@ -2,11 +2,14 @@ import { ALObject } from './alObject';
 
 export module ALObjectStorage {
     export function getALStdObjects(): ALObject[] {
+        let allObjects: ALObject[];
         let tables = getStdTables();
         let cus = getStdCodeunits();
         let pages = getStdPages();
-        tables = tables.concat(pages);
-        return tables.concat(cus);
+        let reports = getStdReports();
+
+        allObjects = tables.concat(cus).concat(pages).concat(reports);
+        return allObjects;
 
     }
 
@@ -5241,6 +5244,13 @@ export module ALObjectStorage {
 
         return pages;
     }
-
+    
+    function getStdReports(): ALObject[] {
+        // TODO
+        let reports : ALObject[] = new Array();
+        reports.push(getReport(1, "CompanyInformation", "CompanyInformation", "Company Information"));
+        
+        return reports;
+    }
   
 }

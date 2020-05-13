@@ -14,24 +14,24 @@ Update 08.05.2020: Massive improvement of this feature through better recognitio
 
 Used quite some code from David Feldhoff for this Improvement, thank him for it ;-)
 
-![Create Local Variable](resources/VarDeclaration.gif)
+![Create Local Variable](resources/VarCreatorNew.gif)
 
 ### Shortcuts
 
-![Shortcuts](resources/Shortcuts.png)
+![Shortcuts](resources/ALNavigator_Shortcuts.png)
 
-- Ctrl + Alt + l: jump to last line of local var section (fast way to declare new variables)
-- Ctrl + Alt + g: jump to the last line of global var section (fast way to declare new variables)
-
-- Ctrl + Alt + k: jump to the keys section in your .al file 
-- Ctrl + Alt + a: jump to next action in a page .al file
-- Ctrl + Alt + t: jump through all triggers in your .al file 
 - Ctrl + Alt + d: jump through data items in your .al report file 
-- Ctrl + Alt + j: jump through OnAfterGetRecord triggers in your .al file 
+- Ctrl + Alt + g: jump to the last line of global var section (fast way to declare new variables)
+- Ctrl + Alt + l: jump to last line of local var section (fast way to declare new variables)
 
+- Ctrl + Alt + t: jump through all triggers in your .al file 
 - Ctrl + o + d: jump to the OnDeleteTrigger
 - Ctrl + o + m: jump to the OnModifyTrigger
 - Ctrl + o + i: jump to the OnInsertTrigger
+
+- Ctrl + Alt + k: jump to the keys section in your .al file 
+- Ctrl + Alt + a: jump to next action in a page .al file
+- Ctrl + Alt + j: jump through OnAfterGetRecord triggers in your .al file 
 
 ### Create Procedure Stub
 

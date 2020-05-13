@@ -5,9 +5,20 @@ import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { ALVariable } from './alVariable';
 import { TextBuilder } from '../additional/textBuilder';
 import { ALFile } from './alFile';
+import { FileJumper } from '../filejumper/fileJumper';
+import { ALAddVarCodeCommand } from './alAddVarCodeCommand';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     protected _alFiles : ALFiles = new ALFiles();
+    protected _addLocalVarCmd : ALAddVarCodeCommand;
+    protected _addGlobalVarCmd : ALAddVarCodeCommand;
+    protected context: vscode.ExtensionContext;
+
+    public constructor (context: vscode.ExtensionContext) {
+        this.context = context;
+        this._addLocalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createLocalVar');
+        this._addGlobalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createGlobalVar');
+    }
 
     public static readonly providedCodeActionKinds = [
         vscode.CodeActionKind.QuickFix
@@ -28,18 +39,19 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
             return;
         }
 
+        let jumpToCreatedVar: boolean = !localVarToCreate.objectType;
+
         let globalVarToCreate: ALVariable = new ALVariable('');
         Object.assign(globalVarToCreate, localVarToCreate);
         if (globalVarToCreate) {
             globalVarToCreate.isLocal = false;
         }
-        
 
         let createLocalVarCodeAction: vscode.CodeAction | undefined;
-        createLocalVarCodeAction = await this.createCodeAction(document, diagnostic, localVarToCreate);
+        createLocalVarCodeAction = await this.createCodeAction(document, diagnostic, localVarToCreate, jumpToCreatedVar);
 
         let createGlobalVarCodeAction: vscode.CodeAction | undefined;
-        createGlobalVarCodeAction = await this.createCodeAction(document, diagnostic, globalVarToCreate);
+        createGlobalVarCodeAction = await this.createCodeAction(document, diagnostic, globalVarToCreate, jumpToCreatedVar);
 
         if (!createLocalVarCodeAction && !createGlobalVarCodeAction) {
             return;
@@ -71,11 +83,11 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         return alVariable;
     }
 
-    private async createCodeAction(currentDocument: vscode.TextDocument, diagnostic: vscode.Diagnostic, varToCreate: ALVariable): Promise<vscode.CodeAction | undefined> {
+    private async createCodeAction(currentDocument: vscode.TextDocument, diagnostic: vscode.Diagnostic, varToCreate: ALVariable, jumpToCreatedVar: boolean): Promise<vscode.CodeAction | undefined> {
         let createVarCodeAction: vscode.CodeAction | undefined;
         switch (diagnostic.code as string) {
             case DiagnosticCodes.AL0118.toString():
-                createVarCodeAction = await this.createVarCodeActionForLine(varToCreate, currentDocument, diagnostic.range, diagnostic.range.start.line);
+                createVarCodeAction = await this.createVarCodeActionForLine(varToCreate, currentDocument, diagnostic.range, jumpToCreatedVar, diagnostic.range.start.line);
                 break;
             default:
                 return;
@@ -89,17 +101,24 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         }
     }
 
-    private async createVarCodeActionForLine(alVariable: ALVariable, document: vscode.TextDocument, range: vscode.Range, currentLineNo?: number): Promise<vscode.CodeAction> {
+    private async createVarCodeActionForLine(alVariable: ALVariable, document: vscode.TextDocument, range: vscode.Range, jumpToCreatedVar: boolean, currentLineNo?: number): Promise<vscode.CodeAction> {
+        // TODO Make this work
         let actionTitle : string = alVariable.isLocal? `Add local variable ${alVariable.name}` : `Add global variable ${alVariable.name}`;
         let action : vscode.CodeAction = new vscode.CodeAction(actionTitle,  vscode.CodeActionKind.QuickFix);
-        action.edit = new vscode.WorkspaceEdit();
-
-        let lineNo = alVariable.isLocal? ALFileCrawler.findLocalVarSectionEndLineNo(true) + 1 : ALFileCrawler.findGlobalVarCreationPos();
-        let position: vscode.Position = new vscode.Position(lineNo, 0);
-        let content = TextBuilder.buildVarDeclaration(range, alVariable.name, alVariable.objectType, alVariable.isLocal);
-        content += '\n';
-        action.edit.insert(document.uri, position, content);
-
+        if (alVariable.isLocal) {
+            this._addLocalVarCmd._alVariable = alVariable;
+            this._addLocalVarCmd._currentLineNo = currentLineNo? currentLineNo : 0;
+            this._addLocalVarCmd._document = document;
+            this._addLocalVarCmd._jumpToCreatedVar = jumpToCreatedVar;
+            action.command = { command: this._addLocalVarCmd.name, title: actionTitle };
+        } 
+        else {
+            this._addGlobalVarCmd._alVariable = alVariable;
+            this._addGlobalVarCmd._currentLineNo = currentLineNo? currentLineNo : 0;
+            this._addGlobalVarCmd._document = document;
+            this._addGlobalVarCmd._jumpToCreatedVar = jumpToCreatedVar;
+            action.command = { command: this._addGlobalVarCmd.name, title: actionTitle };
+        }
         return action;
     }
 }

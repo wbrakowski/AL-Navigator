@@ -45,7 +45,6 @@ export module FileJumper {
    }
 
    export function jumpToLastLocalVarLine() {
-       let editor = window.activeTextEditor;
        let startNo: number = ALFileCrawler.findLocalVarSectionStartLineNo();
        if (startNo > 0) {
             let endNo = ALFileCrawler.findLocalVarSectionEndLineNo(false, startNo);
@@ -54,7 +53,6 @@ export module FileJumper {
    }
 
    export function jumpToLastGlobalVarLine() {
-     let editor = window.activeTextEditor;
      let startNo: number = ALFileCrawler.findGlobalVarSectionStartLineNo();
      if (startNo > 0) {
           let endNo = ALFileCrawler.findGlobalVarSectionEndLineNo(startNo);
@@ -62,7 +60,7 @@ export module FileJumper {
      }
  }
 
-   function jumpToNextTextOccurence(text: string, excludeText?: string)
+   export function jumpToNextTextOccurence(text: string, excludeText?: string)
    {
        let lineNo: number = ALFileCrawler.findNextTextLineNo(text, false, undefined, undefined, excludeText);
        if (lineNo === -1) {
@@ -71,8 +69,8 @@ export module FileJumper {
         jumpToLine(lineNo);
     }
 
-    function jumpToLine(no: number): void {
-     let editor = window.activeTextEditor;
+    export function jumpToLine(no: number, textEditor?: TextEditor): void {
+      let editor = textEditor? textEditor : window.activeTextEditor;
         if (!editor) {
             return;
         }
