@@ -3,10 +3,8 @@ import { ALFiles } from './alFiles';
 import { ALFileCrawler } from './alFileCrawler';
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { ALVariable } from './alVariable';
-import { TextBuilder } from '../additional/textBuilder';
-import { ALFile } from './alFile';
-import { FileJumper } from '../filejumper/fileJumper';
 import { ALAddVarCodeCommand } from './alAddVarCodeCommand';
+import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     protected _alFiles : ALFiles = new ALFiles();
@@ -68,19 +66,13 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     }
 
     public async createVarDeclaration(document: vscode.TextDocument, diagnostic: vscode.Diagnostic): Promise<ALVariable | undefined> {
+        // let varSymbols = await ALCodeOutlineExtension.getVarSymbolOfCurrentLine(document.uri, diagnostic.range.start.line);
         let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(document, diagnostic.range);
         if (varNameToDeclare === '') {
             return;
         }
-        let returnType: string | undefined;
-        let alVariable = new ALVariable(varNameToDeclare);
-        // if (this._alFiles.variableNameExists(varNameToDeclare)) {
-            returnType = await this._alFiles.getObjectTypeAndNameFromVarName(varNameToDeclare);
-            if (returnType) {
-                alVariable.objectType = returnType;
-            }
-        // }
-        return alVariable;
+        let alVar = await this._alFiles.getALVariableByName(varNameToDeclare);
+        return alVar;
     }
 
     private async createCodeAction(currentDocument: vscode.TextDocument, diagnostic: vscode.Diagnostic, varToCreate: ALVariable, jumpToCreatedVar: boolean): Promise<vscode.CodeAction | undefined> {

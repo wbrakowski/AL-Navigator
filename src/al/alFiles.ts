@@ -6,6 +6,7 @@ import { ALObjectStorage } from './alObjectStorage';
 import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { UpdateTypes } from '../additional/updateTypes';
+import { ALVariable } from './alVariable';
      
   export class ALFiles {
 
@@ -110,9 +111,15 @@ import { UpdateTypes } from '../additional/updateTypes';
         }
     }
 
-    public async getObjectTypeAndNameFromVarName(varName: string) : Promise<string | undefined>{
+    public async getALVariableByName(varName: string) : Promise<ALVariable | undefined>{
         // Search std objects
-        let alVariable = this.alObjects.find(i => varName.toUpperCase() === i.longVarName.toUpperCase());
+        let alVariable = new ALVariable(varName);
+        let indexTemp = varName.toUpperCase().indexOf('TEMP');
+        if (indexTemp === 0) {
+            varName = varName.substr(4);
+            alVariable.isTemporary = true;
+        }
+        let alObject = this.alObjects.find(i => varName.toUpperCase() === i.longVarName.toUpperCase());
         // TODO: Check this one day ;-)
         // Cannot find 100% match, try to find cloest match
         // if (!alVariable) {
@@ -134,16 +141,12 @@ import { UpdateTypes } from '../additional/updateTypes';
         //         }
         //     }
         // }
-        if (alVariable) {
-            let objName = alVariable.objectName;
-            if (StringFunctions.containsSpecialChars(objName)) {
-                objName = "\"" + objName + "\"";
-            }
-            return alVariable.objectType + " " + objName;
+        if (alObject) {
+            alVariable.name = alObject.longVarName;
+            alVariable.objectType = alObject.objectType;
+            alVariable.objectName = alObject.objectName;
         }
-        else {
-            return "";
-        }
+        return alVariable;
     }
 
     public async update(uri: vscode.Uri, updateType: UpdateTypes) {

@@ -69,3 +69,7 @@ Bugfixing
 
 - Jump to created variable if it was created without object type
 - Allow selection of variable type if no type can automatically be detected
+
+## [0.2.7]
+
+- Recognize temporary records

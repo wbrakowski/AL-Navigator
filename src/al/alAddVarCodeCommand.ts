@@ -29,7 +29,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         
         if (!this._alVariable.objectType) {
             let varTypes: string[] = this._alVariable.getVariableTypeList();
-            //ask for fields
+
+            // Ask for type
             let selectedType = await vscode.window.showQuickPick(varTypes, {
                 canPickMany: false,
                 placeHolder: 'Select variable type'
@@ -39,7 +40,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             }
         }
 
-        let varDeclaration = TextBuilder.buildVarDeclaration(range, this._alVariable.name, this._alVariable.objectType, this._alVariable.isLocal);
+        let varDeclaration = TextBuilder.buildVarDeclaration(range, this._alVariable);
         let content: string = varDeclaration.declaration;
         content += '\n';
         let editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;

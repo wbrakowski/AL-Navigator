@@ -6,11 +6,15 @@ export class ALVariable {
     public objectType: string;
     public objectName: string;
     public isLocal: boolean;
+    public isTemporary: boolean;
+    
     constructor(name: string) {
         this.name = name;
         this.isLocal = true;
         this.objectName = "";
         this.objectType = "";
+        this.isTemporary = false;
+        
     }
 
     public getVariableDeclarationString(): string {
@@ -18,7 +22,14 @@ export class ALVariable {
         declarationString += this.name;
         declarationString += ": ";
         declarationString += this.objectType;
-        declarationString += this.objectName;
+        if (this.objectName) {
+            declarationString += " ";
+            declarationString += StringFunctions.containsSpecialChars(this.objectName)? "\"" + this.objectName + "\"" : this.objectName;
+        }
+        if (this.isTemporary) {
+            declarationString += ' temporary';
+        }
+        declarationString += ';';
         return declarationString;
     }
     public getVariableTypeList(): string[] {

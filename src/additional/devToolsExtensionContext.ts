@@ -45,32 +45,42 @@ export class ALCodeOutlineExtension {
     //     return symbolsLibraryCalledObject.rootSymbol.findFirstObjectSymbol();
     // }
 
-    // public static async getProcedureOrTriggerSymbolOfCurrentLine(documentUri: vscode.Uri, currentLine: number): Promise<any> {
-    //     let azALDevTools = (await ALCodeOutlineExtension.getInstance()).getAPI();
-    //     let symbolsLibrary = await azALDevTools.symbolsService.loadDocumentSymbols(documentUri);
-    //     if (symbolsLibrary.rootSymbol) {
-    //         let objectSymbol = symbolsLibrary.rootSymbol.findFirstObjectSymbol();
-    //         let triggerOrProcedureKinds: number[] = this.getProcedureOrTriggerKinds();
-    //         for (let x = 0; x < triggerOrProcedureKinds.length; x++) {
-    //             let objectsOfKindX: any[] = [];
-    //             objectSymbol.collectChildSymbols(triggerOrProcedureKinds[x], true, objectsOfKindX);
-    //             if (objectsOfKindX && objectsOfKindX.length > 0) {
-    //                 for (let i = 0; i < objectsOfKindX.length; i++) {
-    //                     if (objectsOfKindX[i].range.start.line <= currentLine && objectsOfKindX[i].range.end.line >= currentLine) {
-    //                         return objectsOfKindX[i];
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     throw new Error("The current procedurename was not found starting at line " + currentLine + " in file " + path.basename(documentUri.fsPath) + ".");
-    // }
+    public static async getVarSymbolOfCurrentLine(documentUri: vscode.Uri, currentLine: number): Promise<any> {
+        let azALDevTools = (await ALCodeOutlineExtension.getInstance()).getAPI();
+        let symbolsLibrary = await azALDevTools.symbolsService.loadDocumentSymbols(documentUri);
+        if (symbolsLibrary.rootSymbol) {
+            let objectSymbol = symbolsLibrary.rootSymbol.findFirstObjectSymbol();
+            let varKinds: number[] = this.getVarKinds();
+            for (let x = 0; x < varKinds.length; x++) {
+                let objectsOfKindX: any[] = [];
+                objectSymbol.collectChildSymbols(varKinds[x], true, objectsOfKindX);
+                if (objectsOfKindX && objectsOfKindX.length > 0) {
+                    for (let i = 0; i < objectsOfKindX.length; i++) {
+                        if (objectsOfKindX[i].range.start.line <= currentLine && objectsOfKindX[i].range.end.line >= currentLine) {
+                            return objectsOfKindX[i];
+                        }
+                    }
+                }
+            }
+        }
+        // TODO
+        // throw new Error("The current procedurename was not found starting at line " + currentLine + " in file " + path.basename(documentUri.fsPath) + ".");
+        throw new Error("Problem my friend " + currentLine + " in file " + path.basename(documentUri.fsPath) + ".");
+    }
     public static isSymbolKindProcedureOrTrigger(kind: number): boolean {
         return this.getProcedureOrTriggerKinds().includes(kind);
     }
     public static isSymbolKindVariableOrParameter(kind: number): boolean {
         switch (kind) {
             case 240:   //Parameter
+            case 241:   //Variable
+                return true;
+            default:
+                return false;
+        }
+    }
+    public static isSymbolKindVariable(kind: number): boolean {
+        switch (kind) {
             case 241:   //Variable
                 return true;
             default:
@@ -111,6 +121,12 @@ export class ALCodeOutlineExtension {
         kinds.push(239); //EventDeclaration
         kinds.push(50001); //LocalMethodDeclaration
         kinds.push(50037); //EventSubscriber
+        return kinds;
+    }
+
+    private static getVarKinds(): number[] {
+        let kinds: number[] = [];
+        kinds.push(241); //EventSubscriber
         return kinds;
     }
 }
