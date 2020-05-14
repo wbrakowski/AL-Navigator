@@ -68,3 +68,4 @@ Bugfixing
 ## [0.2.6]
 
 - Jump to created variable if it was created without object type
+- Allow selection of variable type if no type can automatically be detected

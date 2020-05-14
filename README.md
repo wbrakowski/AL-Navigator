@@ -14,7 +14,9 @@ Update 08.05.2020: Massive improvement of this feature through better recognitio
 
 Used quite some code from David Feldhoff for this Improvement, thank him for it ;-)
 
-![Create Local Variable](resources/VarCreatorNew.gif)
+Update 14.05.2020: Awesome variabe type selection feature implemented when no variable type can automatically be detected.
+
+![Create Local Variable](resources/VarCreatorGif.gif)
 
 ### Shortcuts
 

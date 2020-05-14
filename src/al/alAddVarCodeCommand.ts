@@ -4,6 +4,8 @@ import { ALVariable } from './alVariable';
 import { ALFileCrawler } from './alFileCrawler';
 import { TextBuilder } from '../additional/textBuilder';
 import { FileJumper } from '../filejumper/fileJumper';
+import { stringify } from 'querystring';
+
 
 export class ALAddVarCodeCommand extends ALCodeCommand {
     public _alVariable : ALVariable = new ALVariable('');
@@ -20,11 +22,23 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
     }
     
     protected async insertVar(range: vscode.Range) {
-        // TODO Make this work
         if (!this._document) {
             return; 
         }
         let lineNo = this._alVariable.isLocal? ALFileCrawler.findLocalVarSectionEndLineNo(true) + 1 : ALFileCrawler.findGlobalVarCreationPos();
+        
+        if (!this._alVariable.objectType) {
+            let varTypes: string[] = this._alVariable.getVariableTypeList();
+            //ask for fields
+            let selectedType = await vscode.window.showQuickPick(varTypes, {
+                canPickMany: false,
+                placeHolder: 'Select variable type'
+            });
+            if (selectedType) {
+                this._alVariable.objectType = selectedType;
+            }
+        }
+
         let varDeclaration = TextBuilder.buildVarDeclaration(range, this._alVariable.name, this._alVariable.objectType, this._alVariable.isLocal);
         let content: string = varDeclaration.declaration;
         content += '\n';
@@ -38,24 +52,14 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             await editor.edit(editBuilder => {
                 let pos = new vscode.Position(lineNo, 0);
                 editBuilder.insert(pos, content);
-                // lineNo -= 1;
-                // lineNo += 1;#
-                // this._alVariable.isLocal? FileJumper.jumpToLastLocalVarLine() : FileJumper.jumpToLastGlobalVarLine();
             }); 
             if (varDeclaration.createsVarSection) {
                 lineNo += 1;
             }
-            FileJumper.jumpToLine(lineNo, vscode.window.activeTextEditor);
-
+            if (!this._alVariable.objectType) {
+                FileJumper.jumpToLine(lineNo, vscode.window.activeTextEditor);
+            }
         }
-        // edit.insert(this._document.uri, position, content);
-
-        // TODO
-        //  if (jumpToCreatedVar) {
-        //      vscode.commands.executeCommand('extension.LastLocalVarLine');
-            
-        //  }
-
     }
 
 }
