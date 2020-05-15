@@ -4,7 +4,6 @@ import { ALVariable } from './alVariable';
 import { ALFileCrawler } from './alFileCrawler';
 import { TextBuilder } from '../additional/textBuilder';
 import { FileJumper } from '../filejumper/fileJumper';
-import { stringify } from 'querystring';
 
 
 export class ALAddVarCodeCommand extends ALCodeCommand {
@@ -25,7 +24,16 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         if (!this._document) {
             return; 
         }
-        let lineNo = this._alVariable.isLocal? ALFileCrawler.findLocalVarSectionEndLineNo(true) + 1 : ALFileCrawler.findGlobalVarCreationPos();
+        let lineNo: number;
+        if (this._alVariable.isLocal) {
+            lineNo = ALFileCrawler.findLocalVarSectionEndLineNo(true) + 1;
+        }
+        else {
+            lineNo = ALFileCrawler.findGlobalVarSectionEndLineNo();
+            if (lineNo === -1) {
+                lineNo = ALFileCrawler.findGlobalVarCreationPos();
+            }
+        }
         
         if (!this._alVariable.objectType) {
             let varTypes: string[] = this._alVariable.getVariableTypeList();
