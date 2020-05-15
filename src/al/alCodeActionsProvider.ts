@@ -67,7 +67,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
 
     public async createVarDeclaration(document: vscode.TextDocument, diagnostic: vscode.Diagnostic): Promise<ALVariable | undefined> {
         // let varSymbols = await ALCodeOutlineExtension.getVarSymbolOfCurrentLine(document.uri, diagnostic.range.start.line);
-        let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(document, diagnostic.range);
+        let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(document, diagnostic.range, diagnostic.message);
         if (varNameToDeclare === '') {
             return;
         }

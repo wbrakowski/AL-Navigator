@@ -45,10 +45,6 @@ export module TextBuilder {
             }
         }
     
-        let varEndLineNo = alVariable.isLocal? ALFileCrawler.findLocalVarSectionEndLineNo(false, varStartLineNo) : ALFileCrawler.findGlobalVarSectionEndLineNo(varStartLineNo);
-        if (varEndLineNo < 0) {
-            return varDeclaration;
-        }
         declaration += indentText + indentPart + alVariable.getVariableDeclarationString();
         varDeclaration.declaration = declaration;
         varDeclaration.createsVarSection = createVarSection;

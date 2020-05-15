@@ -427,23 +427,16 @@ export module ALFileCrawler {
         return (file.procedures.includes(procedureName));
     }
 
-    export function getVarNameToDeclare(document: TextDocument, range: Range | Selection): string {
+    export function getVarNameToDeclare(document: TextDocument, range: Range | Selection, diagnosticMsg: string): string {
         let currLineText = ALFileCrawler.getLineText(document, range);
         let currLineDetectedVars = ALFileCrawler.extractVars(currLineText);
         let localVarsAndParams = ALFileCrawler.extractLocalVarsAndParams();
 
-        function containsAllElements(arr: string[], arr2: string[]): boolean {
-            return arr.every(i => arr2.includes(i));
-        }
-
-        let allVarsDeclared: boolean = containsAllElements(currLineDetectedVars, localVarsAndParams);
-        if (!allVarsDeclared) {
-            for(let i = 0; i< currLineDetectedVars.length; i++) {
-                let detVarIndex = localVarsAndParams.indexOf(currLineDetectedVars[i]);
-                if (detVarIndex < 0) {
-                    let varNameToDeclare = currLineDetectedVars[i];
-                    return varNameToDeclare;
-                }
+        for(let i = 0; i< currLineDetectedVars.length; i++) {
+            let detVarIndex = localVarsAndParams.indexOf(currLineDetectedVars[i]);
+            if (detVarIndex < 0 && diagnosticMsg.includes(currLineDetectedVars[i])) {
+                let varNameToDeclare = currLineDetectedVars[i];
+                return varNameToDeclare;
             }
         }
         return "";
@@ -455,7 +448,17 @@ export module ALFileCrawler {
         if (!editor) {
             return -1;
         }
-        // return editor.selection.end.line - 1;
-        return editor.document.lineCount - 1;
+
+        let lastLineNo: number = editor.document.lineCount - 1;
+        let foundLineNo: number = -1;
+        for (let i = lastLineNo; i >= 0; i--) {
+            let currLine: TextLine = editor.document.lineAt(i);
+            let currLineText: string = currLine.text.trim().toUpperCase();
+            if (currLineText === "}") {
+                foundLineNo = i;
+                break;
+            } 
+        }
+        return foundLineNo;
     }
 }
