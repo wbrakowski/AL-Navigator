@@ -105,6 +105,7 @@ export module ALKeywordHelper {
             "LookupMode",
             "const",
             "Clear",
+            "column",
             "filter",
             "LowerCase",
             "StrSubstNo",

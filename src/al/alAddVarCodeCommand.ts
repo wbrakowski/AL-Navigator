@@ -37,6 +37,16 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             });
             if (selectedType) {
                 this._alVariable.objectType = selectedType;
+                switch (selectedType) {
+                    case "Label": {
+                        // Define Label value
+                        let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type value for ${selectedType}` });
+                        if (selectedValue) {
+                            this._alVariable.isLabel = true;
+                            this._alVariable.labelValue = selectedValue;
+                        }
+                    }
+                }
             }
         }
 

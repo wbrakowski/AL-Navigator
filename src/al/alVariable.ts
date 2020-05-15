@@ -3,18 +3,15 @@ import { StringFunctions } from '../additional/stringFunctions';
 
 export class ALVariable {
     public name: string;
-    public objectType: string;
-    public objectName: string;
-    public isLocal: boolean;
-    public isTemporary: boolean;
+    public objectType: string = "";
+    public objectName: string = "";
+    public isLocal: boolean = true;
+    public isTemporary: boolean = false;
+    public isLabel: boolean = false;
+    public labelValue: string = "";
     
     constructor(name: string) {
         this.name = name;
-        this.isLocal = true;
-        this.objectName = "";
-        this.objectType = "";
-        this.isTemporary = false;
-        
     }
 
     public getVariableDeclarationString(): string {
@@ -22,6 +19,11 @@ export class ALVariable {
         declarationString += this.name;
         declarationString += ": ";
         declarationString += this.objectType;
+        if (this.isLabel) {
+            declarationString += ' ';
+            declarationString += '\'';
+            declarationString += this.labelValue? this.labelValue + '\'' : '\'';
+        }
         if (this.objectName) {
             declarationString += " ";
             declarationString += StringFunctions.containsSpecialChars(this.objectName)? "\"" + this.objectName + "\"" : this.objectName;
