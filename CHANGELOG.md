@@ -73,3 +73,9 @@ Bugfixing
 ## [0.2.7]
 
 - Recognize temporary records
+- Recognize short variable names like PurchLine
+- Better finding of global var section
+- Better recognition of vars to be created (sometimes it got confused with procedure names)
+- Creation of labels when standing in report columns 
+- Objects can be selected from list if they are not automatically detected!
+- Support of all var types when choosing them from list

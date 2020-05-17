@@ -15,6 +15,14 @@ export module StringFunctions {
         return(text.includes(" ") || text.includes("+") || text.includes("/") || text.includes("-"));
     }
 
+    export function fromNameText(name : string) : string {
+        name = name.trim();
+        if ((name.length > 1) && (name.substr(0, 1) === "\"") && (name.substr(name.length - 1, 1) === "\"")) {
+            name = name.substr(1, name.length - 2).replace(new RegExp("\"\"", "g"), "\"");           
+        }
+        return name;
+    }
+
     // Levenshtein Distance
     export function LevenshteinDistance(s: string, t: string): number
     {

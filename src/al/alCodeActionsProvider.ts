@@ -14,8 +14,8 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
 
     public constructor (context: vscode.ExtensionContext) {
         this.context = context;
-        this._addLocalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createLocalVar');
-        this._addGlobalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createGlobalVar');
+        this._addLocalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createLocalVar', this._alFiles);
+        this._addGlobalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createGlobalVar', this._alFiles);
     }
 
     public static readonly providedCodeActionKinds = [
@@ -67,7 +67,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
 
     public async createVarDeclaration(document: vscode.TextDocument, diagnostic: vscode.Diagnostic): Promise<ALVariable | undefined> {
         // let varSymbols = await ALCodeOutlineExtension.getVarSymbolOfCurrentLine(document.uri, diagnostic.range.start.line);
-        let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(document, diagnostic.range, diagnostic.message);
+        let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(diagnostic.range, diagnostic.message);
         if (varNameToDeclare === '') {
             return;
         }

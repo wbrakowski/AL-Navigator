@@ -3,17 +3,24 @@ import { ALCodeCommand } from './alCodeCommand';
 import { ALVariable } from './alVariable';
 import { ALFileCrawler } from './alFileCrawler';
 import { TextBuilder } from '../additional/textBuilder';
-import { FileJumper } from '../filejumper/fileJumper';
+import { FileJumper } from '../additional/fileJumper';
+import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
+import { ObjectTypes } from '../additional/objectTypes';
+import { ALVarHelper } from './alVarHelper';
+import { ALFiles } from './alFiles';
+import { ALVarTypes } from '../additional/alVarTypes';
 
 
 export class ALAddVarCodeCommand extends ALCodeCommand {
-    public _alVariable : ALVariable = new ALVariable('');
-    public _document : vscode.TextDocument | undefined;
+    public _alVariable: ALVariable = new ALVariable('');
+    public _document: vscode.TextDocument | undefined;
     public _jumpToCreatedVar: boolean = false;
     public _currentLineNo: number = 0;
+    protected _alFiles: ALFiles;
 
-    constructor(context : vscode.ExtensionContext, commandName:string) {
+    constructor(context: vscode.ExtensionContext, commandName:string, alFiles: ALFiles) {
         super(context, commandName);
+        this._alFiles = alFiles;
     }
 
     protected async runAsync(range: vscode.Range) {
@@ -36,23 +43,130 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         }
         
         if (!this._alVariable.objectType) {
-            let varTypes: string[] = this._alVariable.getVariableTypeList();
+            let varTypes: string[] = ALVarHelper.getVariableTypeList();
 
             // Ask for type
             let selectedType = await vscode.window.showQuickPick(varTypes, {
                 canPickMany: false,
                 placeHolder: 'Select variable type'
             });
+            let objectType: ObjectTypes = ObjectTypes.none;
             if (selectedType) {
                 this._alVariable.objectType = selectedType;
                 switch (selectedType) {
+                    case "array": {
+                        // Define dimension
+                        let dims = await vscode.window.showInputBox({ placeHolder: `Type dimension for ${selectedType},`});
+                        if (dims) {
+                            this._alVariable.varType = ALVarTypes.array;
+                            this._alVariable.varValue = "[" + dims + "]";
+                            let arrayType = await vscode.window.showQuickPick(varTypes, { 
+                                placeHolder: `Choose type for ${selectedType}`
+                            });
+                            if (arrayType) {
+                                this._alVariable.varValue += " of " + arrayType;
+                            }
+                        }
+                        break;
+                    }
+                    case "Code": {
+                        // Define Label value
+                        let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
+                        if (selectedValue) {
+                            this._alVariable.varType = ALVarTypes.Code;
+                            this._alVariable.varValue = "[" + selectedValue + "]";
+                        }
+                        break;
+                    }
+                    case "Dictionary": {
+                        // Define dimension
+                        let key = await vscode.window.showQuickPick(varTypes, { 
+                            placeHolder: `Select key for ${selectedType}`
+                        });
+                        if (key) {
+                            this._alVariable.varType = ALVarTypes.Dictionary;
+                            this._alVariable.varValue = " of [" + key + ", ";
+                            let value = await vscode.window.showQuickPick(varTypes, { 
+                                placeHolder: `Select value for ${selectedType}`
+                            });
+                            if (value) {
+                                this._alVariable.varValue += value + "]";
+                            }
+                        }
+                        break;
+                    }
                     case "Label": {
                         // Define Label value
                         let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type value for ${selectedType}` });
                         if (selectedValue) {
-                            this._alVariable.isLabel = true;
-                            this._alVariable.labelValue = selectedValue;
+                            this._alVariable.varType = ALVarTypes.Label;
+                            this._alVariable.varValue = ' \'' + selectedValue + '\'';
                         }
+                        else {
+                            this._alVariable.varValue = ' \'\'';
+                        }
+                        break;
+                    }
+                    case "List": {
+                        // Define dimension
+                        let listType = await vscode.window.showQuickPick(varTypes, { 
+                            placeHolder: `Select type for ${selectedType}`
+                        });
+                        if (listType) {
+                            this._alVariable.varType = ALVarTypes.List;
+                            this._alVariable.varValue = " of [" + listType + "]";
+                        }
+                        break;
+                    }
+                    case "Text": {
+                        // Define Label value
+                        let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
+                        if (selectedValue) {
+                            this._alVariable.varType = ALVarTypes.Text;
+                            this._alVariable.varValue = "[" + selectedValue + "]";
+                        }
+                        break;
+                    }
+                    case "Record": 
+                        objectType = ObjectTypes.table;
+                        break;
+                    case "Codeunit": 
+                        objectType = ObjectTypes.codeunit;
+                        break;
+                    case "Report": 
+                        objectType = ObjectTypes.report;
+                        break;
+                    case "Page": 
+                    case "TestPage":
+                        objectType = ObjectTypes.page;
+                        break;
+                    case "Query":
+                        objectType = ObjectTypes.query;
+                        break;
+                    case "XmlPort":
+                        objectType = ObjectTypes.xmlport;
+                        break;
+                    case "Enum":
+                        objectType = ObjectTypes.enum;
+                        break;
+                    case "Interface":
+                        objectType = ObjectTypes.interface;
+                        break;
+                    case "Codeunit": 
+                        objectType = ObjectTypes.codeunit;
+                        break;
+                    case "ControlAddIn":
+                        objectType = ObjectTypes.controlAddIn;
+                        break;
+                }
+                if (objectType !== ObjectTypes.none) {
+                    let objectList: string[] = this._alFiles.getObjectList(objectType);
+                    let selectedObject = await vscode.window.showQuickPick(objectList, {
+                        canPickMany: false,
+                        placeHolder: `Select ${selectedType}`
+                    });
+                    if (selectedObject) {
+                        this._alVariable.objectName = selectedObject;
                     }
                 }
             }
@@ -75,9 +189,10 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             if (varDeclaration.createsVarSection) {
                 lineNo += 1;
             }
-            if (!this._alVariable.objectType) {
-                FileJumper.jumpToLine(lineNo, vscode.window.activeTextEditor);
-            }
+            // TODO Is this still necessary?
+            // if (!this._alVariable.objectType) {
+            //     FileJumper.jumpToLine(lineNo, vscode.window.activeTextEditor);
+            // }
         }
     }
 

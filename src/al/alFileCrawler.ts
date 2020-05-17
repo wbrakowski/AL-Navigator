@@ -266,16 +266,6 @@ export module ALFileCrawler {
         return varsAndParams;
     }
 
-    export function extractReturnValueName(text : string) : string {
-        let colonIndex = text.indexOf(":");
-        if (colonIndex > -1) {
-            return text.substring(0, colonIndex).trimRight();
-        }
-        else {
-            return "";
-        }
-    }
-
     export function extractParamNamesFromSection(paramsLineNo : number) : string[] {
         let paramLineText = getText(paramsLineNo);
         return(extractParams(paramLineText, true, true));
@@ -289,19 +279,6 @@ export module ALFileCrawler {
         }
         let line = editor.document.lineAt(lineNo);
         return(line.text);
-    }
-
-    export function findParamType(paramName: string): string {
-        if (!paramName) {
-            return "";
-        }
-        let paramType = getParamTypeFromLocalVars(paramName);
-        if (!paramType) {
-            let paramLineNo = findProcedureStartLineNo();
-            paramType = getParamTypeFromProcLine(paramLineNo, paramName);
-        }
-        
-        return paramType;
     }
 
     export function getParamTypeFromLocalVars(paramName: string): string {
@@ -326,50 +303,6 @@ export module ALFileCrawler {
         return "";
     }
 
-    export function getParamTypeFromProcLine(lineNo: number,paramName: string): string {
-        let editor = window.activeTextEditor;
-        if (!editor || lineNo < 0) {
-            return "";
-        }
-        let paramType: string = ""; 
-        let currLine: TextLine = editor.document.lineAt(lineNo);
-        let currLineText = currLine.text.toUpperCase();
-        let paramNameIndex: number = currLineText.indexOf(paramName.toUpperCase());
-        let colonIndex : number = currLineText.indexOf(":", paramNameIndex);
-        if(colonIndex > -1) {
-            var semiColonIndex : number = currLineText.indexOf(";", colonIndex);
-            if (semiColonIndex > -1) {
-                paramType = currLine.text.substring(colonIndex + 1, semiColonIndex);
-            }
-            else {
-                let bracketIndex : number = currLineText.indexOf(")", colonIndex);
-                if (bracketIndex > -1) {
-                    paramType = currLine.text.substring(colonIndex + 1, bracketIndex);
-                }
-            }
-        }
-        return paramType;
-    }
-
-    export function paramPassedByRef(paramName: string): boolean {
-        let lineNo = findProcedureStartLineNo();
-        let text = getText(lineNo).toUpperCase();
-
-        let paramNameIndex = text.indexOf(paramName.toUpperCase());
-        if (paramNameIndex < 0) {
-            return false;
-        }
-        let textToCheck = text.substring(0, paramNameIndex);
-        let lastBracketIndex = textToCheck.lastIndexOf("(");
-        let lastSemiColonIndex = textToCheck.lastIndexOf(";"); 
-        if (lastBracketIndex < 0 && lastSemiColonIndex < 0) {
-            return false;
-        }
-
-        let delimiterIndex = lastBracketIndex > lastSemiColonIndex? lastBracketIndex : lastSemiColonIndex;
-        textToCheck = textToCheck.substring(delimiterIndex);
-        return textToCheck.includes("VAR");
-    }
 
     export function getCurrLineText(): string {
         let editor = window.activeTextEditor;
@@ -383,7 +316,16 @@ export module ALFileCrawler {
         return currLineText;
     }
 
-    export function getLineText(document: TextDocument, range: Range | Selection) : string {
+    export function getRangeText(range: Range | Selection) : string {
+        let editor = window.activeTextEditor;
+        if (!editor) {
+            return "";
+        }
+        let rangeText = editor.document.getText(range).trim();
+        return rangeText;
+    }
+
+    export function getLineText(range: Range | Selection) : string {
         let editor = window.activeTextEditor;
         if (!editor) {
             return "";
@@ -418,18 +360,9 @@ export module ALFileCrawler {
         return foundLocalProcLineNo;
     }
 
-    
-    export function procedureExistsInALFile(file: ALFile, procedureName: string): boolean {
-        if (!file) {
-            return false;
-        }
-
-        return (file.procedures.includes(procedureName));
-    }
-
-    export function getVarNameToDeclare(document: TextDocument, range: Range | Selection, diagnosticMsg: string): string {
-        let currLineText = ALFileCrawler.getLineText(document, range);
-        let currLineDetectedVars = ALFileCrawler.extractVars(currLineText);
+    export function getVarNameToDeclare(range: Range | Selection, diagnosticMsg: string): string {
+        let rangeText = ALFileCrawler.getRangeText(range);
+        let currLineDetectedVars = ALFileCrawler.extractVars(rangeText);
         let localVarsAndParams = ALFileCrawler.extractLocalVarsAndParams();
 
         for(let i = 0; i< currLineDetectedVars.length; i++) {

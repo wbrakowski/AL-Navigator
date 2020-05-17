@@ -1,7 +1,7 @@
 import { Range } from "vscode";
 import { ALFileCrawler } from "../al/alFileCrawler";
 import { StringFunctions } from "./stringFunctions";
-import { VarDeclaration } from "../al/varDeclaration";
+import { VarDeclaration } from "../al/alVarDeclaration";
 import { ALVariable } from "../al/alVariable";
 
 export module TextBuilder {
@@ -50,7 +50,4 @@ export module TextBuilder {
         varDeclaration.createsVarSection = createVarSection;
         return varDeclaration;
     }
-
-
-   
 }

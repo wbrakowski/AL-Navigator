@@ -7,6 +7,8 @@ export class ALObject {
     public longVarName: string = "";
     public shortVarName: string = "";
     public objectName: string ="";
+    public workspaceFile: boolean = false;
+    public fsPath: string = "";
     
     constructor() {
     }

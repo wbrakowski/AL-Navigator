@@ -5,6 +5,8 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { isNullOrUndefined } from "util";
+import { ObjectTypes } from './objectTypes';
+import { StringFunctions } from './stringFunctions';
 
 export class ALCodeOutlineExtension {
     private static alCodeOutlineExtensionObject: ALCodeOutlineExtension;
@@ -129,9 +131,79 @@ export class ALCodeOutlineExtension {
         kinds.push(241); //EventSubscriber
         return kinds;
     }
-    private static getUndefinedKinds(): number[] {
-        let kinds: number[] = [];
-        kinds.push(0); //EventSubscriber
-        return kinds;
+
+    public static async getObjectList(objectType: string) : Promise<string[]> {
+        let azALDevTools = (await ALCodeOutlineExtension.getInstance()).getAPI();
+        let fileContent: string = "";
+        switch (objectType) {
+            case ObjectTypes.table:
+                //  return azALDevTools.alLangProxy.getTableList(undefined);
+                 fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:record ;\nbegin\nend;\n}";
+                 break;
+            case ObjectTypes.codeunit:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:codeunit ;\nbegin\nend;\n}";
+                break;
+            case ObjectTypes.page:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:page ;\nbegin\nend;\n}";
+                break;
+            case ObjectTypes.report:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:report ;\nbegin\nend;\n}";
+                break;
+            case ObjectTypes.query:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:query ;\nbegin\nend;\n}";
+                break;
+            case ObjectTypes.xmlport:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:xmlport ;\nbegin\nend;\n}";
+                break;
+            case ObjectTypes.enum:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:enum ;\nbegin\nend;\n}";
+                break;
+            case ObjectTypes.controlAddIn:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:controladdin ;\nbegin\nend;\n}";
+                break;
+            case ObjectTypes.interface:
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:interface ;\nbegin\nend;\n}";
+                break;
+        }
+        if (!fileContent) {
+            return [];
+        }
+        // let fileContent = `codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:${objectType} ;\nbegin\nend;\n}`;
+        let list: any;
+        if (objectType === ObjectTypes.table) {
+            // list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, `AL Navigator: Collecting list of object type: ${objectType}.`, fileContent, 4, 9, 7, 1);
+            list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, "", fileContent, 4, 9, 7, 1);
+        }
+        else {
+            // list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, `AL Navigator: Collecting list of object type: ${objectType}.`, fileContent, 4, 7, 7, 1);
+            list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, "", fileContent, 4, 7, 7, 1);
+        }
+        
+        //process results
+        let out : string[] = [];
+        
+        if (list && list.items) {
+            for (let i=0; i<list.items.length; i++) {
+                let item = list.items[i];
+                switch (objectType) {
+                    case ObjectTypes.enum:
+                    case ObjectTypes.controlAddIn:
+                    case ObjectTypes.report:
+                    case ObjectTypes.xmlport:
+                    case ObjectTypes.interface:
+                        if (item.kind === vscode.CompletionItemKind.Reference) { 
+                            out.push(StringFunctions.fromNameText(item.label));
+                        }
+                        break;
+                    default:
+                        if (item.kind === vscode.CompletionItemKind.Class) { 
+                            out.push(StringFunctions.fromNameText(item.label));
+                        }
+                        break;
+                }
+                
+            }
+        }
+        return out;
     }
 }

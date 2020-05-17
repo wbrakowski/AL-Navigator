@@ -6,17 +6,25 @@ Create variables like a boss and navigate through al files with awesome shortcut
 
 ### Create Variables
 
-CodeAction for AL0118: Automatic local/global variable declaration of all standard tables, codeunits, pages and reports (also objects from workspace files).
+CodeAction for AL0118: Automatic local/global variable declaration of all your objects without having to use the var section!
 
-Use the Quick Fix lamp (Ctrl + .) to automatically add variables.
+Use the Quick Fix lamp (Ctrl + .) to add variables.
 
-Update 08.05.2020: Massive improvement of this feature through better recognition of relevant lines where it can be applied.
+Example 1: Creating records, Code variable and a custom record.
 
-Used quite some code from David Feldhoff for this Improvement, thank him for it ;-)
+![Create Variables 1](resources/ALNavigator1.gif)
 
-Update 14.05.2020: Awesome variabe type selection feature implemented when no variable type can automatically be detected.
+Example 2: Creating complex types like enums, interfaces and dictionaries.
 
-![Create Local Variable](resources/VarCreatorGif.gif)
+![Create Variables 2](resources/ALNavigator2.gif)
+
+Example 3: Create variables using their short name. Use Temp at the beginning of the record name to make it temporary.
+
+![Create Variables 3](resources/ALNavigator3.gif)
+
+Add a global variable when adding a new column to a data item in reports:
+
+![Create Variables 4](resources/ALNavigator4.gif)
 
 ### Shortcuts
 
@@ -54,6 +62,10 @@ Check out the extension "AL CodeActions" if you want to automatically create pro
 |--------------|---------|
 | AL Language               | [![vs marketplace](https://img.shields.io/vscode-marketplace/v/ms-dynamics-smb.al.svg?label=vs%20marketplace)](https://marketplace.visualstudio.com/items?itemName=ms-dynamics-smb.al) |
 | AZ AL Dev Tools/AL Code Outline           | [![vs marketplace](https://img.shields.io/vscode-marketplace/v/andrzejzwierzchowski.al-code-outline.svg?label=vs%20marketplace)](https://marketplace.visualstudio.com/items?itemName=andrzejzwierzchowski.al-code-outline) |
+
+## Thanks to
+- David Feldhoff for his contributions and feedback
+- Andrzej Zwierzchowski for providing such an awesome API for his AZ AL Dev Tools/AL Code Outline extension
 
 ## Git Repository
 

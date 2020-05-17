@@ -4,7 +4,7 @@
 
 import * as vscode from 'vscode';
 import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
-import { FileJumper } from './filejumper/fileJumper';
+import { FileJumper } from './additional/fileJumper';
 import { ALCodeActionsProvider } from './al/alCodeActionsProvider';
 import { CustomConsole } from './additional/console';
 
