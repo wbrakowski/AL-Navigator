@@ -70,7 +70,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                         break;
                     }
                     case "Code": {
-                        // Define Label value
+                        // Define length
                         let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
                         if (selectedValue) {
                             this._alVariable.varType = ALVarTypes.Code;
@@ -84,13 +84,21 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                             placeHolder: `Select key for ${selectedType}`
                         });
                         if (key) {
+                            let keyLength: string | undefined;
+                            if (key === "Text" || key === "Code") {
+                                keyLength = await vscode.window.showInputBox({ placeHolder: `Type length for ${key}` });
+                            }
                             this._alVariable.varType = ALVarTypes.Dictionary;
-                            this._alVariable.varValue = " of [" + key + ", ";
+                            this._alVariable.varValue = keyLength? ` of [${key}[${keyLength}], ` : ` of [${key}, `;
                             let value = await vscode.window.showQuickPick(varTypes, { 
                                 placeHolder: `Select value for ${selectedType}`
                             });
                             if (value) {
-                                this._alVariable.varValue += value + "]";
+                                let valueLength: string | undefined;
+                                if (value === "Text" || value === "Code") {
+                                    valueLength = await vscode.window.showInputBox({ placeHolder: `Type length for ${value}` });
+                                }
+                                this._alVariable.varValue += valueLength ? `${value}[${valueLength}]]` : `${value}]`;
                             }
                         }
                         break;
