@@ -1,6 +1,7 @@
-import { TextLine, TextEditor, window, Range, Selection, TextDocument, TextEditorCursorStyle } from 'vscode';
+import { TextLine, TextEditor, window, Range, Selection, TextDocument, TextEditorCursorStyle, Position } from 'vscode';
 import { ALKeywordHelper } from './alKeyWordHelper';
 import { ALFile } from './alFile';
+import * as vscode from 'vscode';
 
 export module ALFileCrawler {
     //#region text search
@@ -393,5 +394,12 @@ export module ALFileCrawler {
             } 
         }
         return foundLineNo;
+    }
+
+    export function isProcedureCall(diagnosticRange: Range | Selection): boolean {
+        // Check if the next character after the diagnostic range is a round opening paranthesis for a procedure call
+        let range = new Range(diagnosticRange.start, new Position(diagnosticRange.end.line, diagnosticRange.end.character + 1));
+        let rangeText = getRangeText(range);
+        return rangeText.includes('(');
     }
 }
