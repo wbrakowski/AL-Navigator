@@ -5,6 +5,7 @@ import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { ALVariable } from './alVariable';
 import { ALAddVarCodeCommand } from './alAddVarCodeCommand';
 import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
+import { ALFile } from './alFile';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     protected _alFiles : ALFiles = new ALFiles();
@@ -45,8 +46,11 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
             globalVarToCreate.isLocal = false;
         }
 
+        let lineText = ALFileCrawler.getLineText(diagnostic.range);
         let createLocalVarCodeAction: vscode.CodeAction | undefined;
-        createLocalVarCodeAction = await this.createCodeAction(document, diagnostic, localVarToCreate, jumpToCreatedVar);
+        if (!lineText.toUpperCase().includes('COLUMN')) {
+            createLocalVarCodeAction = await this.createCodeAction(document, diagnostic, localVarToCreate, jumpToCreatedVar);
+        }
 
         let createGlobalVarCodeAction: vscode.CodeAction | undefined;
         createGlobalVarCodeAction = await this.createCodeAction(document, diagnostic, globalVarToCreate, jumpToCreatedVar);
@@ -66,8 +70,8 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     }
 
     public async createVarDeclaration(document: vscode.TextDocument, diagnostic: vscode.Diagnostic): Promise<ALVariable | undefined> {
-        // let varSymbols = await ALCodeOutlineExtension.getVarSymbolOfCurrentLine(document.uri, diagnostic.range.start.line);
-        let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(diagnostic.range, diagnostic.message);
+        // let varNameToDeclare = ALFileCrawler.getVarNameToDeclare(diagnostic.range, diagnostic.message);
+        let varNameToDeclare = ALFileCrawler.getRangeText(diagnostic.range);
         if (varNameToDeclare === '') {
             return;
         }
@@ -79,7 +83,10 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         let createVarCodeAction: vscode.CodeAction | undefined;
         switch (diagnostic.code as string) {
             case DiagnosticCodes.AL0118.toString():
-                createVarCodeAction = await this.createVarCodeActionForLine(varToCreate, currentDocument, diagnostic.range, jumpToCreatedVar, diagnostic.range.start.line);
+                if (!ALFileCrawler.isProcedureCall(diagnostic.range)) {
+                    createVarCodeAction = await this.createVarCodeActionForLine(varToCreate, currentDocument, diagnostic.range, jumpToCreatedVar, diagnostic.range.start.line);
+                }
+                
                 break;
             default:
                 return;
