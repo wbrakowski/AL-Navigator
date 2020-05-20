@@ -100,20 +100,24 @@ import { createCipher } from 'crypto';
 
     public async getALVariableByName(varName: string) : Promise<ALVariable | undefined>{
         this.fillObjects();
-        let useShortVarName: boolean = false;
+        let varNameSearchString = varName;
 
+        // Check if string starts with temp
         let alVariable = new ALVariable(varName);
         let indexTemp = varName.toUpperCase().indexOf('TEMP');
         if (indexTemp === 0) {
-            varName = varName.substr(4);
+            varNameSearchString = varName.substr(4);
             alVariable.isTemporary = true;
         }
-        let alObject = this.alObjects.find(i => varName.toUpperCase() === i.longVarName.toUpperCase());
+        // Check if string has a trailing number
+        let lastChar = varNameSearchString.charAt(varNameSearchString.length - 1);
+        if (!isNaN(+lastChar)) {
+            varNameSearchString = varNameSearchString.substr(0, varNameSearchString.length - 1);
+        }
+
+        let alObject = this.alObjects.find(i => varNameSearchString.toUpperCase() === i.longVarName.toUpperCase());
         if (!alObject) {
-            alObject = this.alObjects.find(f => varName.toUpperCase() === f.shortVarName.toUpperCase());
-            if (alObject) {
-                useShortVarName = true;
-            }
+            alObject = this.alObjects.find(f => varNameSearchString.toUpperCase() === f.shortVarName.toUpperCase());
         }
         // TODO: Check this one day ;-)
         // Cannot find 100% match, try to find cloest match
@@ -137,7 +141,7 @@ import { createCipher } from 'crypto';
         //     }
         // }
         if (alObject) {
-            alVariable.name = useShortVarName ? alObject.shortVarName : alObject.longVarName;
+            alVariable.name = varName;
             alVariable.objectType = alObject.objectType;
             alVariable.objectName = alObject.objectName;
         }
@@ -146,6 +150,9 @@ import { createCipher } from 'crypto';
     }
 
     public async update(uri: vscode.Uri, updateType: UpdateTypes) {
+        if (!this.alObjects) {
+            return;
+        }
         switch (updateType) {
             case UpdateTypes.delete:
             case UpdateTypes.modify: {
@@ -218,7 +225,7 @@ import { createCipher } from 'crypto';
         let controllAddIns: string[] = await ALCodeOutlineExtension.getObjectList(ObjectTypes.controlAddIn);
         let interfaces: string[] = await ALCodeOutlineExtension.getObjectList(ObjectTypes.interface);
 
-        if (!tables && !pages && !cus && !reports && !enums && !queries && !xmlports && !controllAddIns) {
+        if (!tables && !pages && !cus && !reports && !enums && !queries && !xmlports && !controllAddIns && !interfaces) {
             return;
         }
 
