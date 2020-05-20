@@ -79,3 +79,12 @@ Bugfixing
 - Creation of labels when standing in report columns 
 - Objects can be selected from list if they are not automatically detected!
 - Support of all var types when choosing them from list
+
+## [0.2.8]
+
+- Fixed naming of variables created with temporary
+- Fixed creation of global/local variable when the variable is followed by a round paranthesis (potential procedure calls)
+- Variable naming for variables with numbers at the end is now supported
+- "Add local variable xyz" is now not shown when standing in a report data item column
+- Dictionary now also supports length for code and text
+

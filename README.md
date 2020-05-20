@@ -22,7 +22,7 @@ Example 3: Create variables using their short name. Use Temp at the beginning of
 
 ![Create Variables 3](resources/ALNavigator3.gif)
 
-Add a global variable when adding a new column to a data item in reports:
+Example 4: Add a global variable when adding a new column to a data item in reports:
 
 ![Create Variables 4](resources/ALNavigator4.gif)
 
@@ -52,10 +52,6 @@ Check out the extension "AL CodeActions" if you want to automatically create pro
 
 ![Create Procedure Stub](resources/CreateProcedureStub.gif)
 
- 
-
-
-
 ## Requirements
 
 |              |         |
@@ -66,6 +62,10 @@ Check out the extension "AL CodeActions" if you want to automatically create pro
 ## Thanks to
 - David Feldhoff for his contributions and feedback
 - Andrzej Zwierzchowski for providing such an awesome API for his AZ AL Dev Tools/AL Code Outline extension
+
+## Additional information
+The functionality of this extension is constantly evolving.
+To not bloat this readme too much, you can find more detailed documentations and details on my blog (https://navinsights.net/category/al-navigator/).
 
 ## Git Repository
 
