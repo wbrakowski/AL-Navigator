@@ -75,10 +75,17 @@ export module FileJumper {
             return;
         }
 
-        let range = editor.document.lineAt(no).range;
-        editor.selection = new Selection(range.end, range.end);
-        let revealRange : Range;
-        revealRange = new Range(new Position(range.end.line - 10, 0), new Position(range.end.line + 10, 0));
-        editor.revealRange(revealRange);    
+        try {
+          let range = editor.document.lineAt(no).range;
+          editor.selection = new Selection(range.end, range.end);
+          let revealRange : Range;
+          revealRange = new Range(new Position(range.end.line - 10, 0), new Position(range.end.line + 10, 0));
+          editor.revealRange(revealRange);    
+        }
+        catch (error) {
+             console.log('Whoops. Something went wrong when trying to jump through the file.');
+        }
+
+      
     }
 }
