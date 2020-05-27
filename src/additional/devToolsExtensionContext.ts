@@ -191,6 +191,7 @@ export class ALCodeOutlineExtension {
                     case ObjectTypes.report:
                     case ObjectTypes.xmlport:
                     case ObjectTypes.interface:
+                    case ObjectTypes.query:
                         if (item.kind === vscode.CompletionItemKind.Reference) { 
                             out.push(StringFunctions.fromNameText(item.label));
                         }
