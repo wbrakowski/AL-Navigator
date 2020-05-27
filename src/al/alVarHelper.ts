@@ -1229,5 +1229,156 @@ export module ALVarHelper {
     short = words.join("");
     return short;
   }
+
+  export function varNameMatchesBooleanPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "ISHANDLED", "RUNTRIGGER", "SKIP"
+    ];
+
+    let onlyIncludesStrings: string[] = [
+      // "SEARCHFORNAME", "ENABLE", "READ", "CALCULATE", "FOUND", "CHECK", "IS", "OVERRIDE",
+      // "USE", "OCCURED", "CHECKED", "INSERTED", "CREATED", "CORRECTION", "PREVIEWMODE", "SUPRESS", "COMMIT", "HIDE", "SHOW",
+      // "CALLED", "REQUIRED", "POST", "MODIFIED", "BLOCK", "SKIP", "FOUND", "STOP", "STOPPED", "FINISH", "FINISHED", "ACTIVE",
+      // "MORE"
+    ];
+
+    return patternMatches(varName, exactMatchStrings, onlyIncludesStrings);
+  }
+
+  export function varNameMatchesDialogPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "WINDOW", "PROGRESSWINDOW"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesDatePattern(varName: string): boolean {
+    return varName.toUpperCase().endsWith("DATE");
+  }
+
+  export function varNameMatchesLabelPattern(varName: string): boolean {
+    let patternStrings: string[] = [
+      // "QST", "ERR", "MSG"//, "TXT", "TEXT"
+    ];
+    for(let i = 0;i < patternStrings.length - 1; i++) {
+      if (varName.toUpperCase().endsWith(patternStrings[i])) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  export function varNameMatchesIntegerPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "LEVEL", "ENTRYNO", "TRANSACTIONNO", "LINENO", "DAY", "WEEK", "MONTH", "YEAR", "NOOFRECORDS",
+      "RECCOUNT", "RECORDCOUNT", "COUNT", "NOSERIESNO", "TRANSACTIONKEY", "FIELDNO", "I", "GLENTRYNO",
+      "CUSTLEDGERENTRYNO", "VENDORLEDGERENTRYNO", "GLREGISTERNO", "ITEMREGISTERNO", "REPORTID"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesDecimalPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "AMOUNT", "AMT", "BALANCE", "PRECISION", "FACTOR", "EXCHRATE", "QUANTITY", "QTY"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesCode50Pattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "USERID"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesCode20Pattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "DOCNO", "DOCUMENTNO", "STANDARDTEXTCODE", "LANGUAGECODE",
+      "SALESPERSONPURCHASERCODE", "GLACCOUNTNO", "CUSTOMERNO",
+      "CUSTINVOICEDISCCODE", "VENDORNO", "VENDORINVOICEDISCCODE",
+      "ITEMNO", "SELLTOCUSTOMERNO", "BUYFROMVENDORNO", "PAYTOVENDORNO"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesCode10Pattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "PAYMENTTERMSCODE",
+      "CURRENCYCODE", "FINANCECHARGETERMSCODE", "CUSTOMERPRICEGROUPCODE",
+      "COUNTRYREGIONCODE", "SHIPMENTMETHODCODE", "COUNTRYREGIONTRANSLATIONCODE",
+      "LOCATIONCODE", "ROUNDINGMETHODCODE", "JOURNALTEMPLATENAME", "VARIANTCODE"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesOptionPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      // "DOCTYPE", "STATE", "STATUS", "TYPE"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesVariantPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "VARIANT"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesRecordIDPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "RECORDID"
+    ];
+    let onlyIncludesStrings: string[] = [
+      "RECORDID"
+    ];
+    return patternMatches(varName, exactMatchStrings, onlyIncludesStrings);
+  }
+
+  export function varNameMatchesRecordRefPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "RECREF", "RECORDREF"
+    ];
+    let onlyIncludesStrings: string[] = [
+      "RECREF", "RECORDREF"
+    ];
+    return patternMatches(varName, exactMatchStrings, onlyIncludesStrings);
+  }
+
+  export function varNameMatchesTextPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "DESCRIPTION", "FILTER", "FILENAME"
+    ];
+    return patternMatches(varName, exactMatchStrings);
+  }
+
+  export function varNameMatchesTimePattern(varName: string): boolean {
+    return varName.toUpperCase().endsWith("TIME");
+  }
+
+  export function varNameMatchesEnumPattern(varName: string): boolean {
+    let exactMatchStrings: string[] = [
+      "USAGE"
+    ];
+    let onlyIncludesStrings: string[] = [
+    ];
+    return patternMatches(varName, exactMatchStrings, onlyIncludesStrings);
+  }
+
+  export function patternMatches(varName: string, exactMatchStrings: string[], onlyIncludesStrings?: string[]): boolean {
+    for(let i = 0;i < exactMatchStrings.length; i++) {
+      if (varName.toUpperCase() === (exactMatchStrings[i])) {
+        return true;
+      }
+    }
+    if (onlyIncludesStrings) {
+      for(let i = 0;i < onlyIncludesStrings.length; i++) {
+        if (varName.toUpperCase().includes(onlyIncludesStrings[i])) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
 }
 
