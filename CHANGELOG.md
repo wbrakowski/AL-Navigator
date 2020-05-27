@@ -88,3 +88,10 @@ Bugfixing
 - "Add local variable xyz" is now not shown when standing in a report data item column
 - Dictionary now also supports length for code and text
 
+## [0.2.9]
+
+- Fixed recognition of queries
+- Create arrays correctly
+- Do not create variable if user cancels the variable type selection
+- More variables can be automatically created if their name matches specific patterns (Dates, Dialogs, Booleans, Labels...)
+
