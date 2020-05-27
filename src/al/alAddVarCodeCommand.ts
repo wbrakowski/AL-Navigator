@@ -56,7 +56,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                 switch (selectedType) {
                     case "array": {
                         // Define dimension
-                        let dims = await vscode.window.showInputBox({ placeHolder: `Type dimension for ${selectedType},`});
+                        let dims = await vscode.window.showInputBox({ placeHolder: `Type dimension for ${selectedType}`});
                         if (dims) {
                             this._alVariable.varType = ALVarTypes.array;
                             this._alVariable.varValue = "[" + dims + "]";
@@ -66,6 +66,12 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                             if (arrayType) {
                                 this._alVariable.varValue += " of " + arrayType;
                             }
+                            else {
+                                return;
+                            }
+                        }
+                        else {
+                            return;
                         }
                         break;
                     }
@@ -100,6 +106,12 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                                 }
                                 this._alVariable.varValue += valueLength ? `${value}[${valueLength}]]` : `${value}]`;
                             }
+                            else {
+                                return;
+                            }
+                        }
+                        else {
+                            return;
                         }
                         break;
                     }
@@ -123,6 +135,9 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                         if (listType) {
                             this._alVariable.varType = ALVarTypes.List;
                             this._alVariable.varValue = " of [" + listType + "]";
+                        }
+                        else {
+                            return;
                         }
                         break;
                     }
@@ -176,7 +191,13 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                     if (selectedObject) {
                         this._alVariable.objectName = selectedObject;
                     }
+                    else {
+                        return;
+                    }
                 }
+            }
+            else {
+                return;
             }
         }
 
@@ -197,10 +218,6 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             if (varDeclaration.createsVarSection) {
                 lineNo += 1;
             }
-            // TODO Is this still necessary?
-            // if (!this._alVariable.objectType) {
-            //     FileJumper.jumpToLine(lineNo, vscode.window.activeTextEditor);
-            // }
         }
     }
 
