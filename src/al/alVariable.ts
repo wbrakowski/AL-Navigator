@@ -20,7 +20,7 @@ export class ALVariable {
         declarationString += this.name;
         declarationString += ": ";
         declarationString += this.objectType;
-        if (this.varType) {
+        if (this.varValue) {
             declarationString += this.varValue;
         }
         if (this.objectName) {
