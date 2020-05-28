@@ -95,3 +95,4 @@ Bugfixing
 - Do not create variable if user cancels the variable type selection
 - More variables can be automatically created if their name matches specific patterns (Dates, Dialogs, Booleans, Labels...)
 
+## [0.3.0]
