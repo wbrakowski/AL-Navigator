@@ -3,8 +3,6 @@ import { ALCodeCommand } from './alCodeCommand';
 import { ALVariable } from './alVariable';
 import { ALFileCrawler } from './alFileCrawler';
 import { TextBuilder } from '../additional/textBuilder';
-import { FileJumper } from '../additional/fileJumper';
-import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
 import { ObjectTypes } from '../additional/objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALFiles } from './alFiles';
@@ -12,10 +10,9 @@ import { ALVarTypes } from '../additional/alVarTypes';
 
 
 export class ALAddVarCodeCommand extends ALCodeCommand {
-    public _alVariable: ALVariable = new ALVariable('');
-    public _document: vscode.TextDocument | undefined;
-    public _jumpToCreatedVar: boolean = false;
-    public _currentLineNo: number = 0;
+    public varName: string = '';
+    public local: boolean = false;
+    public document: vscode.TextDocument | undefined;
     protected _alFiles: ALFiles;
 
     constructor(context: vscode.ExtensionContext, commandName:string, alFiles: ALFiles) {
@@ -28,11 +25,11 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
     }
     
     protected async insertVar(range: vscode.Range) {
-        if (!this._document) {
+        if (!this.document) {
             return; 
         }
         let lineNo: number;
-        if (this._alVariable.isLocal) {
+        if (this.local) {
             lineNo = ALFileCrawler.findLocalVarSectionEndLineNo(true) + 1;
         }
         else {
@@ -41,8 +38,17 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                 lineNo = ALFileCrawler.findGlobalVarCreationPos();
             }
         }
-        
-        if (!this._alVariable.objectType) {
+
+        let alVariable = await this.createALVariable(this.varName);
+        if (!alVariable) {
+            return;
+            // TODO Woops something went wrong here!
+        }
+        else {
+            alVariable.isLocal = this.local;
+        }
+
+        if (!alVariable.objectType) {
             let varTypes: string[] = ALVarHelper.getVariableTypeList();
 
             // Ask for type
@@ -52,19 +58,19 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             });
             let objectType: ObjectTypes = ObjectTypes.none;
             if (selectedType) {
-                this._alVariable.objectType = selectedType;
+                alVariable.objectType = selectedType;
                 switch (selectedType) {
                     case "array": {
                         // Define dimension
                         let dims = await vscode.window.showInputBox({ placeHolder: `Type dimension for ${selectedType}`});
                         if (dims) {
-                            this._alVariable.varType = ALVarTypes.array;
-                            this._alVariable.varValue = "[" + dims + "]";
+                            alVariable.varType = ALVarTypes.array;
+                            alVariable.varValue = "[" + dims + "]";
                             let arrayType = await vscode.window.showQuickPick(varTypes, { 
                                 placeHolder: `Choose type for ${selectedType}`
                             });
                             if (arrayType) {
-                                this._alVariable.varValue += " of " + arrayType;
+                                alVariable.varValue += " of " + arrayType;
                             }
                             else {
                                 return;
@@ -79,8 +85,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                         // Define length
                         let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
                         if (selectedValue) {
-                            this._alVariable.varType = ALVarTypes.Code;
-                            this._alVariable.varValue = "[" + selectedValue + "]";
+                            alVariable.varType = ALVarTypes.Code;
+                            alVariable.varValue = "[" + selectedValue + "]";
                         }
                         break;
                     }
@@ -94,8 +100,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                             if (key === "Text" || key === "Code") {
                                 keyLength = await vscode.window.showInputBox({ placeHolder: `Type length for ${key}` });
                             }
-                            this._alVariable.varType = ALVarTypes.Dictionary;
-                            this._alVariable.varValue = keyLength? ` of [${key}[${keyLength}], ` : ` of [${key}, `;
+                            alVariable.varType = ALVarTypes.Dictionary;
+                            alVariable.varValue = keyLength? ` of [${key}[${keyLength}], ` : ` of [${key}, `;
                             let value = await vscode.window.showQuickPick(varTypes, { 
                                 placeHolder: `Select value for ${selectedType}`
                             });
@@ -104,7 +110,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                                 if (value === "Text" || value === "Code") {
                                     valueLength = await vscode.window.showInputBox({ placeHolder: `Type length for ${value}` });
                                 }
-                                this._alVariable.varValue += valueLength ? `${value}[${valueLength}]]` : `${value}]`;
+                                alVariable.varValue += valueLength ? `${value}[${valueLength}]]` : `${value}]`;
                             }
                             else {
                                 return;
@@ -119,11 +125,11 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                         // Define Label value
                         let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type value for ${selectedType}` });
                         if (selectedValue) {
-                            this._alVariable.varType = ALVarTypes.Label;
-                            this._alVariable.varValue = ' \'' + selectedValue + '\'';
+                            alVariable.varType = ALVarTypes.Label;
+                            alVariable.varValue = ' \'' + selectedValue + '\'';
                         }
                         else {
-                            this._alVariable.varValue = ' \'\'';
+                            alVariable.varValue = ' \'\'';
                         }
                         break;
                     }
@@ -133,8 +139,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                             placeHolder: `Select type for ${selectedType}`
                         });
                         if (listType) {
-                            this._alVariable.varType = ALVarTypes.List;
-                            this._alVariable.varValue = " of [" + listType + "]";
+                            alVariable.varType = ALVarTypes.List;
+                            alVariable.varValue = " of [" + listType + "]";
                         }
                         else {
                             return;
@@ -145,8 +151,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                         // Define Label value
                         let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
                         if (selectedValue) {
-                            this._alVariable.varType = ALVarTypes.Text;
-                            this._alVariable.varValue = "[" + selectedValue + "]";
+                            alVariable.varType = ALVarTypes.Text;
+                            alVariable.varValue = "[" + selectedValue + "]";
                         }
                         break;
                     }
@@ -189,7 +195,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                         placeHolder: `Select ${selectedType}`
                     });
                     if (selectedObject) {
-                        this._alVariable.objectName = selectedObject;
+                        alVariable.objectName = selectedObject;
                     }
                     else {
                         return;
@@ -201,7 +207,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             }
         }
 
-        let varDeclaration = TextBuilder.buildVarDeclaration(range, this._alVariable);
+        let varDeclaration = TextBuilder.buildVarDeclaration(range, alVariable);
         let content: string = varDeclaration.declaration;
         content += '\n';
         let editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
@@ -218,6 +224,16 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             if (varDeclaration.createsVarSection) {
                 lineNo += 1;
             }
+        }
+    }
+
+    public async createALVariable(varName: string): Promise<ALVariable | undefined> {
+        if (!varName) {
+            return;
+        }
+        else {
+            let alVar = await this._alFiles.getALVariableByName(varName);
+            return alVar;
         }
     }
 

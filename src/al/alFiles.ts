@@ -7,8 +7,8 @@ import { ALVariable } from './alVariable';
 import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
 import { ObjectTypes } from '../additional/objectTypes';
 import { ALVarHelper } from './alVarHelper';
-import { createCipher } from 'crypto';
 import { ALVarTypes } from '../additional/alVarTypes';
+import { StringFunctions } from '../additional/stringFunctions';
      
   export class ALFiles {
     populatedFromCache: boolean = false;
@@ -24,7 +24,6 @@ import { ALVarTypes } from '../additional/alVarTypes';
 
     constructor() {
         this.populateALFilesArray();
-        // this.fillObjects();
         let watcher = vscode.workspace.createFileSystemWatcher('**/*.al');
         watcher.onDidCreate(async (e: vscode.Uri) => {
             if (e.fsPath.indexOf('.vscode') === -1) {
@@ -48,7 +47,6 @@ import { ALVarTypes } from '../additional/alVarTypes';
     private getCurrentWorkspaceFolder(): vscode.WorkspaceFolder | undefined{
         if (vscode.workspace.workspaceFolders) {
             let workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.workspace.workspaceFolders[0].uri);
-
             let activeTextEditorDocumentUri = null;
             try {
                 if (vscode.window.activeTextEditor) {
@@ -57,11 +55,9 @@ import { ALVarTypes } from '../additional/alVarTypes';
             } catch (error) {
                 activeTextEditorDocumentUri = null;
             }
-    
             if (activeTextEditorDocumentUri) { 
                 workspaceFolder = activeTextEditorDocumentUri;
             }
-    
             return workspaceFolder;
         }
     }
@@ -93,7 +89,6 @@ import { ALVarTypes } from '../additional/alVarTypes';
             catch (error) {
                 vscode.window.showErrorMessage(error.message);
             }
-
         });    
         this.workspaceALFiles = workspaceALFiles;
     }
@@ -105,10 +100,9 @@ import { ALVarTypes } from '../additional/alVarTypes';
         }
         
         let varNameSearchString = varName;
-
-        // Check if string starts with temp
         let alVariable = new ALVariable(varName);
         
+        // Check if string starts with temp
         let indexTemp = varName.toUpperCase().indexOf('TEMP');
         if (indexTemp === 0) {
             varNameSearchString = varName.substr(4);
@@ -119,7 +113,6 @@ import { ALVarTypes } from '../additional/alVarTypes';
         if (!isNaN(+lastChar)) {
             varNameSearchString = varNameSearchString.substr(0, varNameSearchString.length - 1);
         }
-        
        
         let alObject = this.alObjects.find(i => varNameSearchString.toUpperCase() === i.longVarName.toUpperCase());
         if (!alObject) {
@@ -215,7 +208,6 @@ import { ALVarTypes } from '../additional/alVarTypes';
                     alVariable.objectType = "Variant";
                     break;
             }
-           
         }
 
         return alVariable;
@@ -229,11 +221,8 @@ import { ALVarTypes } from '../additional/alVarTypes';
             case UpdateTypes.delete:
             case UpdateTypes.modify: {
                 if (uri.fsPath !== "") {
-                    // let deleteIndex: number = this.workspaceALFiles.findIndex(i => i.uri.fsPath === uri.fsPath);
-                    let deleteIndex: number = this.alObjects.findIndex(i => i.fsPath === uri.fsPath);
+                    let deleteIndex = this.alObjects.findIndex(i => i.fsPath === uri.fsPath);
                     if (deleteIndex > 0) {
-                        // TODO
-                        // Remove object from workspace al Files
                         this.alObjects.splice(deleteIndex, 1);
                     }
 
@@ -247,7 +236,7 @@ import { ALVarTypes } from '../additional/alVarTypes';
 
     public getRelevantDiagnosticOfCurrentPosition(range: vscode.Range) {
         if (!this.document) {
-            return undefined;
+            return;
         }
         let diagnostics = vscode.languages.getDiagnostics(this.document.uri).filter(d => {
             let isAL = this.checkDiagnosticsLanguage(d);
@@ -255,8 +244,6 @@ import { ALVarTypes } from '../additional/alVarTypes';
             let validCode: boolean = this.checkDiagnosticsCode(d);
             return isAL && samePos && validCode;
         });
-
-
         return diagnostics.length === 1 ? diagnostics[0] : undefined;
     }
 
@@ -285,7 +272,6 @@ import { ALVarTypes } from '../additional/alVarTypes';
         if (this.populatedFromCache) {
             return;
         }
-        // TODO find better way?
 
         let tables: string[] = await ALCodeOutlineExtension.getObjectList(ObjectTypes.table);
         let pages: string[] = await ALCodeOutlineExtension.getObjectList(ObjectTypes.page);
@@ -301,86 +287,15 @@ import { ALVarTypes } from '../additional/alVarTypes';
             return;
         }
 
-        for (let i=0; i<tables.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = tables[i];
-            alObject.objectType = "Record";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<pages.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = pages[i];
-            alObject.objectType = "Page";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<cus.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = cus[i];
-            alObject.objectType = "Codeunit";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<reports.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = reports[i];
-            alObject.objectType = "Report";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<enums.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = enums[i];
-            alObject.objectType = "Enum";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<queries.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = queries[i];
-            alObject.objectType = "Query";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<xmlports.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = xmlports[i];
-            alObject.objectType = "XmlPort";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<controllAddIns.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = controllAddIns[i];
-            alObject.objectType = "ControlAddIn";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
-
-        for (let i=0; i<interfaces.length-1; i++) {
-            let alObject = new ALObject();
-            alObject.objectName = interfaces[i];
-            alObject.objectType = "Interface";
-            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
-            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
-        }
+        await this.pushToObjects(tables, ObjectTypes.table);
+        await this.pushToObjects(pages, ObjectTypes.page);
+        await this.pushToObjects(cus, ObjectTypes.codeunit);
+        await this.pushToObjects(reports, ObjectTypes.report);
+        await this.pushToObjects(enums, ObjectTypes.enum);
+        await this.pushToObjects(queries, ObjectTypes.query);
+        await this.pushToObjects(xmlports, ObjectTypes.xmlport);
+        await this.pushToObjects(controllAddIns, ObjectTypes.controlAddIn);
+        await this.pushToObjects(interfaces, ObjectTypes.interface);
 
         this.populatedFromCache = true;
     }
@@ -393,6 +308,17 @@ import { ALVarTypes } from '../additional/alVarTypes';
             objects.push(filteredObjects[i].objectName);
         }
         return objects;
+    }
+
+    private async pushToObjects(newObjects: string[], objectType: ObjectTypes) {
+        for (let i = 0; i < newObjects.length; i++) {
+            let alObject = new ALObject();
+            alObject.objectName = newObjects[i];
+            alObject.objectType = objectType === ObjectTypes.table ? 'Record' : StringFunctions.titleCaseWord(objectType);
+            alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
+            alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
+            this.alObjects.push(alObject);
+        }
     }
 
 }
