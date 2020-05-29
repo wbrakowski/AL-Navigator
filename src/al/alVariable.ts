@@ -19,9 +19,12 @@ export class ALVariable {
         let declarationString = "";
         declarationString += this.name;
         declarationString += ": ";
-        declarationString += this.objectType;
-        if (this.varValue) {
+        if (this.varType) {
+            declarationString += this.varType;
             declarationString += this.varValue;
+        }
+        else {
+            declarationString += this.objectType;
         }
         if (this.objectName) {
             declarationString += " ";

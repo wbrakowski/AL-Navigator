@@ -94,10 +94,10 @@ import { StringFunctions } from '../additional/stringFunctions';
     }
 
     public async getALVariableByName(varName: string) : Promise<ALVariable | undefined>{
-        this.fillObjects();
-        if (!this.alObjects) {
-            return;
-        }
+        await this.fillObjects();
+        // if (!this.alObjects) {
+        //     return;
+        // }
         
         let varNameSearchString = varName;
         let alVariable = new ALVariable(varName);
@@ -141,7 +141,26 @@ import { StringFunctions } from '../additional/stringFunctions';
         // }
         if (alObject) {
             alVariable.name = varName;
-            alVariable.objectType = alObject.objectType;
+            if (alObject.objectType.toLowerCase() === ObjectTypes.page) {
+                let pageTypes: string[] = ["Page", "TestPage"];
+                let selectedType = await vscode.window.showQuickPick(pageTypes, {
+                    canPickMany: false,
+                    placeHolder: 'Select page type'
+                });
+                switch (selectedType) {
+                    case ("Page"): 
+                        alVariable.objectType = "Page";
+                        break;
+                    case ("TestPage"):
+                        alVariable.objectType = "TestPage";
+                        break;
+                    default:
+                        return;
+                }
+            }
+            else {
+                alVariable.objectType = alObject.objectType;
+            }
             alVariable.objectName = alObject.objectName;
         }
         else {
@@ -268,7 +287,7 @@ import { StringFunctions } from '../additional/stringFunctions';
         return d.range.contains(range);
     }
 
-    private async fillObjects() {
+    public async fillObjects() {
         if (this.populatedFromCache) {
             return;
         }
