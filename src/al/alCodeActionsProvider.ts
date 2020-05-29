@@ -8,12 +8,12 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     protected _alFiles : ALFiles = new ALFiles();
     protected _addLocalVarCmd : ALAddVarCodeCommand;
     protected _addGlobalVarCmd : ALAddVarCodeCommand;
-    protected context: vscode.ExtensionContext;
+    protected _context: vscode.ExtensionContext;
 
     public constructor (context: vscode.ExtensionContext) {
-        this.context = context;
-        this._addLocalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createLocalVar', this._alFiles);
-        this._addGlobalVarCmd = new ALAddVarCodeCommand(this.context, 'extension.createGlobalVar', this._alFiles);
+        this._context = context;
+        this._addLocalVarCmd = new ALAddVarCodeCommand(this._context, 'extension.createLocalVar', this._alFiles);
+        this._addGlobalVarCmd = new ALAddVarCodeCommand(this._context, 'extension.createGlobalVar', this._alFiles);
     }
 
     public static readonly providedCodeActionKinds = [
@@ -71,9 +71,8 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     }
 
     private async createVarCodeActionForLine(varName: string, local: boolean, document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction> {
-        // TODO Make this work
-        let actionTitle : string = local? `Add local variable ${varName}` : `Add global variable ${varName}`;
-        let action : vscode.CodeAction = new vscode.CodeAction(actionTitle,  vscode.CodeActionKind.QuickFix);
+        let actionTitle: string = local ? `Add local variable ${varName}` : `Add global variable ${varName}`;
+        let action: vscode.CodeAction = new vscode.CodeAction(actionTitle,  vscode.CodeActionKind.QuickFix);
         if (local) {
             this._addLocalVarCmd.local = true;
             this._addLocalVarCmd.varName = varName;

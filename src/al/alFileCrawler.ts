@@ -402,4 +402,17 @@ export module ALFileCrawler {
         let rangeText = getRangeText(range);
         return rangeText.includes('(');
     }
+
+    export function findVariableInsertLine(local: boolean): number {
+        if (local) {
+            var lineNo = ALFileCrawler.findLocalVarSectionEndLineNo(true) + 1;
+        }
+        else {
+            lineNo = ALFileCrawler.findGlobalVarSectionEndLineNo();
+            if (lineNo === -1) {
+                lineNo = ALFileCrawler.findGlobalVarCreationPos();
+            }
+        }
+        return lineNo;
+    }
 }

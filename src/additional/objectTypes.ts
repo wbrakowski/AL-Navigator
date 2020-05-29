@@ -3,6 +3,7 @@ export enum ObjectTypes {
     all = "all",
     table = "table",
     page = "page",
+    testPage = "testPage",
     codeunit = "codeunit",
     report = "report",
     query = "query",
