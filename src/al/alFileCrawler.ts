@@ -136,142 +136,11 @@ export module ALFileCrawler {
      //#endregion
      //#region text checking
 
-    function containsProcedureSigns(text: string) : boolean {
-        let textUpperCase = text.toUpperCase();
-
-        if ((textUpperCase.indexOf("(") < 0) || (textUpperCase.indexOf(")") < 0)) {
-            return false;
-        }
-
-        if (!textUpperCase.endsWith(";")) {
-            return false;
-        }
-
-        if ((textUpperCase.indexOf("PROCEDURE") > -1)  && (textUpperCase.indexOf("TRIGGER") > -1)) {
-            return false;
-        }
-        return true;
-    }
-
     export function isComment(textToCheck : string) : boolean {
         return(textToCheck.includes("//"));
     }
      //#endregion
      //#region text disscetion
-
-
-    export function extractParams(text: string, removeVarFlag: boolean, removeParamType: boolean) : string[] {
-        // TODO: Change this to RegExp
-        let parameterNames : string[] = [];
-        let openingBracketPos : number = text.indexOf("(");
-        let closingBracketPos : number = text.indexOf(")");
-        if (openingBracketPos < -1 || closingBracketPos < -1) {
-            return [];
-        }
-
-        let textBetweenBrackets = text.substring(openingBracketPos + 1, closingBracketPos).trim();
-        let nextCommaPos : number = textBetweenBrackets.indexOf(",");
-        let parameterNameToPush : string = "";
-        if (nextCommaPos > -1) {
-            parameterNameToPush  = textBetweenBrackets.substring(0, nextCommaPos);
-            do {
-                if (parameterNameToPush !== "") {
-                    parameterNames.push(parameterNameToPush);
-                }
-                let lastCommaPos = nextCommaPos;
-                nextCommaPos = textBetweenBrackets.indexOf(",", lastCommaPos + 1);
-                if (nextCommaPos < 0) {
-                    parameterNameToPush = textBetweenBrackets.substr(lastCommaPos + 1, textBetweenBrackets.length - lastCommaPos);
-                    parameterNameToPush = parameterNameToPush.trimLeft();
-                    parameterNames.push(parameterNameToPush);
-                }
-                else  {
-                    parameterNameToPush = textBetweenBrackets.substring(lastCommaPos + 1, nextCommaPos);
-                    parameterNameToPush = parameterNameToPush.trimLeft();
-                }
-                
-            } while (nextCommaPos > -1);
-        }
-        else {
-            if (textBetweenBrackets !== "") {
-                parameterNameToPush = textBetweenBrackets;
-                parameterNames.push(parameterNameToPush);
-            }
-        }
-        return parameterNames;
-    }
-
-    export function extractVarNameFromProcCall(text: string) : string {
-        let variableName : string = "";
-        let dotIndex : number = text.indexOf(".");
-        if (dotIndex > -1) {
-            variableName = text.substring(0 , dotIndex);
-            let equalSign = variableName.indexOf("=");
-            if (equalSign > -1) {
-                variableName = variableName.substr(equalSign + 1);    
-            }
-        }
-
-        return variableName;
-    }
-
-    export function extractLocalVarNames(startLineNo : number, endLineNo : number) : string[] {
-        let localVariables: string[] = new Array();
-
-        let editor = window.activeTextEditor;
-        if (editor) {
-            for (let i = startLineNo; i <= endLineNo; i++) {
-                let currLine : TextLine = editor.document.lineAt(i);
-                let currLineText = currLine.text.trim();
-                let colonIndex : number = currLineText.indexOf(":");
-                let variableName = currLineText.substring(0, colonIndex);
-                if (variableName) {
-                    localVariables.push(variableName);
-                }
-            }
-        }
-        return localVariables;
-    }
-
-    export function extractVars(text: string) : string[] {
-        let vars: string[] = new Array();
-        if (text) {
-            let trimmedText = text.trim();
-            let varNamePattern = '(\\w[a-zA-Z]*)'; // All characters except "
-            let varNameRegExp = new RegExp(varNamePattern, "gi");
-            let varNames = trimmedText.match(varNameRegExp);
-            if (varNames) {
-                for(let i = 0; i < varNames.length; i++) {
-                    if (!ALKeywordHelper.isKeyWord(varNames[i]) && (!varNames[i].includes("(") && !varNames[i].includes("\"") && (!varNames[i].includes(".")))) {
-                        vars.push(varNames[i]);
-                    }
-                }
-            }
-        }
-        return vars;
-    }
-
-    export function extractLocalVarsAndParams() : string[] {
-        let varsAndParams: string[] = new Array();
-        let varSectionStartLineNo : number = findLocalVarSectionStartLineNo() + 1;
-
-        if (varSectionStartLineNo > 0) {
-            let varSectionEndLineNo : number = findLocalVarSectionEndLineNo(false, varSectionStartLineNo);
-            if (varSectionEndLineNo > 0) {
-                varsAndParams = extractLocalVarNames(varSectionStartLineNo, varSectionEndLineNo);
-                let localParams: string[] = extractParamNamesFromSection(varSectionStartLineNo-2);
-                varsAndParams = varsAndParams.concat(localParams);
-            }
-
-        }
-        return varsAndParams;
-    }
-
-    export function extractParamNamesFromSection(paramsLineNo : number) : string[] {
-        let paramLineText = getText(paramsLineNo);
-        return(extractParams(paramLineText, true, true));
-    }
-     //#endregion
 
      export function getText(lineNo : number) : string {
         let editor = window.activeTextEditor;
@@ -281,29 +150,6 @@ export module ALFileCrawler {
         let line = editor.document.lineAt(lineNo);
         return(line.text);
     }
-
-    export function getParamTypeFromLocalVars(paramName: string): string {
-        let editor = window.activeTextEditor;
-        if (!editor) {
-            return "";
-        }
-        let startNo = findLocalVarSectionStartLineNo()+1;
-        if (startNo < 0) {
-            return "";
-        }
-        let endNo = findLocalVarSectionEndLineNo(false, startNo);
-        for (let i = startNo; i <= endNo; i++) {
-            let currLine = editor.document.lineAt(i);
-            let currLineText = currLine.text.toUpperCase(); 
-            let colonIndex : number = currLineText.indexOf(":");
-            if (currLineText.includes(paramName.toUpperCase())) {
-                let paramType = currLine.text.substring(colonIndex + 1, currLine.text.length - 1);
-                return paramType;
-            }
-        }
-        return "";
-    }
-
 
     export function getCurrLineText(): string {
         let editor = window.activeTextEditor;
@@ -361,22 +207,6 @@ export module ALFileCrawler {
         return foundLocalProcLineNo;
     }
 
-    export function getVarNameToDeclare(range: Range | Selection, diagnosticMsg: string): string {
-        let rangeText = ALFileCrawler.getRangeText(range);
-        let currLineDetectedVars = ALFileCrawler.extractVars(rangeText);
-        let localVarsAndParams = ALFileCrawler.extractLocalVarsAndParams();
-
-        for(let i = 0; i< currLineDetectedVars.length; i++) {
-            let detVarIndex = localVarsAndParams.indexOf(currLineDetectedVars[i]);
-            if (detVarIndex < 0 && diagnosticMsg.includes(currLineDetectedVars[i])) {
-                let varNameToDeclare = currLineDetectedVars[i];
-                return varNameToDeclare;
-            }
-        }
-        return "";
-    }
-
-    
     export function findGlobalVarCreationPos(): number {
         let editor = window.activeTextEditor;
         if (!editor) {

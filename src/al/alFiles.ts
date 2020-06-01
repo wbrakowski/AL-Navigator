@@ -95,10 +95,6 @@ import { StringFunctions } from '../additional/stringFunctions';
 
     public async getALVariableByName(varName: string) : Promise<ALVariable | undefined>{
         await this.fillObjects();
-        // if (!this.alObjects) {
-        //     return;
-        // }
-        
         let varNameSearchString = varName;
         let alVariable = new ALVariable(varName);
         
@@ -118,27 +114,7 @@ import { StringFunctions } from '../additional/stringFunctions';
         if (!alObject) {
             alObject = this.alObjects.find(f => varNameSearchString.toUpperCase() === f.shortVarName.toUpperCase());
         }
-        // TODO: Check this one day ;-)
-        // Cannot find 100% match, try to find cloest match
-        // if (!alVariable) {
-        //     let results = this.alObjects.filter(i => varName.toUpperCase().includes(i.longVarName.toUpperCase()));
-        //     let closestDistance = 0;
-        //     for (let i = 0;i < results.length;i++) {
-        //         let distance = StringFunctions.LevenshteinDistance(varName.toUpperCase(), results[i].longVarName.toUpperCase());
-        //         if (closestDistance === 0) {
-        //             closestDistance = distance;
-        //             console.log(closestDistance);
-
-        //             alVariable = results[i];
-        //         }
-        //         else 
-        //             if (distance < closestDistance) {
-        //                 closestDistance = distance;
-        //                 console.log(closestDistance);
-        //                 alVariable = results[i];
-        //         }
-        //     }
-        // }
+        // TODO Split words in title case and check if name can then be found
         if (alObject) {
             alVariable.name = varName;
             if (alObject.objectType.toLowerCase() === ObjectTypes.page) {
@@ -165,68 +141,7 @@ import { StringFunctions } from '../additional/stringFunctions';
         }
         else {
             // Could not find variable long or short name in the al objects list, let's get creative and see if it matches a var type pattern!
-            switch(true) {
-                case ALVarHelper.varNameMatchesBooleanPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Boolean;
-                    alVariable.objectType = "Boolean";
-                    break;
-                case ALVarHelper.varNameMatchesCode10Pattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Code;
-                    alVariable.varValue = `[10]`;
-                    alVariable.objectType = "Code";
-                    break;
-                case ALVarHelper.varNameMatchesCode20Pattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Code;
-                    alVariable.varValue = `[20]`;
-                    alVariable.objectType = "Code";
-                    break;
-                case ALVarHelper.varNameMatchesDatePattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Date;
-                    alVariable.objectType = "Date";
-                    break;
-                case ALVarHelper.varNameMatchesDecimalPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Decimal;
-                    alVariable.objectType = "Decimal";
-                    break;
-                case ALVarHelper.varNameMatchesDialogPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Dialog;
-                    alVariable.objectType = "Dialog";
-                    break;
-                case ALVarHelper.varNameMatchesIntegerPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Integer;
-                    alVariable.objectType = "Integer";
-                    break;
-                case ALVarHelper.varNameMatchesLabelPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Label;
-                    // let labelValue = await vscode.window.showInputBox({ placeHolder: `Type value for label` });
-                    // alVariable.varValue = labelValue ? labelValue : '';
-                    alVariable.objectType = "Label";
-                    break;
-                case ALVarHelper.varNameMatchesOptionPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Option;
-                    alVariable.objectType = "Option";
-                    break;
-                case ALVarHelper.varNameMatchesRecordIDPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.RecordId;
-                    alVariable.objectType = "RecordID";
-                    break;
-                case ALVarHelper.varNameMatchesRecordRefPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.RecordRef;
-                    alVariable.objectType = "RecordRef";
-                    break;
-                case ALVarHelper.varNameMatchesTextPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Text;
-                    alVariable.objectType = "Text";
-                    break;
-                case ALVarHelper.varNameMatchesTimePattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Time;
-                    alVariable.objectType = "Time";
-                    break;
-                case ALVarHelper.varNameMatchesVariantPattern(varNameSearchString):
-                    alVariable.varType = ALVarTypes.Variant;
-                    alVariable.objectType = "Variant";
-                    break;
-            }
+            ALVarHelper.varNameMatchesPattern(alVariable, varNameSearchString);
         }
 
         return alVariable;

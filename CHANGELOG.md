@@ -96,3 +96,6 @@ Bugfixing
 - More variables can be automatically created if their name matches specific patterns (Dates, Dialogs, Booleans, Labels...)
 
 ## [0.3.0]
+
+- Recognized Pages can also be TestPages -> Show a list where the user can select
+- User now has the possibility to use placeholders and then change the variable name to recommended var name

@@ -32,12 +32,16 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         let lineNo: number = ALFileCrawler.findVariableInsertLine(this.local);
 
         let alVariable = await this.createALVariable(this.varName);
+        let varNameOriginal = "";
         if (!alVariable) {
             return;
         }
         else {
             alVariable.isLocal = this.local;
+            varNameOriginal = alVariable.name;
         }
+
+        
 
         if (!alVariable.objectType) {
             var varTypeSelected = await this.selectVarTypeManually(alVariable);
@@ -51,7 +55,23 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         content += '\n';
         let editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
 
+        let newVarName: string = "";
+        
+        if (varNameOriginal !== alVariable.name) {
+            // User decided to change the variable name to the suggested variable name -> replace the existing range text
+            newVarName = alVariable.name;
+        }
+
         if (editor) {
+            if (newVarName !== "") {
+                // TODO
+                await editor.edit(editBuilder => {
+                    let startCharacter = range.start.character - varNameOriginal.length;
+                    let startPos = new vscode.Position(range.start.line, startCharacter);
+                    let replaceRange = new vscode.Range(startPos, range.end);
+                    editBuilder.replace(replaceRange, newVarName);
+                }); 
+            }
             await editor.edit(editBuilder => {
                 let pos = new vscode.Position(lineNo, 0);
                 editBuilder.insert(pos, content);
@@ -219,6 +239,17 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                 if (selectedObject) {
                     alVariable.objectType = objectType === ObjectTypes.table ? "Record" : StringFunctions.titleCaseWord(objectType);
                     alVariable.objectName = selectedObject;
+                    let suggestedVarNameLong = alVariable.isTemporary ? "Temp" + ALVarHelper.getLongVarName(selectedObject) : ALVarHelper.getLongVarName(selectedObject);
+                    let suggestedVarNameShort = alVariable.isTemporary ? "Temp" + ALVarHelper.getShortVarName(selectedObject) : ALVarHelper.getShortVarName(selectedObject);
+                    let suggestedVarNames: string[] = suggestedVarNameLong !== suggestedVarNameShort ? 
+                        [alVariable.name, suggestedVarNameLong, suggestedVarNameShort] : [alVariable.name, suggestedVarNameLong];
+                    let selectedVarName = await vscode.window.showQuickPick(suggestedVarNames, {
+                        canPickMany: false,
+                        placeHolder: 'Select variable name'
+                    });
+                    if (selectedVarName) {
+                        alVariable.name = selectedVarName;
+                    }
                 }
                 else {
                     return false;
