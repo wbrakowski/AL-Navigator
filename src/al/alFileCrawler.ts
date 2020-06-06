@@ -105,7 +105,7 @@ export module ALFileCrawler {
         return endLineNo;
     }
 
-    export function findNextTextLineNo(text: string, findLastNo: boolean, startNo?: number, endNo?: number, excludesText?: string) : number
+    export function findNextTextLineNo(text: string, findLastNo: boolean, startingFromBottom: boolean, startNo?: number, endNo?: number, excludesText?: string) : number
     {
         let editor = window.activeTextEditor;
          if (!editor) {
@@ -115,18 +115,38 @@ export module ALFileCrawler {
          let endLineNo = endNo !== undefined ? endNo : editor.document.lineCount;
          let foundLineNo = -1;
          let ignoreLine;
-         for (let i = currLineNo; i < endLineNo; i++) {
-             let currLine = editor.document.lineAt(i);
-             let currLineText = currLine.text.toUpperCase().trimLeft();
-             if (currLineText.includes(text)) {
-                 if (excludesText){
-                     ignoreLine = currLineText.includes(excludesText);
-                 }
-                 if (!ignoreLine) {
+         if (startingFromBottom) {
+            for (let i = currLineNo - 3; i > 0; i--) {
+                let currLine = editor.document.lineAt(i);
+                let currLineText = currLine.text.toUpperCase().trimLeft();
+                if (currLineText.includes(text)) {
+                    if (excludesText){
+                        ignoreLine = currLineText.includes(excludesText);
+                    }
+                    if (!ignoreLine) {
                     foundLineNo = i; 
                     if (!findLastNo) {
                         return foundLineNo;
                     }
+                    }
+                }
+            }
+
+         }
+         else {
+             for (let i = currLineNo; i < endLineNo; i++) {
+                 let currLine = editor.document.lineAt(i);
+                 let currLineText = currLine.text.toUpperCase().trimLeft();
+                 if (currLineText.includes(text)) {
+                     if (excludesText){
+                         ignoreLine = currLineText.includes(excludesText);
+                     }
+                     if (!ignoreLine) {
+                     foundLineNo = i; 
+                     if (!findLastNo) {
+                         return foundLineNo;
+                     }
+                     }
                  }
              }
          }

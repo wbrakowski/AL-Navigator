@@ -5,43 +5,48 @@ export module FileJumper {
    export function jumpToNextDataItem() {
         let text : string = "DATAITEM(";        
         let excludeText : string = 'ON';
-        jumpToNextTextOccurence(text, excludeText);
+        jumpToNextTextOccurence(text, false, excludeText);
    }
+   export function jumpToNextDataItemFromBottom() {
+     let text : string = "DATAITEM(";        
+     let excludeText : string = 'ON';
+     jumpToNextTextOccurence(text, true, excludeText);
+}
 
    export function jumpToNextOnAfterGetRecordTrigger(){
         let text : string = "TRIGGER ONAFTERGETRECORD(";
-        jumpToNextTextOccurence(text);
+        jumpToNextTextOccurence(text, false);
    }
 
    export function jumpToKeys(){
         let text : string = "KEYS";
-        jumpToNextTextOccurence(text);
+        jumpToNextTextOccurence(text, false);
    }
 
    export function jumpToNextTrigger(){
         let text : string = "TRIGGER ON";
-        jumpToNextTextOccurence(text);
+        jumpToNextTextOccurence(text,false);
    }
 
    export function jumpToNextOnDeleteTrigger(){
      let text : string = "TRIGGER ONDELETE";
-     jumpToNextTextOccurence(text);
+     jumpToNextTextOccurence(text, false);
      }
 
      export function jumpToNextOnModifyTrigger(){
           let text : string = "TRIGGER ONMODIFY";
-          jumpToNextTextOccurence(text);
+          jumpToNextTextOccurence(text, false);
      }
      export function jumpToNextOnInsertTrigger(){
           let text : string = "TRIGGER ONINSERT";
-          jumpToNextTextOccurence(text);
+          jumpToNextTextOccurence(text, false);
      }
 
    export function jumpToNextActions(){
      //    let text : string = "ACTIONS";
         let text : string = "ACTION(";
         let excludeText : string = 'TRIGGER';
-        jumpToNextTextOccurence(text, excludeText);
+        jumpToNextTextOccurence(text, false, excludeText);
    }
 
    export function jumpToLastLocalVarLine() {
@@ -60,11 +65,21 @@ export module FileJumper {
      }
  }
 
-   export function jumpToNextTextOccurence(text: string, excludeText?: string)
+   export function jumpToNextTextOccurence(text: string, startingFromBottom: boolean, excludeText?: string)
    {
-       let lineNo: number = ALFileCrawler.findNextTextLineNo(text, false, undefined, undefined, excludeText);
+       let lineNo: number = ALFileCrawler.findNextTextLineNo(text, false, startingFromBottom, undefined, undefined, excludeText);
        if (lineNo === -1) {
-            lineNo = ALFileCrawler.findNextTextLineNo(text, false, 0);
+            if (startingFromBottom) {
+                 if (window.activeTextEditor) {
+                      lineNo = window.activeTextEditor.document.lineCount - 1;
+                 }
+                 else {
+                      return;
+                 }
+            }
+            else {
+                 lineNo = ALFileCrawler.findNextTextLineNo(text, false, startingFromBottom, 0);
+            }
        }
         jumpToLine(lineNo);
     }
