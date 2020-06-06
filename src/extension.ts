@@ -14,8 +14,12 @@ export function activate(context: vscode.ExtensionContext) {
 	CustomConsole.customConsole = vscode.window.createOutputChannel("AL Navigator");
 	console.log('Congratulations, AL Navigator is ready to rumble!');
 
-	let jumpToNextdataItemCmd = commands.registerCommand("extension.DataItem", () => {
+	let jumpToNextDataItemCmd = commands.registerCommand("extension.DataItem", () => {
 		FileJumper.jumpToNextDataItem();
+	});
+
+	let jumpToNextDataItemBottomCmd = commands.registerCommand("extension.DataItemBottom", () => {
+		FileJumper.jumpToNextDataItemFromBottom();
 	});
 
 	let jumpToOnAfterGetRecCmd = commands.registerCommand("extension.OnAfterGetRecord", () => {
@@ -59,7 +63,8 @@ export function activate(context: vscode.ExtensionContext) {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
 	
-	context.subscriptions.push(jumpToNextdataItemCmd);
+	context.subscriptions.push(jumpToNextDataItemCmd);
+	context.subscriptions.push(jumpToNextDataItemBottomCmd);
 	context.subscriptions.push(jumpToOnAfterGetRecCmd);
 	context.subscriptions.push(jumpToNextTriggerCmd);
 	context.subscriptions.push(jumpToKeysCmd);

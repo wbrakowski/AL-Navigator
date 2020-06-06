@@ -64,7 +64,6 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
 
         if (editor) {
             if (newVarName !== "") {
-                // TODO
                 await editor.edit(editBuilder => {
                     let startCharacter = range.start.character - varNameOriginal.length;
                     let startPos = new vscode.Position(range.start.line, startCharacter);
@@ -249,6 +248,9 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                     });
                     if (selectedVarName) {
                         alVariable.name = selectedVarName;
+                    }
+                    else {
+                        return false;
                     }
                 }
                 else {

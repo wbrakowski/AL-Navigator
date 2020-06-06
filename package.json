@@ -34,6 +34,7 @@
 	],
 	"activationEvents": [
 		"onCommand:extension.DataItem",
+		"onCommand:extension.DataItemBottom",
 		"onCommand:extension.OnAfterGetRecord",
 		"onCommand:extension.Trigger",
 		"onCommand:extension.Keys",
@@ -45,7 +46,11 @@
 		"commands": [
 			{
 				"command": "extension.DataItem",
-				"title": "AL Navigator: Next DataItem"
+				"title": "AL Navigator: Next DataItem (starting from top)"
+			},
+			{
+				"command": "extension.DataItemBottom",
+				"title": "AL Navigator: Next DataItem (starting from bottom)"
 			},
 			{
 				"command": "extension.OnAfterGetRecord",
@@ -88,6 +93,10 @@
 			{
 				"command": "extension.DataItem",
 				"key": "ctrl+alt+d"
+			},
+			{
+				"command": "extension.DataItemBottom",
+				"key": "shift+alt+d"
 			},
 			{
 				"command": "extension.OnAfterGetRecord",
