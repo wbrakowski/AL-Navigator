@@ -27,7 +27,7 @@
 		"url": "https://github.com/wbrakowski/AL-Navigator/issues"
 	},
 	"engines": {
-		"vscode": "^1.39.0"
+		"vscode": "^1.40.0"
 	},
 	"categories": [
 		"Other"
