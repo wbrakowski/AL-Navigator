@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ALFile} from './alFile';
+import { ALFile } from './alFile';
 import { ALObject } from './alObject';
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { UpdateTypes } from '../additional/updateTypes';
@@ -9,17 +9,17 @@ import { ObjectTypes } from '../additional/objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALVarTypes } from '../additional/alVarTypes';
 import { StringFunctions } from '../additional/stringFunctions';
-     
-  export class ALFiles {
+
+export class ALFiles {
     populatedFromCache: boolean = false;
     private _document: vscode.TextDocument | undefined;
     set document(doc: vscode.TextDocument | undefined) {
         this._document = doc;
     }
-    get document() : vscode.TextDocument | undefined {
+    get document(): vscode.TextDocument | undefined {
         return this._document;
     }
-    public workspaceALFiles: ALFile[] = new Array(); 
+    public workspaceALFiles: ALFile[] = new Array();
     public alObjects: ALObject[] = new Array();
 
     constructor() {
@@ -44,7 +44,7 @@ import { StringFunctions } from '../additional/stringFunctions';
         });
     }
 
-    private getCurrentWorkspaceFolder(): vscode.WorkspaceFolder | undefined{
+    private getCurrentWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
         if (vscode.workspace.workspaceFolders) {
             let workspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.workspace.workspaceFolders[0].uri);
             let activeTextEditorDocumentUri = null;
@@ -55,14 +55,14 @@ import { StringFunctions } from '../additional/stringFunctions';
             } catch (error) {
                 activeTextEditorDocumentUri = null;
             }
-            if (activeTextEditorDocumentUri) { 
+            if (activeTextEditorDocumentUri) {
                 workspaceFolder = activeTextEditorDocumentUri;
             }
             return workspaceFolder;
         }
     }
-       
-    private getAlFilesFromCurrentWorkspace(searchPattern : string) {
+
+    private getAlFilesFromCurrentWorkspace(searchPattern: string) {
         let activeTextEditorDocumentUri = this.getCurrentWorkspaceFolder();
 
         if (activeTextEditorDocumentUri) {
@@ -72,32 +72,32 @@ import { StringFunctions } from '../additional/stringFunctions';
         }
     }
 
-    private populateALFilesArray() : void {
-        let workspaceALFiles : ALFile[] = new Array();    
-        let searchPattern : string = '**/*.al*';
+    private populateALFilesArray(): void {
+        let workspaceALFiles: ALFile[] = new Array();
+        let searchPattern: string = '**/*.al*';
         this.getAlFilesFromCurrentWorkspace(searchPattern).then(Files => {
             try {
                 Files.forEach(file => {
-                    let workspaceALFile : ALFile = new ALFile(file);
+                    let workspaceALFile: ALFile = new ALFile(file);
                     workspaceALFile.alObject.workspaceFile = true;
                     workspaceALFile.alObject.fsPath = file.fsPath;
                     workspaceALFiles.push(workspaceALFile);
                     this.alObjects.push(workspaceALFile.alObject);
                     // console.log(workspaceALFile.alObject);
                 });
-                } 
+            }
             catch (error) {
                 vscode.window.showErrorMessage(error.message);
             }
-        });    
+        });
         this.workspaceALFiles = workspaceALFiles;
     }
 
-    public async getALVariableByName(varName: string) : Promise<ALVariable | undefined>{
+    public async getALVariableByName(varName: string): Promise<ALVariable | undefined> {
         await this.fillObjects();
         let varNameSearchString = varName;
         let alVariable = new ALVariable(varName);
-        
+
         // Check if string starts with temp
         let indexTemp = varName.toUpperCase().indexOf('TEMP');
         if (indexTemp === 0) {
@@ -109,7 +109,7 @@ import { StringFunctions } from '../additional/stringFunctions';
         if (!isNaN(+lastChar)) {
             varNameSearchString = varNameSearchString.substr(0, varNameSearchString.length - 1);
         }
-       
+
         let alObject = this.alObjects.find(i => varNameSearchString.toUpperCase() === i.longVarName.toUpperCase());
         if (!alObject) {
             alObject = this.alObjects.find(f => varNameSearchString.toUpperCase() === f.shortVarName.toUpperCase());
@@ -124,7 +124,7 @@ import { StringFunctions } from '../additional/stringFunctions';
                     placeHolder: 'Select page type'
                 });
                 switch (selectedType) {
-                    case ("Page"): 
+                    case ("Page"):
                         alVariable.objectType = "Page";
                         break;
                     case ("TestPage"):
@@ -163,7 +163,7 @@ import { StringFunctions } from '../additional/stringFunctions';
                 }
             }
         }
-        let workspaceALFile : ALFile = new ALFile(uri);
+        let workspaceALFile: ALFile = new ALFile(uri);
         this.workspaceALFiles.push(workspaceALFile);
         this.alObjects.push(workspaceALFile.alObject);
     }
@@ -238,7 +238,7 @@ import { StringFunctions } from '../additional/stringFunctions';
         let objects: string[] = [];
         let checkString = objectType === ObjectTypes.table ? "RECORD" : objectType.toUpperCase();
         let filteredObjects = this.alObjects.filter(obj => obj.objectType.toUpperCase() === checkString);
-        for(let i = 0; i < filteredObjects.length-1; i++) {
+        for (let i = 0; i < filteredObjects.length - 1; i++) {
             objects.push(filteredObjects[i].objectName);
         }
         return objects;
@@ -251,7 +251,10 @@ import { StringFunctions } from '../additional/stringFunctions';
             alObject.objectType = objectType === ObjectTypes.table ? 'Record' : StringFunctions.titleCaseWord(objectType);
             alObject.longVarName = ALVarHelper.getLongVarName(alObject.objectName);
             alObject.shortVarName = ALVarHelper.getShortVarName(alObject.objectName);
-            this.alObjects.push(alObject);
+            // TODO This should not be necessary but let's avoid that there are multiple entries for the same object
+            if (!this.alObjects.find(i => alObject.objectType === i.objectType && alObject.objectName === i.objectName)) {
+                this.alObjects.push(alObject);
+            };
         }
     }
 
