@@ -3,58 +3,58 @@ import { ALVariable } from "./alVariable";
 import { ALVarTypes } from "../additional/alVarTypes";
 
 export module ALVarHelper {
-    export function getVariableTypeList(): string[] {
-      return ['array', 'Action', 
-              'BigInteger', 'BigText', 'Boolean', 'Byte',
-              'Char', 'ClientType', 'Code', 'Codeunit', 'ControlAddIn',
-              'DataClassification', 'DataScope', 'Date', 'DateFormula', 'DateTime','Decimal', 'DefaultLayout', 'Dialog', 'Dictionary', 'DotNet', 'Duration',
-              'Enum', 'ErrorInfo', 'ErrorType', 'ExecutionContext', 'ExecutionMode',
-              'FieldClass', 'FieldRef', 'FieldType', 'File', 'FilterPageBuilder',
-              'Guid',
-              'HttpClient', 'HttpContent', 'HttpHeaders', 'HttpRequestMessage', 'HttpResponseMessage',
-              'Instream', 'Integer',
-              'Interface',
-              'JsonArray', 'JsonObject', 'JsonToken', 'JsonValue',
-              'KeyRef',
-              'Label', 'List', 
-              'ModuleDependencyInfo', 'ModuleInfo',
-              'Notification', 'NotificationScope',
-              'ObjectType', 'Option', 'OutStream',
-              'Page', 'PageBackgroundTaskErrorLevel',
-              'Query',
-              'Record', 'RecordId', 'RecordRef', 'Report', 'ReportFormat',
-              'SecurityFilter', 'SessionSettings',
-              'TableConnectionType', 'TestPage', 'TestPermissions', 'Text', 'TextBuilder', 'TextConst', 'TextEncoding', 'Time', 'TransactionModel', 'TransactionType',
-              'Variant', 'Verbosity', 'Version',
-              'WebServiceActionConText', 'WebServiceActionResultCode',
-              'XmlAttribute', 'XmlAttributeCollection', 'XmlCData', 'XmlComment', 'XmlDeclaration', 'XmlDocument', 'XmlDocumentType', 'XmlElement', 'XmlNamespaceManager', 'XmlNameTable', 'XmlNode', 'XmlNodeList', 'XmlPort', 'XmlProcessingInstruction', 'XmlReadOptions', 'XmlText', 'XmlWriteOptions'
-              ];
+  export function getVariableTypeList(): string[] {
+    return ['array', 'Action',
+      'BigInteger', 'BigText', 'Boolean', 'Byte',
+      'Char', 'ClientType', 'Code', 'Codeunit', 'ControlAddIn',
+      'DataClassification', 'DataScope', 'Date', 'DateFormula', 'DateTime', 'Decimal', 'DefaultLayout', 'Dialog', 'Dictionary', 'DotNet', 'Duration',
+      'Enum', 'ErrorInfo', 'ErrorType', 'ExecutionContext', 'ExecutionMode',
+      'FieldClass', 'FieldRef', 'FieldType', 'File', 'FilterPageBuilder',
+      'Guid',
+      'HttpClient', 'HttpContent', 'HttpHeaders', 'HttpRequestMessage', 'HttpResponseMessage',
+      'Instream', 'Integer',
+      'Interface',
+      'JsonArray', 'JsonObject', 'JsonToken', 'JsonValue',
+      'KeyRef',
+      'Label', 'List',
+      'ModuleDependencyInfo', 'ModuleInfo',
+      'Notification', 'NotificationScope',
+      'ObjectType', 'Option', 'OutStream',
+      'Page', 'PageBackgroundTaskErrorLevel',
+      'Query',
+      'Record', 'RecordId', 'RecordRef', 'Report', 'ReportFormat',
+      'SecurityFilter', 'SessionSettings',
+      'TableConnectionType', 'TestPage', 'TestPermissions', 'Text', 'TextBuilder', 'TextConst', 'TextEncoding', 'Time', 'TransactionModel', 'TransactionType',
+      'Variant', 'Verbosity', 'Version',
+      'WebServiceActionConText', 'WebServiceActionResultCode',
+      'XmlAttribute', 'XmlAttributeCollection', 'XmlCData', 'XmlComment', 'XmlDeclaration', 'XmlDocument', 'XmlDocumentType', 'XmlElement', 'XmlNamespaceManager', 'XmlNameTable', 'XmlNode', 'XmlNodeList', 'XmlPort', 'XmlProcessingInstruction', 'XmlReadOptions', 'XmlText', 'XmlWriteOptions'
+    ];
   }
 
   export function getLongVarName(objectName: string): string {
-      return objectName.replace(/\W/g, "");
-      // StringFunctions.removeSpecialChars(objectName);
+    return objectName.replace(/\W/g, "");
+    // StringFunctions.removeSpecialChars(objectName);
   }
 
   // Thanks to Rasmus Aaen!
 
-  export function getShortVarName(objectName: string): string{
-      let short: string = objectName.replace(/"/g, "");
-      let words: string[] = [];
-      let matched = short.match(/[A-Z][a-z]*|[a-z]+/g);
-      if (matched) {
-          for (let i=0;i < matched.length; i++) {
-              words[i] = matched[i];
-          }
+  export function getShortVarName(objectName: string): string {
+    let short: string = objectName.replace(/"/g, "");
+    let words: string[] = [];
+    let matched = short.match(/[A-Z][a-z]*|[a-z]+/g);
+    if (matched) {
+      for (let i = 0; i < matched.length; i++) {
+        words[i] = matched[i];
       }
-      else {
-          return "";
-      }
-      
-      short = words.join(" ");
-      words = short.split(" ");
+    }
+    else {
+      return "";
+    }
 
-      words.forEach((word, i) => {
+    short = words.join(" ");
+    words = short.split(" ");
+
+    words.forEach((word, i) => {
 
       switch (word.toUpperCase()) {
         case "ABSENCE":
@@ -1225,8 +1225,8 @@ export module ALVarHelper {
           words[i] = "Mgr";
           break;
 
-        }
-      });
+      }
+    });
 
     short = words.join("");
     return short;
@@ -1262,7 +1262,7 @@ export module ALVarHelper {
     let patternStrings: string[] = [
       // "QST", "ERR", "MSG"//, "TXT", "TEXT"
     ];
-    for(let i = 0;i < patternStrings.length - 1; i++) {
+    for (let i = 0; i < patternStrings.length - 1; i++) {
       if (varName.toUpperCase().endsWith(patternStrings[i])) {
         return true;
       }
@@ -1368,13 +1368,13 @@ export module ALVarHelper {
   }
 
   export function patternMatches(varName: string, exactMatchStrings: string[], onlyIncludesStrings?: string[]): boolean {
-    for(let i = 0;i < exactMatchStrings.length; i++) {
+    for (let i = 0; i < exactMatchStrings.length; i++) {
       if (varName.toUpperCase() === (exactMatchStrings[i])) {
         return true;
       }
     }
     if (onlyIncludesStrings) {
-      for(let i = 0;i < onlyIncludesStrings.length; i++) {
+      for (let i = 0; i < onlyIncludesStrings.length; i++) {
         if (varName.toUpperCase().includes(onlyIncludesStrings[i])) {
           return true;
         }
@@ -1386,71 +1386,71 @@ export module ALVarHelper {
   export function varNameMatchesPattern(alVariable: ALVariable, varName: string) {
     // TODO Also use the includePatterns!
     let patternMatchCounter = 0;
-      if (varNameMatchesBooleanPattern(varName)) {
-          alVariable.varType = ALVarTypes.Boolean;
-          patternMatchCounter += 1;
-      }
-      if (varNameMatchesCode10Pattern(varName)) {
-          alVariable.varType = ALVarTypes.Code;
-          alVariable.varValue = `[10]`;
-          patternMatchCounter += 1;
-      }
-      if (varNameMatchesCode20Pattern(varName)) {
-          alVariable.varType = ALVarTypes.Code;
-          alVariable.varValue = `[20]`;
-          patternMatchCounter += 1;
-      }
-      if (varNameMatchesDatePattern(varName)) {
-        alVariable.varType = ALVarTypes.Date;
-        patternMatchCounter += 1;
-      }
-        
-      if (varNameMatchesDecimalPattern(varName)) {
-          alVariable.varType = ALVarTypes.Decimal;
-          patternMatchCounter += 1;
-        }
-      if (varNameMatchesDialogPattern(varName)) {
-          alVariable.varType = ALVarTypes.Dialog;
-          patternMatchCounter += 1;
-      }
-      if (varNameMatchesIntegerPattern(varName)) {
-          alVariable.varType = ALVarTypes.Integer;
-          patternMatchCounter += 1;
-      }
-      if (varNameMatchesLabelPattern(varName)) {
-        alVariable.varType = ALVarTypes.Label;
-          // let labelValue = await vscode.window.showInputBox({ placeHolder: `Type value for label` });
-          // alVariable.varValue = labelValue ? labelValue : '';
-          patternMatchCounter += 1;
-      }
-      if (varNameMatchesOptionPattern(varName)) {
-        alVariable.varType = ALVarTypes.Option;
-        patternMatchCounter += 1;
-      }
-      if (varNameMatchesRecordIDPattern(varName)) {
-        alVariable.varType = ALVarTypes.RecordId;
-        patternMatchCounter += 1;
-      }
-      if (varNameMatchesRecordRefPattern(varName)) {
-        alVariable.varType = ALVarTypes.RecordRef;
-        patternMatchCounter += 1;
-      }
-      if (varNameMatchesTextPattern(varName)) {
-        alVariable.varType = ALVarTypes.Text;
-        patternMatchCounter += 1;
-      }
-      if (varNameMatchesTimePattern(varName)) {
-        alVariable.varType = ALVarTypes.Time;
-        patternMatchCounter += 1;
-      }
-      if (varNameMatchesVariantPattern(varName)) {
-        alVariable.varType = ALVarTypes.Variant;
-        patternMatchCounter += 1;
-      }
-      if (patternMatchCounter > 1) {
-        alVariable.varType = undefined;
-        alVariable.varValue = "";
-      }
+    if (varNameMatchesBooleanPattern(varName)) {
+      alVariable.varType = ALVarTypes.Boolean;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesCode10Pattern(varName)) {
+      alVariable.varType = ALVarTypes.Code;
+      alVariable.varValue = `[10]`;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesCode20Pattern(varName)) {
+      alVariable.varType = ALVarTypes.Code;
+      alVariable.varValue = `[20]`;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesDatePattern(varName)) {
+      alVariable.varType = ALVarTypes.Date;
+      patternMatchCounter += 1;
+    }
+
+    if (varNameMatchesDecimalPattern(varName)) {
+      alVariable.varType = ALVarTypes.Decimal;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesDialogPattern(varName)) {
+      alVariable.varType = ALVarTypes.Dialog;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesIntegerPattern(varName)) {
+      alVariable.varType = ALVarTypes.Integer;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesLabelPattern(varName)) {
+      alVariable.varType = ALVarTypes.Label;
+      // let labelValue = await vscode.window.showInputBox({ placeHolder: `Type value for label` });
+      // alVariable.varValue = labelValue ? labelValue : '';
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesOptionPattern(varName)) {
+      alVariable.varType = ALVarTypes.Option;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesRecordIDPattern(varName)) {
+      alVariable.varType = ALVarTypes.RecordId;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesRecordRefPattern(varName)) {
+      alVariable.varType = ALVarTypes.RecordRef;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesTextPattern(varName)) {
+      alVariable.varType = ALVarTypes.Text;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesTimePattern(varName)) {
+      alVariable.varType = ALVarTypes.Time;
+      patternMatchCounter += 1;
+    }
+    if (varNameMatchesVariantPattern(varName)) {
+      alVariable.varType = ALVarTypes.Variant;
+      patternMatchCounter += 1;
+    }
+    if (patternMatchCounter > 1) {
+      alVariable.varType = undefined;
+      alVariable.varValue = "";
+    }
   }
 }
 
