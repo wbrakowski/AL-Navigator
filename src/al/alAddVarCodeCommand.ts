@@ -6,9 +6,11 @@ import { TextBuilder } from '../additional/textBuilder';
 import { ObjectTypes } from '../additional/objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALFiles } from './alFiles';
-import { ALVarTypes } from '../additional/alVarTypes';
+import { ALVarTypes } from './alVarTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 import { FileJumper } from '../additional/fileJumper';
+import { strict } from 'assert';
+// import { Settings } from '../additional/Settings';
 
 
 export class ALAddVarCodeCommand extends ALCodeCommand {
@@ -16,10 +18,22 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
     public local: boolean = false;
     public document: vscode.TextDocument | undefined;
     protected _alFiles: ALFiles;
+    protected _ignoreALPrefixUpperCase: string = '';
+    protected _ignoreALSuffixUpperCase: string = '';
 
     constructor(context: vscode.ExtensionContext, commandName: string, alFiles: ALFiles) {
         super(context, commandName);
         this._alFiles = alFiles;
+        // TODO Save the configuration and only get it if it changes (use a watcher)
+        let config = vscode.workspace.getConfiguration('alNavigator');
+        let ignoreALPrefix = config.get('ignoreALPrefix');
+        let ignoreALSuffix = config.get('ignoreALSuffix');
+        if (typeof ignoreALPrefix == 'string') {
+            this._ignoreALPrefixUpperCase = ignoreALPrefix.toUpperCase();
+        }
+        if (typeof ignoreALSuffix == 'string') {
+            this._ignoreALSuffixUpperCase = ignoreALSuffix.toUpperCase();
+        }
     }
 
     protected async runAsync(range: vscode.Range) {
@@ -40,6 +54,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         else {
             alVariable.isLocal = this.local;
             varNameOriginal = alVariable.name;
+            alVariable.ignoreALPrefix = this._ignoreALPrefixUpperCase;
+            alVariable.ignoreALSuffix = this._ignoreALSuffixUpperCase;
         }
 
 
@@ -49,6 +65,9 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             if (!varTypeSelected) {
                 return;
             }
+        }
+        else {
+            alVariable.typeAutomaticallyDetected = true;
         }
 
         let varDeclaration = TextBuilder.buildVarDeclaration(range, alVariable);
@@ -95,7 +114,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             return;
         }
         else {
-            let alVar = await this._alFiles.getALVariableByName(varName);
+            let alVar = await this._alFiles.getALVariableByName(varName, this._ignoreALPrefixUpperCase, this._ignoreALSuffixUpperCase);
             return alVar;
         }
     }
@@ -251,6 +270,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                     alVariable.objectName = selectedObject;
                     let suggestedVarNameLong = alVariable.isTemporary ? "Temp" + ALVarHelper.getLongVarName(selectedObject) : ALVarHelper.getLongVarName(selectedObject);
                     let suggestedVarNameShort = alVariable.isTemporary ? "Temp" + ALVarHelper.getShortVarName(selectedObject) : ALVarHelper.getShortVarName(selectedObject);
+                    suggestedVarNameLong = StringFunctions.removePrefixAndSuffixFromVariableName(suggestedVarNameLong, this._ignoreALPrefixUpperCase, this._ignoreALSuffixUpperCase);
+                    suggestedVarNameShort = StringFunctions.removePrefixAndSuffixFromVariableName(suggestedVarNameShort, this._ignoreALPrefixUpperCase, this._ignoreALSuffixUpperCase);
                     let suggestedVarNames: string[] = suggestedVarNameLong !== suggestedVarNameShort ?
                         [alVariable.name, suggestedVarNameLong, suggestedVarNameShort] : [alVariable.name, suggestedVarNameLong];
                     let selectedVarName = await vscode.window.showQuickPick(suggestedVarNames, {

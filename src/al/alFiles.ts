@@ -7,7 +7,7 @@ import { ALVariable } from './alVariable';
 import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
 import { ObjectTypes } from '../additional/objectTypes';
 import { ALVarHelper } from './alVarHelper';
-import { ALVarTypes } from '../additional/alVarTypes';
+import { ALVarTypes } from './alVarTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 
 export class ALFiles {
@@ -93,7 +93,7 @@ export class ALFiles {
         this.workspaceALFiles = workspaceALFiles;
     }
 
-    public async getALVariableByName(varName: string): Promise<ALVariable | undefined> {
+    public async getALVariableByName(varName: string, ignorePrefix: string, ignoreSuffix: string): Promise<ALVariable | undefined> {
         await this.fillObjects();
         let varNameSearchString = varName;
         let alVariable = new ALVariable(varName);
@@ -155,17 +155,20 @@ export class ALFiles {
             case UpdateTypes.delete:
             case UpdateTypes.modify: {
                 if (uri.fsPath !== "") {
-                    let deleteIndex = this.alObjects.findIndex(i => i.fsPath === uri.fsPath);
-                    if (deleteIndex > 0) {
-                        this.alObjects.splice(deleteIndex, 1);
-                    }
+                    // this does not work for some reason
+                    // let deleteIndex = this.alObjects.findIndex(i => i.fsPath === uri.fsPath);
+                    // if (deleteIndex > 0) {
+                    //     this.alObjects.splice(deleteIndex, 1);
+                    // }
 
                 }
             }
         }
         let workspaceALFile: ALFile = new ALFile(uri);
-        this.workspaceALFiles.push(workspaceALFile);
-        this.alObjects.push(workspaceALFile.alObject);
+        if (!this.alObjects.find(i => workspaceALFile.alObject.objectType === i.objectType && workspaceALFile.alObject.objectName === i.objectName)) {
+            this.workspaceALFiles.push(workspaceALFile);
+            this.alObjects.push(workspaceALFile.alObject);
+        }
     }
 
     public getRelevantDiagnosticOfCurrentPosition(range: vscode.Range) {

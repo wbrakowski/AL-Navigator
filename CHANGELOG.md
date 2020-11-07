@@ -4,10 +4,15 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## Release Notes
 
+## [0.3.1]
+- New configuration settings: ignoreALPrefix, ignoreALSuffix
+- Prefixes and Suffixes will be removed from suggested variable names
+- Fixed bug that adds multiple entries for the same object to the object selection list
+
 ## [0.3.0]
 
 - Recognized Pages can also be TestPages -> Show a list where the user can select
-- User now has the possibility to use placeholders and then change the variable name to recommended var name
+- User now has the possibility to use placeholders and then change the variable name to suggested var name
 - New shortcut Jump through Data items starting from buttom
 
 ## [0.2.9]
