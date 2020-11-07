@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables like a boss and navigate through al files with awesome shortcuts.",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -133,6 +133,24 @@
 			{
 				"command": "extension.LastGlobalVarLine",
 				"key": "ctrl+alt+g"
+			}
+		],
+		"configuration": [
+			{
+				"type": "object",
+				"title": "AL Navigator Configuration",
+				"properties": {
+					"alNavigator.ignoreALPrefix": {
+						"type": "string",
+						"default": "",
+						"description": "Remove prefix's from suggested variable names."
+					},
+					"alNavigator.ignoreALSuffix": {
+						"type": "string",
+						"default": "",
+						"description": "Remove suffix's from suggested variable names."
+					}
+				}
 			}
 		]
 	},

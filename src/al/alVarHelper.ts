@@ -1,6 +1,6 @@
 import { StringFunctions } from "../additional/stringFunctions";
 import { ALVariable } from "./alVariable";
-import { ALVarTypes } from "../additional/alVarTypes";
+import { ALVarTypes } from "./alVarTypes";
 
 export module ALVarHelper {
   export function getVariableTypeList(): string[] {
@@ -1272,7 +1272,7 @@ export module ALVarHelper {
 
   export function varNameMatchesIntegerPattern(varName: string): boolean {
     let exactMatchStrings: string[] = [
-      "LEVEL", "ENTRYNO", "TRANSACTIONNO", "LINENO", "DAY", "WEEK", "MONTH", "YEAR", "NOOFRECORDS",
+      "LEVEL", "ENTRYNO", "TRANSACTIONNO", "LINENO", "DAY", "WEEK", "MONTH", "YEAR", "NOOFRECORDS", 'NOOFRECS',
       "RECCOUNT", "RECORDCOUNT", "COUNT", "NOSERIESNO", "TRANSACTIONKEY", "FIELDNO", "I", "GLENTRYNO",
       "CUSTLEDGERENTRYNO", "VENDORLEDGERENTRYNO", "GLREGISTERNO", "ITEMREGISTERNO", "REPORTID"
     ];

@@ -1,35 +1,34 @@
 export module StringFunctions {
-    export function removeDoubleQuotesFromString(text : string) : string {
-        return text.replace(/"/g,"");
+    export function removeDoubleQuotesFromString(text: string): string {
+        return text.replace(/"/g, "");
     }
-    
+
     export function getNoOfLeftSpaces(text: string): number {
         return text.search(/\S|$/);
     }
 
     export function removeSpecialChars(text: string): string {
-        return(text.replace(/[^a-zA-Z]/g, ""));
+        return (text.replace(/[^a-zA-Z]/g, ""));
     }
 
-    export function containsSpecialChars(text: string) : boolean {
-        return(text.includes(" ") || text.includes("+") || text.includes("/") || text.includes("-"));
+    export function containsSpecialChars(text: string): boolean {
+        return (text.includes(" ") || text.includes("+") || text.includes("/") || text.includes("-"));
     }
 
-    export function fromNameText(name : string) : string {
+    export function fromNameText(name: string): string {
         name = name.trim();
         if ((name.length > 1) && (name.substr(0, 1) === "\"") && (name.substr(name.length - 1, 1) === "\"")) {
-            name = name.substr(1, name.length - 2).replace(new RegExp("\"\"", "g"), "\"");           
+            name = name.substr(1, name.length - 2).replace(new RegExp("\"\"", "g"), "\"");
         }
         return name;
     }
 
     // Levenshtein Distance
-    export function LevenshteinDistance(s: string, t: string): number
-    {
+    export function LevenshteinDistance(s: string, t: string): number {
         let n = s.length;
         let m = t.length;
 
-        let d: number[][] = [[n+1],[m+1]];
+        let d: number[][] = [[n + 1], [m + 1]];
 
         // Step 1
         if (n === 0) {
@@ -50,13 +49,11 @@ export module StringFunctions {
         // }
 
         // Step 3
-        for (let i = 1; i <= n; i++)
-        {
+        for (let i = 1; i <= n; i++) {
             //Step 4
-            for (let j = 1; j <= m; j++)
-            {
+            for (let j = 1; j <= m; j++) {
                 // Step 5
-               let cost = (t[j - 1] === s[i - 1]) ? 0 : 1;
+                let cost = (t[j - 1] === s[i - 1]) ? 0 : 1;
 
                 // Step 6
                 d[i][j] = Math.min(
@@ -73,5 +70,21 @@ export module StringFunctions {
             return word;
         }
         return word[0].toUpperCase() + word.substr(1).toLowerCase();
-      }
+    }
+
+    export function removePrefixAndSuffixFromVariableName(varname: string, ignorePrefix: string, ignoreSuffix: string): string {
+        // Remove Prefix if necessary
+        if (ignorePrefix !== '') {
+            if (varname.toUpperCase().startsWith(ignorePrefix)) {
+                return varname.substring(ignorePrefix.length);
+            }
+        }
+        // Remove Suffix if necessary
+        if (ignoreSuffix !== '') {
+            if (varname.toUpperCase().endsWith(ignoreSuffix)) {
+                return varname.substring(0, varname.length - ignoreSuffix.length - 1);
+            }
+        }
+        return varname;
+    }
 }
