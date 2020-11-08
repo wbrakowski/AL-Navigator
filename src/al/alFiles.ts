@@ -12,6 +12,7 @@ import { StringFunctions } from '../additional/stringFunctions';
 
 export class ALFiles {
     populatedFromCache: boolean = false;
+    appFilesChanged: boolean = false;
     private _document: vscode.TextDocument | undefined;
     set document(doc: vscode.TextDocument | undefined) {
         this._document = doc;
@@ -24,24 +25,43 @@ export class ALFiles {
 
     constructor() {
         this.populateALFilesArray();
-        let watcher = vscode.workspace.createFileSystemWatcher('**/*.al');
-        watcher.onDidCreate(async (e: vscode.Uri) => {
+        let watcherALFiles = vscode.workspace.createFileSystemWatcher('**/*.al');
+        watcherALFiles.onDidCreate(async (e: vscode.Uri) => {
             if (e.fsPath.indexOf('.vscode') === -1) {
-                await this.update(e, UpdateTypes.insert);
+                await this.updateALFiles(e, UpdateTypes.insert);
             }
         });
 
-        watcher.onDidChange(async (e: vscode.Uri) => {
+        watcherALFiles.onDidChange(async (e: vscode.Uri) => {
             if (e.fsPath.indexOf('.vscode') === -1) {
-                await this.update(e, UpdateTypes.modify);
+                await this.updateALFiles(e, UpdateTypes.modify);
             }
         });
 
-        watcher.onDidDelete(async (e: vscode.Uri) => {
+        watcherALFiles.onDidDelete(async (e: vscode.Uri) => {
             if (e.fsPath.indexOf('.vscode') === -1) {
-                await this.update(e, UpdateTypes.delete);
+                await this.updateALFiles(e, UpdateTypes.delete);
             }
         });
+
+        let watcherAppFiles = vscode.workspace.createFileSystemWatcher('**/*.app');
+        watcherAppFiles.onDidCreate(async (e: vscode.Uri) => {
+            if (e.fsPath.indexOf('.alpackages') !== -1) {
+                await this.updateAppFiles(e, UpdateTypes.insert);
+            }
+        });
+
+        // watcherAppFiles.onDidChange(async (e: vscode.Uri) => {
+        //     if (e.fsPath.indexOf('.alpackages') !== -1) {
+        //         await this.updateAppFiles(e, UpdateTypes.modify);
+        //     }
+        // });
+
+        // watcherAppFiles.onDidDelete(async (e: vscode.Uri) => {
+        //     if (e.fsPath.indexOf('.alpackages') !== -1) {
+        //         await this.updateAppFiles(e, UpdateTypes.delete);
+        //     }
+        // });
     }
 
     private getCurrentWorkspaceFolder(): vscode.WorkspaceFolder | undefined {
@@ -147,7 +167,7 @@ export class ALFiles {
         return alVariable;
     }
 
-    public async update(uri: vscode.Uri, updateType: UpdateTypes) {
+    public async updateALFiles(uri: vscode.Uri, updateType: UpdateTypes) {
         if (!this.alObjects) {
             return;
         }
@@ -168,6 +188,20 @@ export class ALFiles {
         if (!this.alObjects.find(i => workspaceALFile.alObject.objectType === i.objectType && workspaceALFile.alObject.objectName === i.objectName)) {
             this.workspaceALFiles.push(workspaceALFile);
             this.alObjects.push(workspaceALFile.alObject);
+        }
+    }
+
+    public async updateAppFiles(uri: vscode.Uri, updateType: UpdateTypes) {
+        if (!this.alObjects) {
+            return;
+        }
+        switch (updateType) {
+            case UpdateTypes.insert: {
+                this.appFilesChanged = true;
+                await this.delay(2000);
+                await this.fillObjects();
+                this.appFilesChanged = false;
+            }
         }
     }
 
@@ -206,7 +240,7 @@ export class ALFiles {
     }
 
     public async fillObjects() {
-        if (this.populatedFromCache) {
+        if (this.populatedFromCache && !this.appFilesChanged) {
             return;
         }
 
@@ -235,13 +269,16 @@ export class ALFiles {
         await this.pushToObjects(interfaces, ObjectTypes.interface);
 
         this.populatedFromCache = true;
+        // if (this.appFilesChanged) {
+        //     this.appFilesChanged = false;
+        // }
     }
 
     public getObjectList(objectType: ObjectTypes): string[] {
         let objects: string[] = [];
         let checkString = objectType === ObjectTypes.table ? "RECORD" : objectType.toUpperCase();
         let filteredObjects = this.alObjects.filter(obj => obj.objectType.toUpperCase() === checkString);
-        for (let i = 0; i < filteredObjects.length - 1; i++) {
+        for (let i = 0; i < filteredObjects.length; i++) {
             objects.push(filteredObjects[i].objectName);
         }
         return objects;
@@ -259,6 +296,10 @@ export class ALFiles {
                 this.alObjects.push(alObject);
             };
         }
+    }
+
+    private delay(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
 }

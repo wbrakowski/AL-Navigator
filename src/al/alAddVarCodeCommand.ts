@@ -10,6 +10,7 @@ import { ALVarTypes } from './alVarTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 import { FileJumper } from '../additional/fileJumper';
 import { strict } from 'assert';
+import { Settings } from 'http2';
 // import { Settings } from '../additional/Settings';
 
 
@@ -24,7 +25,13 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
     constructor(context: vscode.ExtensionContext, commandName: string, alFiles: ALFiles) {
         super(context, commandName);
         this._alFiles = alFiles;
-        // TODO Save the configuration and only get it if it changes (use a watcher)
+        this.setAffixes();
+        vscode.workspace.onDidChangeConfiguration((change) => {
+            this.setAffixes();
+        })
+    }
+
+    private setAffixes() {
         let config = vscode.workspace.getConfiguration('alNavigator');
         let ignoreALPrefix = config.get('ignoreALPrefix');
         let ignoreALSuffix = config.get('ignoreALSuffix');

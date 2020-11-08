@@ -4,6 +4,9 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## Release Notes
 
+## [0.3.2]
+- New downloaded alpackages are now recognized
+
 ## [0.3.1]
 - New configuration settings: ignoreALPrefix, ignoreALSuffix
 - Prefixes and Suffixes will be removed from suggested variable names
