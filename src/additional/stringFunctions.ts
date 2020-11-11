@@ -82,7 +82,7 @@ export module StringFunctions {
         // Remove Suffix if necessary
         if (ignoreSuffix !== '') {
             if (varname.toUpperCase().endsWith(ignoreSuffix)) {
-                return varname.substring(0, varname.length - ignoreSuffix.length - 1);
+                return varname.substring(0, varname.length - ignoreSuffix.length);
             }
         }
         return varname;
