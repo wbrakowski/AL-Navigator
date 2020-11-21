@@ -1,5 +1,5 @@
-export enum ALVarTypes { 
-    none = "none", array = "Array", Action = "Action", 
+export enum ALDataTypes {
+    none = "none", array = "Array", Action = "Action",
     BigInteger = "BigInteger", BigText = "BigText", Boolean = "Boolean", Byte = "Byte",
     Char = "Char", ClientType = "ClientType", Code = "Code", Codeunit = "Codeunit", ControlAddIn = "ControlAddIn",
     DataClassification = "DataClassification", DataScope = "DataScope", Date = "Date", DateFormula = "DateFormula", DateTime = "DateTime", Decimal = "Decimal", DefaultLayout = "DefaultLayout", Dialog = "Dialog", Dictionary = "Dictionary", DotNet = "DotNet", Duration = "Duration",
@@ -11,7 +11,7 @@ export enum ALVarTypes {
     Interface = "Interface",
     JsonArray = "JsonArray", JsonObject = "JsonObject", JsonToken = "JsonToken", JsonValue = "JsonValue",
     KeyRef = "KeyRef",
-    Label = "Label", List = "List", 
+    Label = "Label", List = "List",
     ModuleDependencyInfo = "ModuleDependencyInfo", ModuleInfo = "ModuleInfo",
     Notification = "Notification", NotificationScope = "NotificationScope",
     ObjectType = "ObjectType", Option = "Option", OutStream = "OutStream",
@@ -24,3 +24,4 @@ export enum ALVarTypes {
     WebServiceActionConText = "WebServiceActionConText", WebServiceActionResultCode = "WebServiceActionResultCode",
     XmlAttribute = "XmlAttribute", XmlAttributeCollection = "XmlAttributeCollection", XmlCData = "XmlCData", XmlComment = "XmlComment", XmlDeclaration = "XmlDeclaration", XmlDocument = "XmlDeclaration", XmlDocumentType = "XmlDocumentType", XmlElement = "XmlElement", XmlNamespaceManager = "XmlNamespaceManager", XmlNameTable = "XmlNameTable", XmlNode = "XmlNode", XmlNodeList = "XmlNodeList", XmlPort = "XmlPort", XmlProcessingInstruction = "XmlPort", XmlReadOptions = "XmlReadOptions", XmlText = "XmlText", XmlWriteOptions = "XmlWriteOptions"
 }
+

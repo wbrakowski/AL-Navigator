@@ -1,6 +1,6 @@
 import { StringFunctions } from "../additional/stringFunctions";
 import { ALVariable } from "./alVariable";
-import { ALVarTypes } from "./alVarTypes";
+import { ALDataTypes } from "./alDataTypes";
 
 export module ALVarHelper {
   export function getVariableTypeList(): string[] {
@@ -1298,7 +1298,8 @@ export module ALVarHelper {
       "DOCNO", "DOCUMENTNO", "STANDARDTEXTCODE", "LANGUAGECODE",
       "SALESPERSONPURCHASERCODE", "GLACCOUNTNO", "CUSTOMERNO",
       "CUSTINVOICEDISCCODE", "VENDORNO", "VENDORINVOICEDISCCODE",
-      "ITEMNO", "SELLTOCUSTOMERNO", "BUYFROMVENDORNO", "PAYTOVENDORNO"
+      "ITEMNO", "SELLTOCUSTOMERNO", "BUYFROMVENDORNO", "PAYTOVENDORNO",
+      "INVOICENO"
     ];
     return patternMatches(varName, exactMatchStrings);
   }
@@ -1387,69 +1388,66 @@ export module ALVarHelper {
     // TODO Also use the includePatterns!
     let patternMatchCounter = 0;
     if (varNameMatchesBooleanPattern(varName)) {
-      alVariable.varType = ALVarTypes.Boolean;
+      alVariable.setDataType(ALDataTypes.Boolean, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesCode10Pattern(varName)) {
-      alVariable.varType = ALVarTypes.Code;
-      alVariable.varValue = `[10]`;
+      alVariable.setDataType(ALDataTypes.Code, 1, "10");
       patternMatchCounter += 1;
     }
     if (varNameMatchesCode20Pattern(varName)) {
-      alVariable.varType = ALVarTypes.Code;
-      alVariable.varValue = `[20]`;
+      alVariable.setDataType(ALDataTypes.Code, 1, "20");
       patternMatchCounter += 1;
     }
     if (varNameMatchesDatePattern(varName)) {
-      alVariable.varType = ALVarTypes.Date;
+      alVariable.setDataType(ALDataTypes.Date, 1);
       patternMatchCounter += 1;
     }
 
     if (varNameMatchesDecimalPattern(varName)) {
-      alVariable.varType = ALVarTypes.Decimal;
+      alVariable.setDataType(ALDataTypes.Decimal, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesDialogPattern(varName)) {
-      alVariable.varType = ALVarTypes.Dialog;
+      alVariable.setDataType(ALDataTypes.Dialog, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesIntegerPattern(varName)) {
-      alVariable.varType = ALVarTypes.Integer;
+      alVariable.setDataType(ALDataTypes.Integer, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesLabelPattern(varName)) {
-      alVariable.varType = ALVarTypes.Label;
+      alVariable.setDataType(ALDataTypes.Label, 1);
       // let labelValue = await vscode.window.showInputBox({ placeHolder: `Type value for label` });
       // alVariable.varValue = labelValue ? labelValue : '';
       patternMatchCounter += 1;
     }
     if (varNameMatchesOptionPattern(varName)) {
-      alVariable.varType = ALVarTypes.Option;
+      alVariable.setDataType(ALDataTypes.Option, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesRecordIDPattern(varName)) {
-      alVariable.varType = ALVarTypes.RecordId;
+      alVariable.setDataType(ALDataTypes.RecordId, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesRecordRefPattern(varName)) {
-      alVariable.varType = ALVarTypes.RecordRef;
+      alVariable.setDataType(ALDataTypes.RecordRef, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesTextPattern(varName)) {
-      alVariable.varType = ALVarTypes.Text;
+      alVariable.setDataType(ALDataTypes.Text, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesTimePattern(varName)) {
-      alVariable.varType = ALVarTypes.Time;
+      alVariable.setDataType(ALDataTypes.Time, 1);
       patternMatchCounter += 1;
     }
     if (varNameMatchesVariantPattern(varName)) {
-      alVariable.varType = ALVarTypes.Variant;
+      alVariable.setDataType(ALDataTypes.Variant, 1);
       patternMatchCounter += 1;
     }
     if (patternMatchCounter > 1) {
-      alVariable.varType = undefined;
-      alVariable.varValue = "";
+      alVariable.alDataType = undefined;
     }
   }
 }
