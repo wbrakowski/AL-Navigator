@@ -7,7 +7,7 @@ import { ALVariable } from './alVariable';
 import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
 import { ObjectTypes } from '../additional/objectTypes';
 import { ALVarHelper } from './alVarHelper';
-import { ALVarTypes } from './alVarTypes';
+import { ALDataTypes } from './alDataTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 
 export class ALFiles {
@@ -25,6 +25,7 @@ export class ALFiles {
 
     constructor() {
         this.populateALFilesArray();
+        this.fillObjects();
         let watcherALFiles = vscode.workspace.createFileSystemWatcher('**/*.al');
         watcherALFiles.onDidCreate(async (e: vscode.Uri) => {
             if (e.fsPath.indexOf('.vscode') === -1) {
@@ -184,6 +185,7 @@ export class ALFiles {
                 }
             }
         }
+        // TODO Check performance
         let workspaceALFile: ALFile = new ALFile(uri);
         if (!this.alObjects.find(i => workspaceALFile.alObject.objectType === i.objectType && workspaceALFile.alObject.objectName === i.objectName)) {
             this.workspaceALFiles.push(workspaceALFile);

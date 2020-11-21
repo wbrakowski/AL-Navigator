@@ -6,11 +6,12 @@ import { TextBuilder } from '../additional/textBuilder';
 import { ObjectTypes } from '../additional/objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALFiles } from './alFiles';
-import { ALVarTypes } from './alVarTypes';
+import { ALDataTypes } from './alDataTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 import { FileJumper } from '../additional/fileJumper';
 import { strict } from 'assert';
 import { Settings } from 'http2';
+import { abort } from 'process';
 // import { Settings } from '../additional/Settings';
 
 
@@ -67,7 +68,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
 
 
 
-        if (!alVariable.objectType && !alVariable.varType) {
+        if (!alVariable.objectType && !alVariable.alDataType) {
             var varTypeSelected = await this.selectVarTypeManually(alVariable);
             if (!varTypeSelected) {
                 return;
@@ -136,102 +137,23 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         let objectType: ObjectTypes = ObjectTypes.none;
         if (selectedType) {
             switch (selectedType) {
-                case "array": {
-                    // Define dimension
-                    let dims = await vscode.window.showInputBox({ placeHolder: `Type dimension for ${selectedType}` });
-                    if (dims) {
-                        alVariable.varType = ALVarTypes.array;
-                        alVariable.varValue = "[" + dims + "]";
-                        let arrayType = await vscode.window.showQuickPick(varTypes, {
-                            placeHolder: `Choose type for ${selectedType}`
-                        });
-                        if (arrayType) {
-                            alVariable.varValue += " of " + arrayType;
-                        }
-                        else {
+                case "Text":
+                case "Code":
+                case "Label":
+                case "array":
+                case "Dictionary":
+                case "List":
+                    {
+                        let level: number = 1;
+                        // alVariable.setDataType(selectedType, level);
+                        await this.selectMoreInformation(alVariable, selectedType, level);
+                        if (alVariable.abortProcess) {
                             return false;
+                            break;
                         }
+                        break;
                     }
-                    else {
-                        return false;
-                    }
-                    break;
-                }
-                case "Code": {
-                    // Define length
-                    let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
-                    if (selectedValue) {
-                        alVariable.varType = ALVarTypes.Code;
-                        alVariable.varValue = "[" + selectedValue + "]";
-                    }
-                    break;
-                }
-                case "Dictionary": {
-                    // Define dimension
-                    let key = await vscode.window.showQuickPick(varTypes, {
-                        placeHolder: `Select key for ${selectedType}`
-                    });
-                    if (key) {
-                        let keyLength: string | undefined;
-                        if (key === "Text" || key === "Code") {
-                            keyLength = await vscode.window.showInputBox({ placeHolder: `Type length for ${key}` });
-                        }
-                        alVariable.varType = ALVarTypes.Dictionary;
-                        alVariable.varValue = keyLength ? ` of [${key}[${keyLength}], ` : ` of [${key}, `;
-                        let value = await vscode.window.showQuickPick(varTypes, {
-                            placeHolder: `Select value for ${selectedType}`
-                        });
-                        if (value) {
-                            let valueLength: string | undefined;
-                            if (value === "Text" || value === "Code") {
-                                valueLength = await vscode.window.showInputBox({ placeHolder: `Type length for ${value}` });
-                            }
-                            alVariable.varValue += valueLength ? `${value}[${valueLength}]]` : `${value}]`;
-                        }
-                        else {
-                            return false;
-                        }
-                    }
-                    else {
-                        return false;
-                    }
-                    break;
-                }
-                case "Label": {
-                    // Define Label value
-                    let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type value for ${selectedType}` });
-                    if (selectedValue) {
-                        alVariable.varType = ALVarTypes.Label;
-                        alVariable.varValue = ' \'' + selectedValue + '\'';
-                    }
-                    else {
-                        alVariable.varValue = ' \'\'';
-                    }
-                    break;
-                }
-                case "List": {
-                    // Define dimension
-                    let listType = await vscode.window.showQuickPick(varTypes, {
-                        placeHolder: `Select type for ${selectedType}`
-                    });
-                    if (listType) {
-                        alVariable.varType = ALVarTypes.List;
-                        alVariable.varValue = " of [" + listType + "]";
-                    }
-                    else {
-                        return false;
-                    }
-                    break;
-                }
-                case "Text": {
-                    // Define Label value
-                    let selectedValue = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
-                    if (selectedValue) {
-                        alVariable.varType = ALVarTypes.Text;
-                        alVariable.varValue = "[" + selectedValue + "]";
-                    }
-                    break;
-                }
+
                 case "Record":
                     objectType = ObjectTypes.table;
                     break;
@@ -263,8 +185,9 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                 case "ControlAddIn":
                     objectType = ObjectTypes.controlAddIn;
                     break;
-                default:
-                    alVariable.varType = (<any>ALVarTypes)[selectedType];;
+                default: {
+                    alVariable.setDataType(selectedType, 1);
+                }
             }
             if (objectType !== ObjectTypes.none) {
                 let objectList: string[] = this._alFiles.getObjectList(objectType);
@@ -306,6 +229,154 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         }
     }
 
+    private async selectMoreInformation(alVariable: ALVariable, selectedType: string, level: number) {
+        let varTypes: string[] = ALVarHelper.getVariableTypeList();
+        switch (selectedType) {
+            case "Code":
+            case "Text": {
+                // Choose length
+                let length = await vscode.window.showInputBox({ placeHolder: `Type length for ${selectedType}` });
+                if (length) {
+                    alVariable.setDataType(selectedType, level, length);
+                }
+                else {
+                    if (selectedType === "Text") {
+                        alVariable.setDataType(selectedType, level);
+                    }
+                    else {
+                        alVariable.abortProcess = true;
+                        break;
+                    }
+                }
+                break;
+            }
+            case "Label": {
+                // Choose label text
+                let labelText = await vscode.window.showInputBox({ placeHolder: `Type text for ${selectedType}` });
+                if (labelText) {
+                    alVariable.setDataType(selectedType, level, labelText);
+                }
+                else {
+                    // Create label anyway
+                    alVariable.abortProcess = true;
+                    // alVariable.setDataType(selectedType, level, ' \'\'');
+                }
+                break;
+            }
 
+            case "Dictionary": {
+                // key
+                let key = await vscode.window.showQuickPick(varTypes, {
+                    placeHolder: `Select key for ${selectedType}`
+                });
+                if (key) {
+                    alVariable.setDataType(selectedType, level);
+                    level += 1;
+                    if (this.isComplexVarType(key)) {
+                        await this.selectMoreInformation(alVariable, key, level);
+                        if (alVariable.abortProcess) {
+                            return;
+                        }
+                    }
+                    else {
+                        alVariable.setDataType(key, level);
+                    }
+                    // value
+                    let value = await vscode.window.showQuickPick(varTypes, {
+                        placeHolder: `Select value for ${selectedType}`
+                    });
+                    if (value) {
+                        level += 1;
+                        if (this.isComplexVarType(value)) {
+                            await this.selectMoreInformation(alVariable, value, level);
+                            if (alVariable.abortProcess) {
+                                return;
+                            }
+                        }
+                        else {
+                            alVariable.setDataType(value, level);
+                        }
+                    }
+                }
+                else {
+                    alVariable.abortProcess = true;
+                }
+                break;
+            }
+            case 'array': {
+                // Example: x: Array[2] of Text[20];
+                // Example: y: Array[3] of Integer;
+                // Define dimension
+                let dim = await vscode.window.showInputBox({ placeHolder: `Type dimension for ${selectedType}` });
+                if (dim) {
+                    let arrayType = await vscode.window.showQuickPick(varTypes, {
+                        placeHolder: `Choose type for ${selectedType}`
+                    });
+                    if (arrayType) {
+                        alVariable.setDataType(selectedType, level, dim);
+                        if (this.isComplexVarType(arrayType)) {
+                            level += 1;
 
+                            await this.selectMoreInformation(alVariable, arrayType, level);
+                            if (alVariable.abortProcess) {
+                                return;
+                            }
+                        }
+                        else {
+                            // if (alVariable.alDataType) {
+                            alVariable.setDataType(arrayType, level + 1);
+                            // }
+                        }
+                    }
+                    else {
+                        alVariable.abortProcess = true;
+                    }
+                }
+                else {
+                    alVariable.abortProcess = true;
+                }
+                break;
+            }
+            case "List": {
+                // Define type
+                let listType = await vscode.window.showQuickPick(varTypes, {
+                    placeHolder: `Select type for ${selectedType}`
+                });
+                if (listType) {
+                    alVariable.setDataType(selectedType, level);
+                    level += 1;
+                    if (this.isComplexVarType(listType)) {
+                        await this.selectMoreInformation(alVariable, listType, level);
+                        if (alVariable.abortProcess) {
+                            return;
+                        }
+                    }
+                    else {
+                        if (alVariable.alDataType) {
+                            alVariable.setDataType(listType, level);
+                        }
+
+                    }
+                }
+                break;
+            }
+            default:
+                alVariable.abortProcess = true;
+        }
+    }
+
+    private isComplexVarType(varType: string): boolean {
+        switch (varType) {
+            case "array":
+            case "Code":
+            case "Dictionary":
+            case "Label":
+            case "List":
+            case "Text": {
+                return true;
+            }
+            default:
+                return false;
+        }
+    }
 }
