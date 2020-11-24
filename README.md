@@ -6,16 +6,14 @@ Create variables and parameters like a boss. Navigate through al files with awes
 
 ### Shortcuts
 
-![Shortcuts](resources/ALNavigator_Shortcuts.png)
-
 |Shortcut   |Command Name   |Description   |
 |---|---|---|
-|Ctrl + Alt + g   |AL Navigator:   |jump to end of your global variables (fast way to declare new variables)   |
-|Ctrl + Alt + l   |AL Navigator:   |jump to the end of your local variables (fast way to declare new variables)   |
-|Ctrl + Alt + k   |AL Navigator:   |jump to the keys in your .al file    |
-|Ctrl + Alt + a   |AL Navigator:   |jump to next action in a page .al file   |
-|Ctrl + Alt + d   |AL Navigator:   |jump through data items in your .al report file    |
-|Shift + Alt + d   |AL Navigator:   |jump through data items in your .al report file    |
+|Ctrl + Alt + g   |AL Navigator: End of global variables  |Move cursor to the end of your global variables (fast way to declare new variables)   |
+|Ctrl + Alt + l   |AL Navigator: End of local variables   |Move cursor to the end of your local variables (fast way to declare new variables)   |
+|Ctrl + Alt + k   |AL Navigator: Keys  |Move cursor to the keys in your .al file    |
+|Ctrl + Alt + a   |AL Navigator: Next Action   |Move cursor to next action in a page .al file   |
+|Ctrl + Alt + d   |AL Navigator: Next DataItem (starting from top)  |Move cursor through data items in your .al report file    |
+|Shift + Alt + d   |AL Navigator: Next DataItem (starting from bottom)   |Move cursor through data items in your .al report file    |
 
 ### Create Variables
 
@@ -32,6 +30,11 @@ Example 1: Create global variables
 Example 3: Create parameters
 
 ![Create Variables 3](resources/ALNavigator3.gif)
+
+### Tips: How To Use the CodeAction
+|Tip   |Example   |
+|---|---|
+|Variable Names for objects like records can automatically be created if they follow the [naming conventions](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode#variable-and-field-naming "naming conventions")|Vendor - Vendor can be recognized as Record "Vendor"
 
 
 ## Requirements
