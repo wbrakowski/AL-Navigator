@@ -1,3 +1,4 @@
+import { StringFunctions } from "../additional/stringFunctions";
 import { ALDataTypes } from "./alDataTypes";
 
 
@@ -149,6 +150,30 @@ export class DictionaryDataType implements ALDataType {
             }
         }
         return value;
+    }
+}
+
+export class ObjectDataType implements ALDataType {
+    // Records, Codeunits, Pages, Reports etc.
+    public type: ALDataTypes;
+    public name: string = "";
+    public subTypes: ALDataType[] = [];
+
+    constructor(type: ALDataTypes, name?: string) {
+        this.type = type;
+        if (name) {
+            this.name = name;
+        }
+    }
+
+    getStringForDataType(): string {
+        // Use quotes if necessary
+        if (StringFunctions.containsSpecialChars(this.name)) {
+            return `${this.type} "${this.name}"`;
+        }
+        else {
+            return `${this.type} ${this.name}`;
+        }
     }
 }
 
