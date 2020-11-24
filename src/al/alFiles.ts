@@ -146,19 +146,18 @@ export class ALFiles {
                 });
                 switch (selectedType) {
                     case ("Page"):
-                        alVariable.objectType = "Page";
+                        alVariable.setDataType("Page", 1, alObject.objectName)
                         break;
                     case ("TestPage"):
-                        alVariable.objectType = "TestPage";
+                        alVariable.setDataType("TestPage", 1, alObject.objectName)
                         break;
                     default:
                         return;
                 }
             }
             else {
-                alVariable.objectType = alObject.objectType;
+                alVariable.setDataType(alObject.objectType, 1, alObject.objectName);
             }
-            alVariable.objectName = alObject.objectName;
         }
         else {
             // Could not find variable long or short name in the al objects list, let's get creative and see if it matches a var type pattern!

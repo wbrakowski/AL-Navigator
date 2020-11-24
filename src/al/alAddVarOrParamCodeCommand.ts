@@ -12,24 +12,26 @@ import { FileJumper } from '../additional/fileJumper';
 import { strict } from 'assert';
 import { Settings } from 'http2';
 import { abort } from 'process';
+import { CommandType } from '../additional/commandType';
 // import { Settings } from '../additional/Settings';
 
 
-export class ALAddVarCodeCommand extends ALCodeCommand {
+export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
     public varName: string = '';
-    public local: boolean = false;
+    public cmdType: CommandType;
     public document: vscode.TextDocument | undefined;
     protected _alFiles: ALFiles;
     protected _ignoreALPrefixUpperCase: string = '';
     protected _ignoreALSuffixUpperCase: string = '';
 
-    constructor(context: vscode.ExtensionContext, commandName: string, alFiles: ALFiles) {
+    constructor(context: vscode.ExtensionContext, commandName: string, alFiles: ALFiles, cmdType: CommandType) {
         super(context, commandName);
         this._alFiles = alFiles;
         this.setAffixes();
         vscode.workspace.onDidChangeConfiguration((change) => {
             this.setAffixes();
         })
+        this.cmdType = cmdType;
     }
 
     private setAffixes() {
@@ -52,7 +54,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
         if (!this.document) {
             return;
         }
-        let lineNo: number = ALFileCrawler.findVariableInsertLine(this.local);
+        let lineNo: number = ALFileCrawler.findVariableInsertLine(this.cmdType);
 
         let alVariable = await this.createALVariable(this.varName);
         let varNameOriginal = "";
@@ -60,7 +62,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             return;
         }
         else {
-            alVariable.isLocal = this.local;
+            alVariable.cmdType = this.cmdType;
             varNameOriginal = alVariable.name;
             alVariable.ignoreALPrefix = this._ignoreALPrefixUpperCase;
             alVariable.ignoreALSuffix = this._ignoreALSuffixUpperCase;
@@ -68,7 +70,7 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
 
 
 
-        if (!alVariable.objectType && !alVariable.alDataType) {
+        if (!alVariable.alDataType) {
             var varTypeSelected = await this.selectVarTypeManually(alVariable);
             if (!varTypeSelected) {
                 return;
@@ -80,7 +82,9 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
 
         let varDeclaration = TextBuilder.buildVarDeclaration(range, alVariable);
         let content: string = varDeclaration.declaration;
-        content += '\n';
+        if (this.cmdType !== CommandType.Parameter) {
+            content += '\n';
+        }
 
         let editor: vscode.TextEditor | undefined = vscode.window.activeTextEditor;
 
@@ -108,12 +112,27 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                 });
             }
             await editor.edit(editBuilder => {
-                let pos = new vscode.Position(lineNo, 0);
-                editBuilder.insert(pos, content);
+                switch (this.cmdType) {
+                    case CommandType.Parameter: {
+                        if (editor) {
+                            let textLine = editor.document.lineAt(lineNo);
+                            let lastBracketIdx: number = textLine.text.lastIndexOf(")");
+                            if (lastBracketIdx !== -1) {
+                                let pos = new vscode.Position(lineNo, lastBracketIdx);
+                                editBuilder.insert(pos, content);
+                            }
+                        }
+
+                        break;
+                    }
+                    default: {
+                        let pos = new vscode.Position(lineNo, 0);
+                        editBuilder.insert(pos, content);
+                        break;
+                    }
+                }
+
             });
-            if (varDeclaration.createsVarSection) {
-                lineNo += 1;
-            }
         }
     }
 
@@ -134,7 +153,6 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
             canPickMany: false,
             placeHolder: 'Select variable type'
         });
-        let objectType: ObjectTypes = ObjectTypes.none;
         if (selectedType) {
             switch (selectedType) {
                 case "Text":
@@ -145,83 +163,62 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                 case "List":
                     {
                         let level: number = 1;
-                        // alVariable.setDataType(selectedType, level);
                         await this.selectMoreInformation(alVariable, selectedType, level);
                         if (alVariable.abortProcess) {
                             return false;
-                            break;
                         }
                         break;
                     }
 
                 case "Record":
-                    objectType = ObjectTypes.table;
-                    break;
                 case "Codeunit":
-                    objectType = ObjectTypes.codeunit;
-                    break;
                 case "Report":
-                    objectType = ObjectTypes.report;
-                    break;
                 case "Page":
                 case "TestPage":
-                    objectType = ObjectTypes.page;
-                    break;
                 case "Query":
-                    objectType = ObjectTypes.query;
-                    break;
                 case "XmlPort":
-                    objectType = ObjectTypes.xmlport;
-                    break;
                 case "Enum":
-                    objectType = ObjectTypes.enum;
-                    break;
                 case "Interface":
-                    objectType = ObjectTypes.interface;
-                    break;
                 case "Codeunit":
-                    objectType = ObjectTypes.codeunit;
-                    break;
-                case "ControlAddIn":
-                    objectType = ObjectTypes.controlAddIn;
-                    break;
-                default: {
-                    alVariable.setDataType(selectedType, 1);
-                }
-            }
-            if (objectType !== ObjectTypes.none) {
-                let objectList: string[] = this._alFiles.getObjectList(objectType);
-                let selectedObject = await vscode.window.showQuickPick(objectList, {
-                    canPickMany: false,
-                    placeHolder: `Select ${selectedType}`
-                });
-                if (selectedObject) {
-                    alVariable.objectType = objectType === ObjectTypes.table ? "Record" : StringFunctions.titleCaseWord(objectType);
-                    alVariable.objectName = selectedObject;
-                    let suggestedVarNameLong = alVariable.isTemporary ? "Temp" + ALVarHelper.getLongVarName(selectedObject) : ALVarHelper.getLongVarName(selectedObject);
-                    let suggestedVarNameShort = alVariable.isTemporary ? "Temp" + ALVarHelper.getShortVarName(selectedObject) : ALVarHelper.getShortVarName(selectedObject);
-                    suggestedVarNameLong = StringFunctions.removePrefixAndSuffixFromVariableName(suggestedVarNameLong, this._ignoreALPrefixUpperCase, this._ignoreALSuffixUpperCase);
-                    suggestedVarNameShort = StringFunctions.removePrefixAndSuffixFromVariableName(suggestedVarNameShort, this._ignoreALPrefixUpperCase, this._ignoreALSuffixUpperCase);
-                    let suggestedVarNames: string[] = suggestedVarNameLong !== suggestedVarNameShort ?
-                        [alVariable.name, suggestedVarNameLong, suggestedVarNameShort] : [alVariable.name, suggestedVarNameLong];
-                    let selectedVarName = await vscode.window.showQuickPick(suggestedVarNames, {
+                case "ControlAddIn": {
+                    let objectType: ObjectTypes = selectedType === "Record" ? ObjectTypes.table : (<any>ObjectTypes)[selectedType.toLowerCase()];
+                    let objectList: string[] = this._alFiles.getObjectList(objectType);
+                    let selectedObject = await vscode.window.showQuickPick(objectList, {
                         canPickMany: false,
-                        placeHolder: 'Select variable name'
+                        placeHolder: `Select ${selectedType}`
                     });
-                    if (selectedVarName) {
-                        alVariable.name = selectedVarName;
+                    if (selectedObject) {
+                        let type: string = objectType === ObjectTypes.table ? "Record" : StringFunctions.titleCaseWord(objectType);
+                        let name: string = selectedObject;
+                        let suggestedVarNameLong = alVariable.isTemporary ? "Temp" + ALVarHelper.getLongVarName(selectedObject) : ALVarHelper.getLongVarName(selectedObject);
+                        let suggestedVarNameShort = alVariable.isTemporary ? "Temp" + ALVarHelper.getShortVarName(selectedObject) : ALVarHelper.getShortVarName(selectedObject);
+                        suggestedVarNameLong = StringFunctions.removePrefixAndSuffixFromVariableName(suggestedVarNameLong, this._ignoreALPrefixUpperCase, this._ignoreALSuffixUpperCase);
+                        suggestedVarNameShort = StringFunctions.removePrefixAndSuffixFromVariableName(suggestedVarNameShort, this._ignoreALPrefixUpperCase, this._ignoreALSuffixUpperCase);
+                        let suggestedVarNames: string[] = suggestedVarNameLong !== suggestedVarNameShort ?
+                            [alVariable.name, suggestedVarNameLong, suggestedVarNameShort] : [alVariable.name, suggestedVarNameLong];
+                        let selectedVarName = await vscode.window.showQuickPick(suggestedVarNames, {
+                            canPickMany: false,
+                            placeHolder: 'Select variable name'
+                        });
+                        if (selectedVarName) {
+                            alVariable.name = selectedVarName;
+                        }
+                        else {
+                            return false;
+                        }
+                        alVariable.setDataType(selectedType, 1, name);
                     }
                     else {
                         return false;
                     }
-                }
-                else {
-                    return false;
-                }
-            }
-            else {
+                    break;
 
+                }
+                default: {
+                    alVariable.setDataType(selectedType, 1);
+                }
             }
+
             return true;
         }
         else {
@@ -257,8 +254,8 @@ export class ALAddVarCodeCommand extends ALCodeCommand {
                     alVariable.setDataType(selectedType, level, labelText);
                 }
                 else {
-                    // Create label anyway
                     alVariable.abortProcess = true;
+                    // Create label anyway
                     // alVariable.setDataType(selectedType, level, ' \'\'');
                 }
                 break;
