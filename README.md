@@ -17,7 +17,7 @@ Create variables and parameters like a boss. Navigate through al files with awes
 
 ### Create Variables and Parameters
 
-CodeAction for AL0118: Create a local/global variable or a parameter by using the quick fix lamp (Ctrl + .=).
+CodeAction for AL0118: Create a local/global variable or a parameter by using the quick fix lamp (Ctrl + .).
 
 Example 1: Create local variables
 
