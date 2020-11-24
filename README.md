@@ -4,8 +4,6 @@ Create variables and parameters like a boss. Navigate through al files with awes
 
 ## Features
 
-### Shortcuts
-
 |Shortcut   |Command Name   |Description   |
 |---|---|---|
 |**Ctrl+Alt+g**   |AL Navigator: End of global variables  |Moves cursor to the end of your global variables   |
