@@ -22,60 +22,60 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextDataItemFromBottom();
 	});
 
-	let jumpToOnAfterGetRecCmd = commands.registerCommand("extension.OnAfterGetRecord", () => {
-		FileJumper.jumpToNextOnAfterGetRecordTrigger();
-	});
+	// let jumpToOnAfterGetRecCmd = commands.registerCommand("extension.OnAfterGetRecord", () => {
+	// 	FileJumper.jumpToNextOnAfterGetRecordTrigger();
+	// });
 
-	let jumpToNextTriggerCmd = commands.registerCommand("extension.Trigger", () => {
-		FileJumper.jumpToNextTrigger();
-	  });
+	// let jumpToNextTriggerCmd = commands.registerCommand("extension.Trigger", () => {
+	// 	FileJumper.jumpToNextTrigger();
+	//   });
 
 	let jumpToKeysCmd = commands.registerCommand("extension.Keys", () => {
 		FileJumper.jumpToKeys();
-	  });
+	});
 
-	  let jumpToModifyCmd = commands.registerCommand("extension.OnModify", () => {
-		FileJumper.jumpToNextOnModifyTrigger();
-	  });
+	//   let jumpToModifyCmd = commands.registerCommand("extension.OnModify", () => {
+	// 	FileJumper.jumpToNextOnModifyTrigger();
+	//   });
 
-	  let jumpToDeleteCmd = commands.registerCommand("extension.OnDelete", () => {
-		FileJumper.jumpToNextOnDeleteTrigger();
-	  });
+	//   let jumpToDeleteCmd = commands.registerCommand("extension.OnDelete", () => {
+	// 	FileJumper.jumpToNextOnDeleteTrigger();
+	//   });
 
-	  let jumpToInsertCmd = commands.registerCommand("extension.OnInsert", () => {
-		FileJumper.jumpToNextOnInsertTrigger();
-	  });
+	//   let jumpToInsertCmd = commands.registerCommand("extension.OnInsert", () => {
+	// 	FileJumper.jumpToNextOnInsertTrigger();
+	//   });
 
 
 	let jumpToLastLocalVarLineCmd = commands.registerCommand("extension.LastLocalVarLine", () => {
 		FileJumper.jumpToLastLocalVarLine();
-	  });
+	});
 
-	  let jumpToLastGlobalVarLinecmd = commands.registerCommand("extension.LastGlobalVarLine", () => {
+	let jumpToLastGlobalVarLinecmd = commands.registerCommand("extension.LastGlobalVarLine", () => {
 		FileJumper.jumpToLastGlobalVarLine();
-	  });
+	});
 
 	let jumpToActionsCmd = commands.registerCommand("extension.Actions", () => {
 		FileJumper.jumpToNextActions();
 	});
-	
+
 	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context), {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
-	
+
 	context.subscriptions.push(jumpToNextDataItemCmd);
 	context.subscriptions.push(jumpToNextDataItemBottomCmd);
-	context.subscriptions.push(jumpToOnAfterGetRecCmd);
-	context.subscriptions.push(jumpToNextTriggerCmd);
+	// context.subscriptions.push(jumpToOnAfterGetRecCmd);
+	// context.subscriptions.push(jumpToNextTriggerCmd);
 	context.subscriptions.push(jumpToKeysCmd);
 	context.subscriptions.push(jumpToLastLocalVarLineCmd);
 	context.subscriptions.push(jumpToLastGlobalVarLinecmd);
 	context.subscriptions.push(jumpToActionsCmd);
-	context.subscriptions.push(jumpToInsertCmd);
-	context.subscriptions.push(jumpToDeleteCmd);
-	context.subscriptions.push(jumpToModifyCmd);
+	// context.subscriptions.push(jumpToInsertCmd);
+	// context.subscriptions.push(jumpToDeleteCmd);
+	// context.subscriptions.push(jumpToModifyCmd);
 
 }
 
 // this method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() { }

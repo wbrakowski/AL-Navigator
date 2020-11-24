@@ -35,8 +35,6 @@
 	"activationEvents": [
 		"onCommand:extension.DataItem",
 		"onCommand:extension.DataItemBottom",
-		"onCommand:extension.OnAfterGetRecord",
-		"onCommand:extension.Trigger",
 		"onCommand:extension.Keys",
 		"onCommand:extension.Actions",
 		"onLanguage:al"
@@ -53,28 +51,8 @@
 				"title": "AL Navigator: Next DataItem (starting from bottom)"
 			},
 			{
-				"command": "extension.OnAfterGetRecord",
-				"title": "AL Navigator: Next OnAfterGetRecord"
-			},
-			{
-				"command": "extension.Trigger",
-				"title": "AL Navigator: Next Trigger"
-			},
-			{
-				"command": "extension.OnDelete",
-				"title": "AL Navigator: OnDelete"
-			},
-			{
-				"command": "extension.OnModify",
-				"title": "AL Navigator: OnModify"
-			},
-			{
-				"command": "extension.OnInsert",
-				"title": "AL Navigator: OnInsert"
-			},
-			{
 				"command": "extension.Keys",
-				"title": "AL Navigator: Keys Section"
+				"title": "AL Navigator: Keys"
 			},
 			{
 				"command": "extension.Actions",
@@ -82,11 +60,11 @@
 			},
 			{
 				"command": "extension.LastLocalVarLine",
-				"title": "AL Navigator: Last local var line"
+				"title": "AL Navigator: End of local variables"
 			},
 			{
 				"command": "extension.LastGlobalVarLine",
-				"title": "AL Navigator: Last global var line"
+				"title": "AL Navigator: End of global variables"
 			}
 		],
 		"keybindings": [
@@ -97,26 +75,6 @@
 			{
 				"command": "extension.DataItemBottom",
 				"key": "shift+alt+d"
-			},
-			{
-				"command": "extension.OnAfterGetRecord",
-				"key": "ctrl+alt+j"
-			},
-			{
-				"command": "extension.Trigger",
-				"key": "ctrl+alt+t"
-			},
-			{
-				"command": "extension.OnModify",
-				"key": "ctrl+o ctrl+m"
-			},
-			{
-				"command": "extension.OnDelete",
-				"key": "ctrl+o ctrl+d"
-			},
-			{
-				"command": "extension.OnInsert",
-				"key": "ctrl+o ctrl+i"
 			},
 			{
 				"command": "extension.Keys",
