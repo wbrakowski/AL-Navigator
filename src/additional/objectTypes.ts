@@ -1,9 +1,9 @@
-export enum ObjectTypes { 
+export enum ObjectTypes {
     none = "none",
     all = "all",
     table = "table",
     page = "page",
-    testPage = "testPage",
+    testPage = "testpage",
     codeunit = "codeunit",
     report = "report",
     query = "query",

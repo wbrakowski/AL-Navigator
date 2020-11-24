@@ -1,19 +1,18 @@
 import { isUndefined } from "util";
+import { CommandType } from "../additional/commandType";
 import { StringFunctions } from '../additional/stringFunctions';
-import { ALDataType, ArrayDataType, CodeTextDataType, DefaultDataType, DictionaryDataType, LabelDataType, ListDataType } from "./alDataType";
+import { ALDataType, ArrayDataType, CodeTextDataType, DefaultDataType, DictionaryDataType, LabelDataType, ListDataType, ObjectDataType } from "./alDataType";
 import { ALDataTypes } from "./alDataTypes";
 
 export class ALVariable {
-    public name: string;
-    public objectType: string = "";
-    public objectName: string = "";
-    public isLocal: boolean = true;
-    public isTemporary: boolean = false;
     public alDataType: ALDataType | undefined;
+    public name: string;
     public ignoreALPrefix: string = "";
     public ignoreALSuffix: string = "";
     public typeAutomaticallyDetected: boolean = false;
     public abortProcess: boolean = false;
+    public cmdType: CommandType = CommandType.GlobalVariable;
+    public isTemporary: boolean = false;
 
     constructor(name: string) {
         this.name = name;
@@ -28,17 +27,12 @@ export class ALVariable {
         if (this.alDataType) {
             declarationString += this.alDataType.getStringForDataType();
         }
-        else {
-            declarationString += this.objectType;
-        }
-        if (this.objectName) {
-            declarationString += " ";
-            declarationString += StringFunctions.containsSpecialChars(this.objectName) ? "\"" + this.objectName + "\"" : this.objectName;
-        }
         if (this.isTemporary) {
             declarationString += ' temporary';
         }
-        declarationString += ';';
+        if (this.cmdType !== CommandType.Parameter) {
+            declarationString += ';';
+        }
         return declarationString;
     }
 
@@ -82,6 +76,20 @@ export class ALVariable {
             }
             case ALDataTypes.Dictionary: {
                 dt = new DictionaryDataType();
+                break;
+            }
+            case ALDataTypes.Record:
+            case ALDataTypes.Codeunit:
+            case ALDataTypes.Report:
+            case ALDataTypes.Page:
+            case ALDataTypes.TestPage:
+            case ALDataTypes.Query:
+            case ALDataTypes.XmlPort:
+            case ALDataTypes.Enum:
+            case ALDataTypes.Interface:
+            case ALDataTypes.Codeunit:
+            case ALDataTypes.ControlAddIn: {
+                dt = valueForType ? new ObjectDataType(alDataType, valueForType) : new ObjectDataType(alDataType);
                 break;
             }
             default: {
