@@ -101,12 +101,12 @@
 					"alNavigator.ignoreALPrefix": {
 						"type": "string",
 						"default": "",
-						"description": "Remove prefix's from suggested variable names."
+						"description": "Remove prefix from suggested variable names."
 					},
 					"alNavigator.ignoreALSuffix": {
 						"type": "string",
 						"default": "",
-						"description": "Remove suffix's from suggested variable names."
+						"description": "Remove suffix from suggested variable names."
 					}
 				}
 			}
