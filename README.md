@@ -29,7 +29,7 @@ Example 1: Create global variables
 
 Example 3: Create parameters
 
-![Shortcuts](resources/ALNavigator_Shortcuts.png)
+![Create Variables 2](resources/ALNavigator3.gif)
 
 #### Tips: How To Use the CodeAction
 |Tip   |Example   |
