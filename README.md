@@ -35,11 +35,11 @@ Example 3: Create parameters
 |Tip   |Example   |
 |---|---|
 |Variable Names for objects like records can automatically be created if they follow the [naming conventions.](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode#variable-and-field-naming "naming conventions.")   |Vendor can be recognized as Record "Vendor". [Demo](#create-variables-for-objects-like-records)   |
-|Use the Prefix "Temp" to create a temporary record variable.   |TempItem can be recognized as temporary Record "Item".   |
-|You can use [Microsoft's suggested abbreviated variable names](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviated variable names") to create variables.   |GLSetup will be recognized as Record "General Ledger Setup".   |
-|Some frequently used variable names will be automatically created.   |ItemNo can be recognized as Code[20].   |
-|Use a placeholder character as variable name and replace it with the suggested variable name.   |variable name "x" can be replaced by "SalesLine" when the record "Sales Line" has been selected.   |
-|Change the settings "alNavigator.ignoreALPrefix" and "alNavigator.ignoreALSuffix" to ignore these affixes when detecting or creating variables.   |   Set "alNavigator.ignoreALPrefix" to "EX". If you have a table called "EX Test Table" and use the variable name "TestTable", it can be automatically be created.   |
+|Use the Prefix "Temp" to create a temporary record variable.   |TempItem can be recognized as temporary Record "Item". [Demo](#prefix-temp)   |
+|You can use [Microsoft's suggested abbreviated variable names](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviated variable names") to create variables.   |GLSetup will be recognized as Record "General Ledger Setup". [Demo](#abbreviated-variable-names)   |
+|Some frequently used variable names will be automatically created.   |ItemNo can be recognized as Code[20]. [Demo](#frequently-used-variable-names)   |
+|Use a placeholder character as variable name and replace it with the suggested variable name.   |variable name "x" can be replaced by "SalesLine" when the record "Sales Line" has been selected. [Demo](#replace-placeholder)   |
+|Change the settings "alNavigator.ignoreALPrefix" and "alNavigator.ignoreALSuffix" to ignore these affixes when detecting or creating variables.   |   Set "alNavigator.ignoreALPrefix" to "EX". If you have a table called "EX Test Table" and use the variable name "TestTable", it can be automatically be created. [Demo](#affixes)   |
 
 #### Create Variables for Objects Like Records
 ![Create Variables 4](resources/ALNavigator4.gif)
@@ -53,11 +53,17 @@ Example 3: Create parameters
 #### Frequently Used Variable Names
 ![Create Variables 7](resources/ALNavigator7.gif)
 
+#### Replace Placeholder
+![Create Variables 8](resources/ALNavigator8.gif)
+
+#### Affixes
+![Create Variables 9](resources/ALNavigator9.gif)
+
 ## Settings
 |Setting   |Description|
 |---|---|
-|alNavigator.ignoreALPrefix   |
-|alNavigator.ignoreALSuffix   |
+|alNavigator.ignoreALPrefix   |Removes prefix from suggested variable names.   |
+|alNavigator.ignoreALSuffix   |Removes suffix from suggested variable names.   |
 
 
 
