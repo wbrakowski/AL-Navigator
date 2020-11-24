@@ -8,12 +8,12 @@ Create variables and parameters like a boss. Navigate through al files with awes
 
 |Shortcut   |Command Name   |Description   |
 |---|---|---|
-|Ctrl+Alt+g   |AL Navigator: End of global variables  |Move cursor to the end of your global variables (fast way to declare new variables)   |
-|Ctrl+Alt+l   |AL Navigator: End of local variables   |Move cursor to the end of your local variables (fast way to declare new variables)   |
-|Ctrl+Alt+k   |AL Navigator: Keys  |Move cursor to the keys in your .al file    |
-|Ctrl+Alt+a   |AL Navigator: Next Action   |Move cursor to next action in a page .al file   |
-|Ctrl+Alt+d   |AL Navigator: Next DataItem (starting from top)  |Move cursor through data items in your .al report file    |
-|Shift+Alt+d   |AL Navigator: Next DataItem (starting from bottom)   |Move cursor through data items in your .al report file    |
+|**Ctrl+Alt+g**   |AL Navigator: End of global variables  |Moves cursor to the end of your global variables   |
+|**Ctrl+Alt+l**   |AL Navigator: End of local variables   |Moves cursor to the end of your local variables   |
+|**Ctrl+Alt+k**   |AL Navigator: Keys  |Moves cursor to the keys in your .al table file    |
+|**Ctrl+Alt+a**   |AL Navigator: Next Action   |Moves cursor to next action in a page .al file   |
+|**Ctrl+Alt+d**   |AL Navigator: Next DataItem (starting from top)  |Moves cursor through data items in your .al report file    |
+|**Shift+Alt+d**   |AL Navigator: Next DataItem (starting from bottom)   |Moves cursor through data items in your .al report file    |
 
 ### Create Variables
 
@@ -34,12 +34,24 @@ Example 3: Create parameters
 #### Tips: How To Use the CodeAction
 |Tip   |Example   |
 |---|---|
-|Variable Names for objects like records can automatically be created if they follow the [naming conventions](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode#variable-and-field-naming "naming conventions.")   |Vendor can be recognized as Record "Vendor".   |
+|Variable Names for objects like records can automatically be created if they follow the [naming conventions.](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode#variable-and-field-naming "naming conventions.")   |Vendor can be recognized as Record "Vendor". [Demo](#create-variables-for-objects-like-records)   |
 |Use the Prefix "Temp" to create a temporary record variable.   |TempItem can be recognized as temporary Record "Item".   |
-|You can use [Microsoft's suggested abbreviated variable names](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviated variable names") to create variables.   |GLSetup will be recognized as Record "General Ledger Setup"   |
-|Some frequently used variable names will be automatically created   |ItemNo can be recognized as Code[20]   |
-|Use a placeholder character as variable name and replace it with the suggested variable name   |variable name "x" can be replaced by "SalesLine" when the record "Sales Line" has been selected   |
-|Change the settings "alNavigator.ignoreALPrefix" and "alNavigator.ignoreALSuffix" to ignore these affixes when detecting or creating variables   |   |
+|You can use [Microsoft's suggested abbreviated variable names](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviated variable names") to create variables.   |GLSetup will be recognized as Record "General Ledger Setup".   |
+|Some frequently used variable names will be automatically created.   |ItemNo can be recognized as Code[20].   |
+|Use a placeholder character as variable name and replace it with the suggested variable name.   |variable name "x" can be replaced by "SalesLine" when the record "Sales Line" has been selected.   |
+|Change the settings "alNavigator.ignoreALPrefix" and "alNavigator.ignoreALSuffix" to ignore these affixes when detecting or creating variables.   |   Set "alNavigator.ignoreALPrefix" to "EX". If you have a table called "EX Test Table" and use the variable name "TestTable", it can be automatically be created.   |
+
+#### Create Variables for Objects Like Records
+![Create Variables 4](resources/ALNavigator4.gif)
+
+#### Prefix Temp
+![Create Variables 5](resources/ALNavigator5.gif)
+
+#### Abbreviated Variable Names
+![Create Variables 6](resources/ALNavigator6.gif)
+
+#### Frequently Used Variable Names
+![Create Variables 7](resources/ALNavigator7.gif)
 
 ## Settings
 |Setting   |Description|
