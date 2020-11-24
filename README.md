@@ -15,7 +15,7 @@ Create variables and parameters like a boss. Navigate through al files with awes
 |**Ctrl+Alt+d**   |AL Navigator: Next DataItem (starting from top)  |Moves cursor through data items in your .al report file    |
 |**Shift+Alt+d**   |AL Navigator: Next DataItem (starting from bottom)   |Moves cursor through data items in your .al report file    |
 
-### Create Variables
+### Create Variables and Parameters
 
 CodeAction for AL0118: Create a local/global variable or a parameter by using the quick fix lamp (Ctrl + .=).
 
@@ -57,6 +57,7 @@ Example 3: Create parameters
 ![Create Variables 8](resources/ALNavigator8.gif)
 
 #### Affixes
+The prefix "CCO" is removed for the suggested variable name because we set the "alNavigator.ignoreALPrefix": CCO
 ![Create Variables 9](resources/ALNavigator9.gif)
 
 ## Settings
