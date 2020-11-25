@@ -8,12 +8,12 @@ Create variables and parameters like a boss. Navigate through al files with awes
 
 |Shortcut   |Command Name   |Description   |
 |---|---|---|
-|**Ctrl+Alt+g**   |AL Navigator: End of global variables  |Moves cursor to the end of your global variables   |
-|**Ctrl+Alt+l**   |AL Navigator: End of local variables   |Moves cursor to the end of your local variables   |
-|**Ctrl+Alt+k**   |AL Navigator: Keys  |Moves cursor to the keys in your .al table file    |
-|**Ctrl+Alt+a**   |AL Navigator: Next Action   |Moves cursor to next action in a page .al file   |
-|**Ctrl+Alt+d**   |AL Navigator: Next DataItem (starting from top)  |Moves cursor through data items in your .al report file    |
-|**Shift+Alt+d**   |AL Navigator: Next DataItem (starting from bottom)   |Moves cursor through data items in your .al report file    |
+|**Ctrl+Alt+g**   |AL Navigator: End of global variables  |Moves cursor to the end of your global variables.   |
+|**Ctrl+Alt+l**   |AL Navigator: End of local variables   |Moves cursor to the end of your local variables.   |
+|**Ctrl+Alt+k**   |AL Navigator: Keys  |Moves cursor to the keys in your .al table file.    |
+|**Ctrl+Alt+a**   |AL Navigator: Next Action   |Moves cursor to next action in a page .al file.   |
+|**Ctrl+Alt+d**   |AL Navigator: Next DataItem (starting from top)  |Moves cursor through data items in your .al report file.    |
+|**Shift+Alt+d**   |AL Navigator: Next DataItem (starting from bottom)   |Moves cursor through data items in your .al report file.    |
 
 ### Create Variables and Parameters
 

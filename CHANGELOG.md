@@ -4,6 +4,8 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## Release Notes
 
+## [0.3.4]
+- Minor bug fixes
 ## [0.3.3]
 - Get list of objects in workspace on startup (on prior versions the list was retrieved on first variable creation)
 - Support for complex variables with great depth by using recursive functions (List of [Dictionary of [Code[50], Decimal]])
