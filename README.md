@@ -90,5 +90,9 @@ To not bloat this readme too much, you can find more detailed documentations and
 
 https://github.com/wbrakowski/AL-Navigator
 
+## VS Code Marketplace
+
+https://marketplace.visualstudio.com/items?itemName=wbrakowski.al-navigator
+
 ## Picture Attribution
 <a href="https://vectorified.com/alpaca-icon">Alpaca Icon</a>
