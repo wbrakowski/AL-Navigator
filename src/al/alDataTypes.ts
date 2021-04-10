@@ -19,9 +19,9 @@ export enum ALDataTypes {
     Query = "Query",
     Record = "Record", RecordId = "RecordId", RecordRef = "RecordRef", Report = "Report", ReportFormat = "ReportFormat",
     SecurityFilter = "SecurityFilter", SessionSettings = "SessionSettings",
-    TableConnectionType = "TableConnectionType", TestPage = "TestPage", TestPermissions = "TestPermissions", Text = "Text", TextBuilder = "TextBuilder", TextConst = "TextConst", TextEncoding = "TextEncoding", Time = "TextEncoding", TransactionModel = "TextEncoding", TransactionType = "TransactionType",
+    TableConnectionType = "TableConnectionType", TestPage = "TestPage", TestPermissions = "TestPermissions", Text = "Text", TextBuilder = "TextBuilder", TextConst = "TextConst", TextEncoding = "TextEncoding", Time = "Time", TransactionModel = "TransactionModel", TransactionType = "TransactionType",
     Variant = "Variant", Verbosity = "Verbosity", Version = "Version",
     WebServiceActionConText = "WebServiceActionConText", WebServiceActionResultCode = "WebServiceActionResultCode",
-    XmlAttribute = "XmlAttribute", XmlAttributeCollection = "XmlAttributeCollection", XmlCData = "XmlCData", XmlComment = "XmlComment", XmlDeclaration = "XmlDeclaration", XmlDocument = "XmlDeclaration", XmlDocumentType = "XmlDocumentType", XmlElement = "XmlElement", XmlNamespaceManager = "XmlNamespaceManager", XmlNameTable = "XmlNameTable", XmlNode = "XmlNode", XmlNodeList = "XmlNodeList", XmlPort = "XmlPort", XmlProcessingInstruction = "XmlPort", XmlReadOptions = "XmlReadOptions", XmlText = "XmlText", XmlWriteOptions = "XmlWriteOptions"
+    XmlAttribute = "XmlAttribute", XmlAttributeCollection = "XmlAttributeCollection", XmlCData = "XmlCData", XmlComment = "XmlComment", XmlDeclaration = "XmlDeclaration", XmlDocument = "XmlDocument", XmlDocumentType = "XmlDocumentType", XmlElement = "XmlElement", XmlNamespaceManager = "XmlNamespaceManager", XmlNameTable = "XmlNameTable", XmlNode = "XmlNode", XmlNodeList = "XmlNodeList", XmlPort = "XmlPort", XmlProcessingInstruction = "XmlPort", XmlReadOptions = "XmlReadOptions", XmlText = "XmlText", XmlWriteOptions = "XmlWriteOptions"
 }
 
