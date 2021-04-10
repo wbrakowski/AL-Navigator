@@ -253,6 +253,13 @@ export module ALFileCrawler {
         return rangeText.includes('(');
     }
 
+    export function isPageField(diagnosticRange: Range | Selection): boolean {
+        // Check if the next character after the diagnostic range is a round opening paranthesis for a procedure call
+        let range = new Range(diagnosticRange.start, new Position(diagnosticRange.end.line, diagnosticRange.end.character + 1));
+        let rangeText = getRangeText(range);
+        return rangeText.includes(')');
+    }
+
     export function findVariableInsertLine(cmdType: CommandType): number {
         switch (cmdType) {
             case CommandType.LocalVariable: {

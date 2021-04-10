@@ -61,7 +61,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
             case DiagnosticCodes.AL0118.toString():
                 if (!ALFileCrawler.isProcedureCall(diagnostic.range)) {
                     let lineText = ALFileCrawler.getLineText(diagnostic.range);
-                    if (cmdType !== CommandType.LocalVariable || !lineText.toUpperCase().includes('COLUMN')) {
+                    if (cmdType === CommandType.GlobalVariable || !lineText.toUpperCase().includes('COLUMN') && !ALFileCrawler.isPageField(diagnostic.range)) {
                         createVarCodeAction = await this.createVarCodeActionForLine(varName, cmdType, currentDocument, diagnostic.range);
                     }
                 }
@@ -83,7 +83,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         let action: vscode.CodeAction | undefined;
         switch (cmdType) {
             case CommandType.LocalVariable: {
-                actionTitle = `Add local variable ${varName}`;
+                actionTitle = `Add local variable ${varName} (AL Navigator)`;
                 action = new vscode.CodeAction(actionTitle, vscode.CodeActionKind.QuickFix);
                 this._addLocalVarCmd.varName = varName;
                 this._addLocalVarCmd.document = document;
@@ -91,7 +91,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
                 break;
             }
             case CommandType.GlobalVariable: {
-                actionTitle = `Add global variable ${varName}`;
+                actionTitle = `Add global variable ${varName} (AL Navigator)`;
                 action = new vscode.CodeAction(actionTitle, vscode.CodeActionKind.QuickFix);
                 this._addGlobalVarCmd.varName = varName;
                 this._addGlobalVarCmd.document = document;
@@ -99,7 +99,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
                 break;
             }
             case CommandType.Parameter: {
-                actionTitle = `Add parameter ${varName}`;
+                actionTitle = `Add parameter ${varName} (AL Navigator)`;
                 action = new vscode.CodeAction(actionTitle, vscode.CodeActionKind.QuickFix);
                 this._addParamCmd.varName = varName;
                 this._addParamCmd.document = document;
