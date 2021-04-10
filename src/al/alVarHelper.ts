@@ -1234,7 +1234,7 @@ export module ALVarHelper {
 
   export function varNameMatchesBooleanPattern(varName: string): boolean {
     let exactMatchStrings: string[] = [
-      "ISHANDLED", "RUNTRIGGER", "SKIP"
+      "ISHANDLED", "RUNTRIGGER", "SKIP", "EXPLODEBOM", "SHOWCORRECTIONLINES", "LOGINTERACTION", "USEREQUESTPAGE"
     ];
 
     let onlyIncludesStrings: string[] = [
@@ -1288,7 +1288,7 @@ export module ALVarHelper {
 
   export function varNameMatchesCode50Pattern(varName: string): boolean {
     let exactMatchStrings: string[] = [
-      "USERID"
+      "USERID", "SERIALNO"
     ];
     return patternMatches(varName, exactMatchStrings);
   }
