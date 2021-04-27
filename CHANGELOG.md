@@ -6,6 +6,7 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## [0.3.5]
 - Do not show "Add variable local" or "Add parameter" if user is using CodeAction in Request Page 
+- Better  tracking of changed file names and object names 
 ## [0.3.4]
 - Minor bug fixes
 ## [0.3.3]

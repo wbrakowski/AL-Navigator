@@ -146,10 +146,10 @@ export class ALFiles {
                 });
                 switch (selectedType) {
                     case ("Page"):
-                        alVariable.setDataType("Page", 1, alObject.objectName)
+                        alVariable.setDataType("Page", 1, alObject.objectName);
                         break;
                     case ("TestPage"):
-                        alVariable.setDataType("TestPage", 1, alObject.objectName)
+                        alVariable.setDataType("TestPage", 1, alObject.objectName);
                         break;
                     default:
                         return;
@@ -172,25 +172,60 @@ export class ALFiles {
             return;
         }
         switch (updateType) {
-            case UpdateTypes.delete:
-            case UpdateTypes.modify: {
-                if (uri.fsPath !== "") {
-                    // this does not work for some reason
-                    // let deleteIndex = this.alObjects.findIndex(i => i.fsPath === uri.fsPath);
-                    // if (deleteIndex > 0) {
-                    //     this.alObjects.splice(deleteIndex, 1);
-                    // }
+            case UpdateTypes.insert: {
+                let workspaceALFile: ALFile = new ALFile(uri);
+                if (!this.workspaceALFiles.find(i => workspaceALFile.alObject.objectType === i.alObject.objectType && workspaceALFile.alObject.objectName === i.alObject.objectName)) {
+                    this.workspaceALFiles.push(workspaceALFile);
+                    this.alObjects.push(workspaceALFile.alObject);
+                }
+            }
+            case UpdateTypes.delete,
+                UpdateTypes.modify: {
+                    if (uri.fsPath !== "") {
+                        let workspaceALFile: ALFile = new ALFile(uri);
+                        let deleteIndex = await this.getDeleteIdxInWorkspacefiles(workspaceALFile);
+                        if (deleteIndex === -1) {
+                            return;
+                        }
+                        let deleteIndex2 = await this.getDeleteIdxInALObjects(deleteIndex);
+                        if (deleteIndex2 > -1) {
+                            this.alObjects.splice(deleteIndex2, 1);
+                        }
+                        this.workspaceALFiles.splice(deleteIndex, 1);
 
+                        if (updateType !== UpdateTypes.modify) {
+                            return;
+                        }
+
+                        if (!this.workspaceALFiles.find(i => workspaceALFile.alObject.objectType === i.alObject.objectType && workspaceALFile.alObject.objectName === i.alObject.objectName)) {
+                            this.workspaceALFiles.push(workspaceALFile);
+                            this.alObjects.push(workspaceALFile.alObject);
+                        }
+                    }
+                }
+        }
+    }
+
+    private async getDeleteIdxInWorkspacefiles(workspaceALFile: ALFile): Promise<number> {
+        let deleteIdx = -1;
+        if (workspaceALFile.alObject.objectID !== "" || workspaceALFile.alObject.objectType !== "") {
+            deleteIdx = this.workspaceALFiles.findIndex(i => workspaceALFile.alObject.objectType === i.alObject.objectType && workspaceALFile.alObject.objectID === i.alObject.objectID);
+            if (deleteIdx === -1) {
+                if (workspaceALFile.alObject.objectName !== "") {
+                    deleteIdx = this.workspaceALFiles.findIndex(i => workspaceALFile.alObject.objectType === i.alObject.objectType && workspaceALFile.alObject.objectName === i.alObject.objectName);
+                    if (deleteIdx === -1) {
+                        deleteIdx = this.workspaceALFiles.findIndex(i => workspaceALFile.alObject.objectName === i.alObject.objectName && workspaceALFile.alObject.objectID === i.alObject.objectID);
+                    }
                 }
             }
         }
-        // TODO Check performance
-        let workspaceALFile: ALFile = new ALFile(uri);
-        if (!this.alObjects.find(i => workspaceALFile.alObject.objectType === i.objectType && workspaceALFile.alObject.objectName === i.objectName)) {
-            this.workspaceALFiles.push(workspaceALFile);
-            this.alObjects.push(workspaceALFile.alObject);
-        }
+        return deleteIdx;
     }
+
+    private async getDeleteIdxInALObjects(workspaceFilesIdx: number): Promise<number> {
+        return this.alObjects.findIndex(i => this.workspaceALFiles[workspaceFilesIdx].alObject.objectType === i.objectType && this.workspaceALFiles[workspaceFilesIdx].alObject.objectID === i.objectID);
+    }
+
 
     public async updateAppFiles(uri: vscode.Uri, updateType: UpdateTypes) {
         if (!this.alObjects) {
@@ -295,7 +330,7 @@ export class ALFiles {
             // TODO This should not be necessary but let's avoid that there are multiple entries for the same object
             if (!this.alObjects.find(i => alObject.objectType === i.objectType && alObject.objectName === i.objectName)) {
                 this.alObjects.push(alObject);
-            };
+            }
         }
     }
 
