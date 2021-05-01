@@ -7,6 +7,8 @@ import { workspace, ExtensionContext, commands, window, Selection, Range, Positi
 import { FileJumper } from './additional/fileJumper';
 import { ALCodeActionsProvider } from './al/alCodeActionsProvider';
 import { CustomConsole } from './additional/console';
+import { TranslationService } from './additional/translationService';
+import * as Translator from './additional/translator';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -22,30 +24,9 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextDataItemFromBottom();
 	});
 
-	// let jumpToOnAfterGetRecCmd = commands.registerCommand("extension.OnAfterGetRecord", () => {
-	// 	FileJumper.jumpToNextOnAfterGetRecordTrigger();
-	// });
-
-	// let jumpToNextTriggerCmd = commands.registerCommand("extension.Trigger", () => {
-	// 	FileJumper.jumpToNextTrigger();
-	//   });
-
 	let jumpToKeysCmd = commands.registerCommand("extension.Keys", () => {
 		FileJumper.jumpToKeys();
 	});
-
-	//   let jumpToModifyCmd = commands.registerCommand("extension.OnModify", () => {
-	// 	FileJumper.jumpToNextOnModifyTrigger();
-	//   });
-
-	//   let jumpToDeleteCmd = commands.registerCommand("extension.OnDelete", () => {
-	// 	FileJumper.jumpToNextOnDeleteTrigger();
-	//   });
-
-	//   let jumpToInsertCmd = commands.registerCommand("extension.OnInsert", () => {
-	// 	FileJumper.jumpToNextOnInsertTrigger();
-	//   });
-
 
 	let jumpToLastLocalVarLineCmd = commands.registerCommand("extension.LastLocalVarLine", () => {
 		FileJumper.jumpToLastLocalVarLine();
@@ -59,22 +40,21 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextActions();
 	});
 
+	let openMSTranslation = commands.registerCommand("extension.OpenMicrosoftTranslation", () => {
+		Translator.openMicrosoftTranslation();
+	});
+
 	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context), {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
 
 	context.subscriptions.push(jumpToNextDataItemCmd);
 	context.subscriptions.push(jumpToNextDataItemBottomCmd);
-	// context.subscriptions.push(jumpToOnAfterGetRecCmd);
-	// context.subscriptions.push(jumpToNextTriggerCmd);
 	context.subscriptions.push(jumpToKeysCmd);
 	context.subscriptions.push(jumpToLastLocalVarLineCmd);
 	context.subscriptions.push(jumpToLastGlobalVarLinecmd);
 	context.subscriptions.push(jumpToActionsCmd);
-	// context.subscriptions.push(jumpToInsertCmd);
-	// context.subscriptions.push(jumpToDeleteCmd);
-	// context.subscriptions.push(jumpToModifyCmd);
-
+	context.subscriptions.push(openMSTranslation);
 }
 
 // this method is called when your extension is deactivated
