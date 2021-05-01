@@ -3,7 +3,7 @@ import { ALCodeCommand } from './alCodeCommand';
 import { ALVariable } from './alVariable';
 import { ALFileCrawler } from './alFileCrawler';
 import { TextBuilder } from '../additional/textBuilder';
-import { ObjectTypes } from '../additional/objectTypes';
+import { ObjectTypes } from './objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALFiles } from './alFiles';
 import { ALDataTypes } from './alDataTypes';
@@ -30,7 +30,7 @@ export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
         this.setAffixes();
         vscode.workspace.onDidChangeConfiguration((change) => {
             this.setAffixes();
-        })
+        });
         this.cmdType = cmdType;
     }
 
@@ -38,10 +38,10 @@ export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
         let config = vscode.workspace.getConfiguration('alNavigator');
         let ignoreALPrefix = config.get('ignoreALPrefix');
         let ignoreALSuffix = config.get('ignoreALSuffix');
-        if (typeof ignoreALPrefix == 'string') {
+        if (typeof ignoreALPrefix === 'string') {
             this._ignoreALPrefixUpperCase = ignoreALPrefix.toUpperCase();
         }
-        if (typeof ignoreALSuffix == 'string') {
+        if (typeof ignoreALSuffix === 'string') {
             this._ignoreALSuffixUpperCase = ignoreALSuffix.toUpperCase();
         }
     }

@@ -5,7 +5,7 @@ import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { UpdateTypes } from '../additional/updateTypes';
 import { ALVariable } from './alVariable';
 import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
-import { ObjectTypes } from '../additional/objectTypes';
+import { ObjectTypes } from './objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALDataTypes } from './alDataTypes';
 import { StringFunctions } from '../additional/stringFunctions';

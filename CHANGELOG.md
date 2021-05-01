@@ -4,6 +4,8 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## Release Notes
 
+## [0.3.6]
+- New feature: open microsoft translation
 ## [0.3.5]
 - Do not show "Add variable local" or "Add parameter" if user is using CodeAction in Request Page 
 - Better  tracking of changed file names and object names 

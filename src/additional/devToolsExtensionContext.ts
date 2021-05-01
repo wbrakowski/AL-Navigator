@@ -2,7 +2,7 @@
 
 import * as vscode from 'vscode';
 import { isNullOrUndefined } from "util";
-import { ObjectTypes } from './objectTypes';
+import { ObjectTypes } from '../al/objectTypes';
 import { StringFunctions } from './stringFunctions';
 
 export class ALCodeOutlineExtension {
