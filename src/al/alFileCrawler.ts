@@ -254,7 +254,11 @@ export module ALFileCrawler {
     }
 
     export function isPageField(diagnosticRange: Range | Selection): boolean {
-        // Check if the next character after the diagnostic range is a round opening paranthesis for a procedure call
+        let currLineText = getText(diagnosticRange.start.line).trimLeft();
+        if (!currLineText.startsWith('field')) {
+            return false;
+        }
+        // Check if the next character after the diagnostic range is a round closing paranthesis
         let range = new Range(diagnosticRange.start, new Position(diagnosticRange.end.line, diagnosticRange.end.character + 1));
         let rangeText = getRangeText(range);
         return rangeText.includes(')');
