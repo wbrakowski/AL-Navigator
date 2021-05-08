@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.",
-	"version": "0.3.6",
+	"version": "0.3.7",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -69,6 +69,10 @@
 			{
 				"command": "extension.OpenMicrosoftTranslation",
 				"title": "AL Navigator: Open Microsoft Translation"
+			},
+			{
+				"command": "extension.ShowMicrosoftTranslation",
+				"title": "AL Navigator: Show Microsoft Translation"
 			}
 		],
 		"keybindings": [
@@ -260,6 +264,7 @@
 		"andrzejzwierzchowski.al-code-outline"
 	],
 	"dependencies": {
+		"axios": "^0.21.1",
 		"open": "^8.0.7"
 	}
 }

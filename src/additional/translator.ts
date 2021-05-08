@@ -11,3 +11,13 @@ export function openMicrosoftTranslation() {
 
     console.log('Done: openMicrosoftTranslation');
 }
+
+export function showMicrosoftTranslation() {
+    console.log('Running: showMicrosoftTranslation');
+
+    let currentWord = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
+    vscode.window.showInputBox({ value: currentWord, prompt: "Translate String:" }).then(searchString =>
+        TranslationService.showMicrosoftTranslation(searchString));
+
+    console.log('Done: showMicrosoftTranslation');
+}
