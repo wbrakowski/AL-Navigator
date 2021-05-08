@@ -44,6 +44,11 @@ export function activate(context: vscode.ExtensionContext) {
 		Translator.openMicrosoftTranslation();
 	});
 
+	let showMSTranslation = commands.registerCommand("extension.ShowMicrosoftTranslation", () => {
+		Translator.showMicrosoftTranslation();
+	});
+
+
 	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context), {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
@@ -55,6 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToLastGlobalVarLinecmd);
 	context.subscriptions.push(jumpToActionsCmd);
 	context.subscriptions.push(openMSTranslation);
+	context.subscriptions.push(showMSTranslation);
 }
 
 // this method is called when your extension is deactivated

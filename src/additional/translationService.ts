@@ -2,6 +2,7 @@ import open = require('open');
 import { window } from 'vscode';
 import { StringFunctions } from './stringFunctions';
 import * as vscode from 'vscode';
+const axios = require('axios');
 
 export class TranslationService {
     static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=%22|SearchString|%22';
@@ -20,9 +21,6 @@ export class TranslationService {
         if (searchString) {
             let url = this.getMicrosoftSearchUrl(searchString);
             open(url);
-        }
-        else {
-            window.showErrorMessage('Something went wrong when trying to open the search URL.');
         }
     }
 
@@ -382,5 +380,61 @@ export class TranslationService {
                 langId = this.msDefLangId;
         }
         return langId;
+    }
+
+    public static async showMicrosoftTranslation(searchString: string | undefined): Promise<string[] | undefined> {
+        if (searchString) {
+            console.log(`Fetching Translation from Microsoft for string: ${searchString}`);
+            let url = this.getMicrosoftSearchUrl(searchString);
+            try {
+                const response = await axios.get(url);
+                if (response.status === 200) {
+                    // Status OK
+                    let responseText: string = response.data;
+                    let translations: string[] | undefined = await TranslationService.extractTranslationsFromResponseText(responseText);
+                    if (translations) {
+                        if (translations.length > 0) {
+                            vscode.window.showInformationMessage(`Input: ${searchString}, translation: ${translations}`);
+                            return translations;
+                        }
+                        else {
+                            vscode.window.showInformationMessage(`No translation found for input: ${searchString}`);
+                            return;
+                        }
+                    }
+                }
+                else {
+                    vscode.window.showErrorMessage(`An unknown occured during translation: Unexpected status: ${response.status}`);
+                    return;
+                }
+            } catch (exception) {
+                process.stderr.write(`ERROR received from ${url}: ${exception}\n`);
+                return;
+            }
+        }
+    }
+
+    private static async extractTranslationsFromResponseText(responseText: string): Promise<string[] | undefined> {
+        let translations: string[] = [];
+        let tdString: string = '<td class="trs_target_clm">';
+        let tdStringStartIdx: number;
+        let pos: number = 0;
+        do {
+            tdStringStartIdx = responseText.indexOf(tdString, pos);
+            if (tdStringStartIdx > -1) {
+                let translationStartIdx: number = tdStringStartIdx + tdString.length;
+                if (translationStartIdx === -1) {
+                    // TODO Http response is for some reason corrupt
+                    return;
+                }
+                let tdStringEndIdx: number = responseText.indexOf('</td>', translationStartIdx);
+                if (tdStringEndIdx > -1) {
+                    let translationText = responseText.substring(translationStartIdx, tdStringEndIdx);
+                    translations.push(translationText);
+                }
+                pos = tdStringEndIdx;
+            }
+        } while (tdStringStartIdx !== -1);
+        return translations;
     }
 }

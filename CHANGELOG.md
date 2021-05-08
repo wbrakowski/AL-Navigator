@@ -4,6 +4,9 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## Release Notes
 
+## [0.3.7]
+- More fixes for "Add variable local" or "Add parameter" 
+- New feature: show microsoft translation
 ## [0.3.6]
 - New feature: open microsoft translation
 ## [0.3.5]
