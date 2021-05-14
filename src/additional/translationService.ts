@@ -5,33 +5,35 @@ import * as vscode from 'vscode';
 const axios = require('axios');
 
 export class TranslationService {
-    static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=%22|SearchString|%22';
+    // static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=%22|SearchString|%22';
+    static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=|SearchString|';
     static readonly msProductId = '564'; // Dynamics NAV
     static readonly msDefLangId = '354'; // German
 
-    public static getMicrosoftSearchUrl(searchString: string): string {
+    public static getMicrosoftSearchUrl(searchString: string, reverse: boolean): string {
         let searchUrl = StringFunctions.replaceAll(this.msTranslationUrl, '|SearchString|', searchString.split(' ').join('+'));
-        let targetTranslation = this.getTargetTranslationFromConfig();
+        let targetTranslation = this.getTranslationFromConfig();
         let langId = this.getLanguageId(targetTranslation);
-        searchUrl += `&langID=${langId}&Source=true&productid=${this.msProductId}`;
+        let source = reverse ? 'false' : 'true';
+        searchUrl += `&langID=${langId}&productid=${this.msProductId}&Source=${source}`;
         return searchUrl;
     }
 
-    public static openSearchUrl(searchString: string | undefined) {
+    public static openSearchUrl(searchString: string | undefined, reverse: boolean) {
         if (searchString) {
-            let url = this.getMicrosoftSearchUrl(searchString);
+            let url = this.getMicrosoftSearchUrl(searchString, reverse);
             open(url);
         }
     }
 
-    public static getTargetTranslationFromConfig(): any {
+    public static getTranslationFromConfig(): any {
         let config = vscode.workspace.getConfiguration('alNavigator');
         return config.get('translationTargetLanguage');
     }
 
-    public static getLanguageId(targetTranslation: string): string {
+    public static getLanguageId(translationLang: string): string {
         let langId: string;
-        switch (targetTranslation) {
+        switch (translationLang) {
             case 'Afrikaans':
                 langId = '6';
                 break;
@@ -382,20 +384,20 @@ export class TranslationService {
         return langId;
     }
 
-    public static async showMicrosoftTranslation(searchString: string | undefined): Promise<string[] | undefined> {
+    public static async showMicrosoftTranslation(searchString: string | undefined, reverse: boolean): Promise<string | undefined> {
         if (searchString) {
             console.log(`Fetching Translation from Microsoft for string: ${searchString}`);
-            let url = this.getMicrosoftSearchUrl(searchString);
+            let url = this.getMicrosoftSearchUrl(searchString, reverse);
             try {
                 const response = await axios.get(url);
                 if (response.status === 200) {
                     // Status OK
                     let responseText: string = response.data;
-                    let translations: string[] | undefined = await TranslationService.extractTranslationsFromResponseText(responseText);
+                    let translations: string[] | undefined = await TranslationService.extractTranslationsFromResponseText(responseText, reverse);
                     if (translations) {
                         if (translations.length > 0) {
-                            vscode.window.showInformationMessage(`Input: ${searchString}, translation: ${translations}`);
-                            return translations;
+                            vscode.window.showInformationMessage(`Input: ${searchString}, translation: ${translations[0]}`);
+                            return translations[0];
                         }
                         else {
                             vscode.window.showInformationMessage(`No translation found for input: ${searchString}`);
@@ -414,11 +416,11 @@ export class TranslationService {
         }
     }
 
-    private static async extractTranslationsFromResponseText(responseText: string): Promise<string[] | undefined> {
+    private static async extractTranslationsFromResponseText(responseText: string, reverse: boolean): Promise<string[] | undefined> {
         let translations: string[] = [];
-        let tdString: string = '<td class="trs_target_clm">';
+        let tdString = reverse ? '<td class="trs_source_clm">' : '<td class="trs_target_clm">';
         let tdStringStartIdx: number;
-        let pos: number = 0;
+        let pos = 0;
         do {
             tdStringStartIdx = responseText.indexOf(tdString, pos);
             if (tdStringStartIdx > -1) {
