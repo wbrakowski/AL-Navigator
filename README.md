@@ -15,6 +15,24 @@ Create variables and parameters like a boss. Navigate through al files with awes
 |**Ctrl+Alt+d**   |AL Navigator: Next DataItem (starting from top)  |Moves cursor through data items in your .al report file.    |
 |**Shift+Alt+d**   |AL Navigator: Next DataItem (starting from bottom)   |Moves cursor through data items in your .al report file.    |
 
+### Open/Show Translations
+
+AL Navigator: Open Microsoft Translation (English -> Target Language)
+
+![Open Target Translation](resources/OpenTargetTranslation.gif)
+
+AL Navigator: Open Microsoft Translation (Target Language -> English)
+
+![Open English Translation](resources/OpenEnglishTranslation.gif)
+
+AL Navigator: Show Microsoft Translation (English -> Target Language)
+
+![Show Target Translation](resources/ShowTargetTranslation.gif)
+
+AL Navigator: Show Microsoft Translation (Target Language -> English)
+
+![Show English Translation](resources/ShowEnglishTranslation.gif)
+
 ### Create Variables and Parameters
 
 CodeAction for AL0118: Create a local/global variable or a parameter by using the quick fix lamp (Ctrl + .).
@@ -65,10 +83,7 @@ The prefix "CCO" is removed for the suggested variable name because we set the "
 |---|---|
 |alNavigator.ignoreALPrefix   |Removes prefix from suggested variable names.   |
 |alNavigator.ignoreALSuffix   |Removes suffix from suggested variable names.   |
-
-
-
-
+|alNavigator.translationTargetLanguage   |Defines the target language for translation functionalities.   |
 
 
 ## Requirements

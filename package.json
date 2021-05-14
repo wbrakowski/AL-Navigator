@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.",
-	"version": "0.3.8",
+	"version": "0.3.9",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -67,12 +67,20 @@
 				"title": "AL Navigator: End of global variables"
 			},
 			{
-				"command": "extension.OpenMicrosoftTranslation",
-				"title": "AL Navigator: Open Microsoft Translation"
+				"command": "extension.OpenMSTranslation",
+				"title": "AL Navigator: Open Microsoft Translation (English -> Target Language)"
 			},
 			{
-				"command": "extension.ShowMicrosoftTranslation",
-				"title": "AL Navigator: Show Microsoft Translation"
+				"command": "extension.OpenMSTranslationReverse",
+				"title": "AL Navigator: Open Microsoft Translation (Target Language -> English)"
+			},
+			{
+				"command": "extension.ShowMSTranslation",
+				"title": "AL Navigator: Show Microsoft Translation (English -> Target Language)"
+			},
+			{
+				"command": "extension.ShowMSTranslationReverse",
+				"title": "AL Navigator: Show Microsoft Translation (Target Language -> English)"
 			}
 		],
 		"keybindings": [

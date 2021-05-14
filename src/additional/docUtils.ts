@@ -22,7 +22,7 @@ export function getSelectedWord(editor: vscode.TextEditor): string {
 
 export function getCurrentLineText(editor: vscode.TextEditor): string {
     let currLine = editor.document.lineAt(editor.selection.start.line);
-    let currLineText: string = currLine.text;;
+    let currLineText: string = currLine.text;
     if (ALFileCrawler.isComment(currLineText)) {
         vscode.window.showInformationMessage(`The current line ${editor.selection.start.line} contains a comment. Operation failed.`);
         return '';

@@ -40,12 +40,20 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextActions();
 	});
 
-	let openMSTranslation = commands.registerCommand("extension.OpenMicrosoftTranslation", () => {
-		Translator.openMicrosoftTranslation();
+	let openMSTranslation = commands.registerCommand("extension.OpenMSTranslation", () => {
+		Translator.openMicrosoftTranslation(false);
 	});
 
-	let showMSTranslation = commands.registerCommand("extension.ShowMicrosoftTranslation", () => {
-		Translator.showMicrosoftTranslation();
+	let openMSTranslationReverse = commands.registerCommand("extension.OpenMSTranslationReverse", () => {
+		Translator.openMicrosoftTranslation(true);
+	});
+
+	let showMSTranslation = commands.registerCommand("extension.ShowMSTranslation", () => {
+		Translator.showMicrosoftTranslation(false);
+	});
+
+	let showMSTranslationReverse = commands.registerCommand("extension.ShowMSTranslationReverse", () => {
+		Translator.showMicrosoftTranslation(true);
 	});
 
 
@@ -60,7 +68,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToLastGlobalVarLinecmd);
 	context.subscriptions.push(jumpToActionsCmd);
 	context.subscriptions.push(openMSTranslation);
+	context.subscriptions.push(openMSTranslationReverse);
 	context.subscriptions.push(showMSTranslation);
+	context.subscriptions.push(showMSTranslationReverse);
 }
 
 // this method is called when your extension is deactivated
