@@ -3,6 +3,9 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.4.0]
+- Fix indentation when creating variables with CodeAction
+
 ## [0.3.9]
 - New feature: Open Microsoft translation target language -> english language
 - New feature: Show Microsoft translation target language -> english language

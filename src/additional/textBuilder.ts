@@ -44,6 +44,7 @@ export module TextBuilder {
                             indentText += " ";
                         }
                         declaration = indentText + "var" + "\n";
+                        createVarSection = true;
                     }
                 }
 
@@ -76,7 +77,12 @@ export module TextBuilder {
         }
 
         // Only indent for global or local variables, not for parameters
-        declaration += alVariable.cmdType === CommandType.Parameter ? alVariable.getVariableDeclarationString() : indentText + indentPart + alVariable.getVariableDeclarationString();
+        if (alVariable.cmdType === CommandType.Parameter) {
+            declaration += alVariable.getVariableDeclarationString();
+        }
+        else {
+            declaration += createVarSection ? indentText + alVariable.getVariableDeclarationString() : indentText + indentPart + alVariable.getVariableDeclarationString();
+        }
         varDeclaration.declaration = declaration;
         varDeclaration.createsVarSection = createVarSection;
         return varDeclaration;
