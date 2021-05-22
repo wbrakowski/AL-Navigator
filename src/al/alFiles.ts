@@ -305,9 +305,6 @@ export class ALFiles {
         await this.pushToObjects(interfaces, ObjectTypes.interface);
 
         this.populatedFromCache = true;
-        // if (this.appFilesChanged) {
-        //     this.appFilesChanged = false;
-        // }
     }
 
     public getObjectList(objectType: ObjectTypes): string[] {

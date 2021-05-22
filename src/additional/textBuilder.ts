@@ -22,7 +22,7 @@ export module TextBuilder {
                     {
                         varStartLineNo = ALFileCrawler.findGlobalVarCreationPos();
                         if (varStartLineNo > -1) {
-                            let noOfWhiteSpaces = 2;
+                            let noOfWhiteSpaces = 4;
                             for (let i = 0; i < noOfWhiteSpaces; i++) {
                                 indentText += " ";
                             }
@@ -73,6 +73,9 @@ export module TextBuilder {
             noWhiteSpaces = StringFunctions.getNoOfLeftSpaces(varText);
             for (let i = 0; i < noWhiteSpaces; i++) {
                 indentText += " ";
+            }
+            if (alVariable.cmdType === CommandType.GlobalVariable && createVarSection) {
+                indentText += "    ";
             }
         }
 
