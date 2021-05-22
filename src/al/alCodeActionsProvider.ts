@@ -6,13 +6,15 @@ import { ALAddVarOrParamCodeCommand } from './alAddVarOrParamCodeCommand';
 import { CommandType } from '../additional/commandType';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
-    protected _alFiles: ALFiles = new ALFiles();
+    // protected _alFiles: ALFiles = new ALFiles();
+    protected _alFiles: ALFiles;
     protected _addLocalVarCmd: ALAddVarOrParamCodeCommand;
     protected _addGlobalVarCmd: ALAddVarOrParamCodeCommand;
     protected _addParamCmd: ALAddVarOrParamCodeCommand;
     protected _context: vscode.ExtensionContext;
 
-    public constructor(context: vscode.ExtensionContext) {
+    public constructor(context: vscode.ExtensionContext, alFiles: ALFiles) {
+        this._alFiles = alFiles;
         this._context = context;
         this._addLocalVarCmd = new ALAddVarOrParamCodeCommand(this._context, 'extension.createLocalVar', this._alFiles, CommandType.LocalVariable);
         this._addGlobalVarCmd = new ALAddVarOrParamCodeCommand(this._context, 'extension.createGlobalVar', this._alFiles, CommandType.GlobalVariable);

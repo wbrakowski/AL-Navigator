@@ -3,12 +3,13 @@
 'use strict';
 
 import * as vscode from 'vscode';
-import { workspace, ExtensionContext, commands, window, Selection, Range, Position } from 'vscode';
+import { commands } from 'vscode';
 import { FileJumper } from './additional/fileJumper';
 import { ALCodeActionsProvider } from './al/alCodeActionsProvider';
 import { CustomConsole } from './additional/console';
-import { TranslationService } from './additional/translationService';
 import * as Translator from './additional/translator';
+import { ALFiles } from './al/alFiles';
+import { ReportCreator } from './al/reportCreator';
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -32,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToLastLocalVarLine();
 	});
 
-	let jumpToLastGlobalVarLinecmd = commands.registerCommand("extension.LastGlobalVarLine", () => {
+	let jumpToLastGlobalVarLineCmd = commands.registerCommand("extension.LastGlobalVarLine", () => {
 		FileJumper.jumpToLastGlobalVarLine();
 	});
 
@@ -40,24 +41,29 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextActions();
 	});
 
-	let openMSTranslation = commands.registerCommand("extension.OpenMSTranslation", () => {
+	let openMSTranslationCmd = commands.registerCommand("extension.OpenMSTranslation", () => {
 		Translator.openMicrosoftTranslation(false);
 	});
 
-	let openMSTranslationReverse = commands.registerCommand("extension.OpenMSTranslationReverse", () => {
+	let openMSTranslationReverseCmd = commands.registerCommand("extension.OpenMSTranslationReverse", () => {
 		Translator.openMicrosoftTranslation(true);
 	});
 
-	let showMSTranslation = commands.registerCommand("extension.ShowMSTranslation", () => {
+	let showMSTranslationCmd = commands.registerCommand("extension.ShowMSTranslation", () => {
 		Translator.showMicrosoftTranslation(false);
 	});
 
-	let showMSTranslationReverse = commands.registerCommand("extension.ShowMSTranslationReverse", () => {
+	let showMSTranslationReverseCmd = commands.registerCommand("extension.ShowMSTranslationReverse", () => {
 		Translator.showMicrosoftTranslation(true);
 	});
 
+	let _alFiles: ALFiles = new ALFiles();
+	let startCreateReportDialogCmd = commands.registerCommand("extension.StartCreateReportDialog", () => {
+		ReportCreator.startCreateReportDialog(_alFiles);
+	});
 
-	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context), {
+
+	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context, _alFiles), {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
 
@@ -65,12 +71,13 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToNextDataItemBottomCmd);
 	context.subscriptions.push(jumpToKeysCmd);
 	context.subscriptions.push(jumpToLastLocalVarLineCmd);
-	context.subscriptions.push(jumpToLastGlobalVarLinecmd);
+	context.subscriptions.push(jumpToLastGlobalVarLineCmd);
 	context.subscriptions.push(jumpToActionsCmd);
-	context.subscriptions.push(openMSTranslation);
-	context.subscriptions.push(openMSTranslationReverse);
-	context.subscriptions.push(showMSTranslation);
-	context.subscriptions.push(showMSTranslationReverse);
+	context.subscriptions.push(openMSTranslationCmd);
+	context.subscriptions.push(openMSTranslationReverseCmd);
+	context.subscriptions.push(showMSTranslationCmd);
+	context.subscriptions.push(showMSTranslationReverseCmd);
+	context.subscriptions.push(startCreateReportDialogCmd);
 }
 
 // this method is called when your extension is deactivated
