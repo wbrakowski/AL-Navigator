@@ -21,7 +21,7 @@ export class ALVariable {
     public getVariableDeclarationString(): string {
         let declarationString = "";
         // Only remove prefixes/suffixes if a variable suggestion name is being used
-        let variableName = this.typeAutomaticallyDetected ? this.name : StringFunctions.removePrefixAndSuffixFromVariableName(this.name, this.ignoreALPrefix, this.ignoreALSuffix)
+        let variableName = this.typeAutomaticallyDetected ? this.name : StringFunctions.removePrefixAndSuffixFromVariableName(this.name, this.ignoreALPrefix, this.ignoreALSuffix);
         declarationString += variableName;
         declarationString += ": ";
         if (this.alDataType) {

@@ -82,11 +82,6 @@
 				"command": "extension.ShowMSTranslationReverse",
 				"title": "AL Navigator: Show Microsoft Translation (Target Language -> English)"
 			}
-			// ,
-			// {
-			// 	"command": "extension.StartCreateReportDialog",
-			// 	"title": "AL Navigator: Create Report"
-			// }
 		],
 		"keybindings": [
 			{
