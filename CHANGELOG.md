@@ -4,7 +4,7 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## Release Notes
 ## [0.4.1]
-- New Feature: Create Report (copies a standard report including layout)
+- Fixed a bug where the local variable section could nould be found to create new variables
 ## [0.4.0]
 - Fix indentation when creating variables with CodeAction
 ## [0.3.9]
@@ -134,4 +134,3 @@ Bugfixing
 ### [0.0.1] 
 
 Initial release
-
