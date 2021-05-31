@@ -56,6 +56,7 @@ export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
         }
         let lineNo: number = ALFileCrawler.findVariableInsertLine(this.cmdType);
 
+        await this._alFiles.fillObjects();
         let alVariable = await this.createALVariable(this.varName);
         let varNameOriginal = "";
         if (!alVariable) {

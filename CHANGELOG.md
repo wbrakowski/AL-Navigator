@@ -4,7 +4,10 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 
 ## Release Notes
 ## [0.4.1]
+- Fixed loading the list of enums
 - Fixed a bug where the local variable section could nould be found to create new variables
+- Object list now will only be loaded when you use the create variable/parameter CodeAction for the first time 
+  -> little delay the first time, but this fixes the bug where not all objects are loaded correctly
 ## [0.4.0]
 - Fix indentation when creating variables with CodeAction
 ## [0.3.9]
