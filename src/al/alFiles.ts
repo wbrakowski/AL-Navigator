@@ -25,7 +25,7 @@ export class ALFiles {
 
     constructor() {
         this.populateALFilesArray();    
-        this.fillObjects();
+        // this.fillObjects();
         let watcherALFiles = vscode.workspace.createFileSystemWatcher('**/*.al');
         watcherALFiles.onDidCreate(async (e: vscode.Uri) => {
             if (e.fsPath.indexOf('.vscode') === -1) {

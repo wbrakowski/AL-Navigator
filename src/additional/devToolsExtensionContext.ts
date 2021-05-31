@@ -104,6 +104,10 @@ export class ALCodeOutlineExtension {
                 let item = list.items[i];
                 switch (objectType) {
                     case ObjectTypes.enum:
+                        if (item.kind === vscode.CompletionItemKind.Enum) { 
+                            out.push(StringFunctions.fromNameText(item.label));
+                        }
+                        break;
                     case ObjectTypes.controlAddIn:
                     case ObjectTypes.report:
                     case ObjectTypes.xmlport:
