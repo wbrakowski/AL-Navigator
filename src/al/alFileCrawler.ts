@@ -19,7 +19,7 @@ export module ALFileCrawler {
             if (currLineText === "VAR") {
                 foundLineNo = i;
                 break;
-            } else if (currLineText.includes("TRIGGER") || currLineText.includes("PROCEDURE")) {
+            } else if ((currLineText.includes("TRIGGER") && currLineText.endsWith('()'))|| currLineText.includes("PROCEDURE")) {
                 if (i === lastLineNo) {
                     foundLineNo = i + 1;
                 }
@@ -62,7 +62,7 @@ export module ALFileCrawler {
         for (let i = 0; i < editor.document.lineCount; i++) {
             let currLine = editor.document.lineAt(i);
             let currLineText = currLine.text.trim().toUpperCase();
-            if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
+            if ((currLineText.includes("TRIGGER") && currLineText.endsWith('()')) || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
                 ignoreNext = true;
             } else if (currLineText.toUpperCase() === "VAR") {
                 if (ignoreNext) {
@@ -94,7 +94,7 @@ export module ALFileCrawler {
         for (let i = startNo; i <= editor.document.lineCount - 1; i++) {
             let currLine: TextLine = editor.document.lineAt(i);
             let currLineText: string = currLine.text.trim().toUpperCase();
-            if (currLineText.includes('PROCEDURE') || currLineText.includes('TRIGGER')) {
+            if (currLineText.includes('PROCEDURE') || (currLineText.includes("TRIGGER") && currLineText.endsWith('()'))) {
                 endLineNo = i - 2;
                 break;
             }
@@ -218,8 +218,8 @@ export module ALFileCrawler {
         let foundLocalProcLineNo: number = -1;
         for (let i = lastLineNo; i >= 0; i--) {
             let currLine: TextLine = editor.document.lineAt(i);
-            let currLineText: string = currLine.text.trim();
-            if (currLineText.toUpperCase().indexOf("TRIGGER") >= 0 || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
+            let currLineText: string = currLine.text.trim().toUpperCase();
+            if ((currLineText.includes("TRIGGER") && currLineText.endsWith('()')) || currLineText.toUpperCase().indexOf("PROCEDURE") >= 0) {
                 foundLocalProcLineNo = i;
                 break;
             }
