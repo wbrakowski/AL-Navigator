@@ -245,6 +245,12 @@
 						"type": "string",
 						"default": "German",
 						"description": "Defines the target language for translation functionalities."
+					},
+					"alNavigator.maxNoOfShownTranslations": {
+						"type": "integer",
+						"default": "1",
+						"minimum": 1,
+						"description": "Maximum number of shown translations when using translation functionalities."
 					}
 				}
 			}
