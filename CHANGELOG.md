@@ -3,6 +3,10 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.4.2]
+- Search for all translations in all products if Dynamics NAV translation cannot be found
+- New configuration setting: maxNoOfShownTranslations
+
 ## [0.4.1]
 - Fixed loading the list of enums
 - Fixed a bug where the local variable section could nould be found to create new variables

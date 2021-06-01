@@ -7,15 +7,18 @@ const axios = require('axios');
 export class TranslationService {
     // static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=%22|SearchString|%22';
     static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=|SearchString|';
+    static readonly msAllProductsId = '0'; // All Products
+    static readonly msFinOpProductId = '639';
     static readonly msProductId = '564'; // Dynamics NAV
     static readonly msDefLangId = '354'; // German
 
-    public static getMicrosoftSearchUrl(searchString: string, reverse: boolean): string {
+    public static getMicrosoftSearchUrl(searchString: string, reverse: boolean, productId?: string): string {
         let searchUrl = StringFunctions.replaceAll(this.msTranslationUrl, '|SearchString|', searchString.split(' ').join('+'));
         let targetTranslation = this.getTranslationFromConfig();
         let langId = this.getLanguageId(targetTranslation);
         let source = reverse ? 'false' : 'true';
-        searchUrl += `&langID=${langId}&productid=${this.msProductId}&Source=${source}`;
+        let urlProductId = productId ? productId : this.msProductId;
+        searchUrl += `&langID=${langId}&productid=${urlProductId}&Source=${source}`;
         return searchUrl;
     }
 
@@ -29,6 +32,11 @@ export class TranslationService {
     public static getTranslationFromConfig(): any {
         let config = vscode.workspace.getConfiguration('alNavigator');
         return config.get('translationTargetLanguage');
+    }
+
+    public static getMaxNoOfTranslationsFromConfig(): any {
+        let config = vscode.workspace.getConfiguration('alNavigator');
+        return config.get('maxNoOfShownTranslations');
     }
 
     public static getLanguageId(translationLang: string): string {
@@ -384,10 +392,16 @@ export class TranslationService {
         return langId;
     }
 
-    public static async showMicrosoftTranslation(searchString: string | undefined, reverse: boolean): Promise<string | undefined> {
+    public static async showMicrosoftTranslation(searchString: string | undefined, reverse: boolean, productId?: string): Promise<string[] | undefined> {
         if (searchString) {
             console.log(`Fetching Translation from Microsoft for string: ${searchString}`);
-            let url = this.getMicrosoftSearchUrl(searchString, reverse);
+            let url: string;
+            if (productId) {
+                url = this.getMicrosoftSearchUrl(searchString, reverse, productId);
+            }
+            else {
+                url = this.getMicrosoftSearchUrl(searchString, reverse);
+            }
             try {
                 const response = await axios.get(url);
                 if (response.status === 200) {
@@ -396,11 +410,30 @@ export class TranslationService {
                     let translations: string[] | undefined = await TranslationService.extractTranslationsFromResponseText(responseText, reverse);
                     if (translations) {
                         if (translations.length > 0) {
-                            vscode.window.showInformationMessage(`Input: ${searchString}, translation: ${translations[0]}`);
-                            return translations[0];
+                            vscode.window.showInformationMessage(`Input: ${searchString}, translations: ${translations}`);
+                            return translations;
                         }
                         else {
-                            vscode.window.showInformationMessage(`No translation found for input: ${searchString}`);
+
+                            let product1 = 'All products';
+                            let product2 = 'Microsoft Dynamics 365 for Finance and Operations, Business Edition';
+                            let products: string[] = [];
+                            products[0] = product1;
+                            products[1] = product2;
+                            let translationProduct = await vscode.window.showQuickPick(products, {
+                                canPickMany: false,
+                                placeHolder: `No translation found for product Dynamics NAV. Check translations for other products?`
+                            });
+                            if (translationProduct) {
+                                switch(translationProduct) 
+                                {
+                                    case product1:
+                                        this.showMicrosoftTranslation(searchString, reverse, this.msAllProductsId);
+                                    case product2:
+                                        this.showMicrosoftTranslation(searchString, reverse, this.msFinOpProductId);
+                                }
+                                // vscode.window.showInformationMessage(`No translation found for input: ${searchString}`);
+                            }
                             return;
                         }
                     }
@@ -420,7 +453,8 @@ export class TranslationService {
         let translations: string[] = [];
         let tdString = reverse ? '<td class="trs_source_clm">' : '<td class="trs_target_clm">';
         let tdStringStartIdx: number;
-        let pos = 0;
+        let maxNoOfTranslations = this.getMaxNoOfTranslationsFromConfig();
+        let pos = 0;    
         do {
             tdStringStartIdx = responseText.indexOf(tdString, pos);
             if (tdStringStartIdx > -1) {
@@ -432,11 +466,13 @@ export class TranslationService {
                 let tdStringEndIdx: number = responseText.indexOf('</td>', translationStartIdx);
                 if (tdStringEndIdx > -1) {
                     let translationText = responseText.substring(translationStartIdx, tdStringEndIdx);
-                    translations.push(translationText);
+                    if (!translations.includes(translationText)) {
+                        translations.push(translationText);
+                    }
                 }
                 pos = tdStringEndIdx;
             }
-        } while (tdStringStartIdx !== -1);
+        } while ((tdStringStartIdx !== -1) && (translations.length < maxNoOfTranslations));
         return translations;
     }
 }
