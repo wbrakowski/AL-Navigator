@@ -7,7 +7,7 @@ export function openMicrosoftTranslation(reverse: boolean) {
 
     let currentword = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
     vscode.window.showInputBox({ value: currentword, prompt: "Translate String:" }).then(searchString =>
-        TranslationService.openSearchUrl(searchString, reverse));
+        TranslationService.openDynNavSearchUrl(searchString, reverse));
 
     console.log('Done: openMicrosoftTranslation');
 }
@@ -17,7 +17,7 @@ export function showMicrosoftTranslation(reverse: boolean) {
 
     let currentWord = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
     vscode.window.showInputBox({ value: currentWord, prompt: "Translate String:" }).then(searchString =>
-        TranslationService.showMicrosoftTranslation(searchString, reverse));
+        TranslationService.showMicrosoftDynNavTranslation(searchString, reverse));
 
     console.log('Done: showMicrosoftTranslation');
 }

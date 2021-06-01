@@ -9,24 +9,27 @@ export class TranslationService {
     static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=|SearchString|';
     static readonly msAllProductsId = '0'; // All Products
     static readonly msFinOpProductId = '639';
-    static readonly msProductId = '564'; // Dynamics NAV
+    static readonly msDynNavProductId = '564'; // Dynamics NAV
     static readonly msDefLangId = '354'; // German
 
-    public static getMicrosoftSearchUrl(searchString: string, reverse: boolean, productId?: string): string {
+    public static getMicrosoftSearchUrl(searchString: string, reverse: boolean, productId: string): string {
         let searchUrl = StringFunctions.replaceAll(this.msTranslationUrl, '|SearchString|', searchString.split(' ').join('+'));
         let targetTranslation = this.getTranslationFromConfig();
         let langId = this.getLanguageId(targetTranslation);
         let source = reverse ? 'false' : 'true';
-        let urlProductId = productId ? productId : this.msProductId;
-        searchUrl += `&langID=${langId}&productid=${urlProductId}&Source=${source}`;
+        searchUrl += `&langID=${langId}&productid=${productId}&Source=${source}`;
         return searchUrl;
     }
 
-    public static openSearchUrl(searchString: string | undefined, reverse: boolean) {
+    public static openSearchUrl(searchString: string | undefined, reverse: boolean, productId: string) {
         if (searchString) {
-            let url = this.getMicrosoftSearchUrl(searchString, reverse);
+            let url = this.getMicrosoftSearchUrl(searchString, reverse, productId);
             open(url);
         }
+    }
+
+    public static openDynNavSearchUrl(searchString: string | undefined, reverse: boolean) {
+        this.openSearchUrl(searchString, reverse, this.msDynNavProductId);
     }
 
     public static getTranslationFromConfig(): any {
@@ -392,16 +395,14 @@ export class TranslationService {
         return langId;
     }
 
-    public static async showMicrosoftTranslation(searchString: string | undefined, reverse: boolean, productId?: string): Promise<string[] | undefined> {
+    public static async showMicrosoftDynNavTranslation(searchString: string | undefined, reverse: boolean): Promise<string[] | undefined> {
+        return await this.showMicrosoftTranslation(searchString, reverse, this.msDynNavProductId);
+    }
+
+    public static async showMicrosoftTranslation(searchString: string | undefined, reverse: boolean, productId: string): Promise<string[] | undefined> {
         if (searchString) {
             console.log(`Fetching Translation from Microsoft for string: ${searchString}`);
-            let url: string;
-            if (productId) {
-                url = this.getMicrosoftSearchUrl(searchString, reverse, productId);
-            }
-            else {
-                url = this.getMicrosoftSearchUrl(searchString, reverse);
-            }
+            let url = this.getMicrosoftSearchUrl(searchString, reverse, productId);
             try {
                 const response = await axios.get(url);
                 if (response.status === 200) {
@@ -416,21 +417,28 @@ export class TranslationService {
                         else {
 
                             let product1 = 'All products';
-                            let product2 = 'Microsoft Dynamics 365 for Finance and Operations, Business Edition';
+                            let product2 = 'Microsoft Dynamics NAV';
+                            let product3 = 'Microsoft Dynamics 365 for Finance and Operations, Business Edition';
                             let products: string[] = [];
                             products[0] = product1;
                             products[1] = product2;
+                            products[2] = product3;
                             let translationProduct = await vscode.window.showQuickPick(products, {
                                 canPickMany: false,
-                                placeHolder: `No translation found for product Dynamics NAV. Check translations for other products?`
+                                placeHolder: `No translation found for product id ${productId}. Check translations for other products?`
                             });
                             if (translationProduct) {
                                 switch(translationProduct) 
                                 {
                                     case product1:
                                         this.showMicrosoftTranslation(searchString, reverse, this.msAllProductsId);
+                                        break;
                                     case product2:
+                                        this.showMicrosoftTranslation(searchString, reverse, this.msDynNavProductId);
+                                        break;
+                                    case product3:
                                         this.showMicrosoftTranslation(searchString, reverse, this.msFinOpProductId);
+                                        break;
                                 }
                                 // vscode.window.showInformationMessage(`No translation found for input: ${searchString}`);
                             }
