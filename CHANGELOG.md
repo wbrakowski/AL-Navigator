@@ -3,6 +3,9 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.4.3]
+- Show Microsoft translations on hover over field names
+- New configuration setting DisableHoverProviders
 ## [0.4.2]
 - Search for all translations in all products if Dynamics NAV translation cannot be found
 - New configuration setting: maxNoOfShownTranslations

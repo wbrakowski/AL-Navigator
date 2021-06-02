@@ -251,7 +251,13 @@
 						"default": "1",
 						"minimum": 1,
 						"description": "Maximum number of shown translations when using translation functionalities."
-					}
+					},
+					"alNavigator.DisableHoverProviders": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Disable Hover Providers (requires reload). AL Navigator shows the field caption for the target language on hover.",
+                        "scope": "application"
+                    }
 				}
 			}
 		]
