@@ -3,6 +3,8 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.4.4]
+- Disable Hover Providers by default
 ## [0.4.3]
 - Show Microsoft translations on hover over field names
 - New configuration setting disableHoverProviders
