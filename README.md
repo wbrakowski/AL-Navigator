@@ -17,7 +17,7 @@ Create variables and parameters like a boss. Navigate through al files with awes
 
 ### Open/Show Translations
 
-Show translations on hover over symbols (field names, table names...)
+Show translations on hover over symbols (field names, table names...) - CURRENTLY DISABLED
 
 ![Open Target Translation](resources/ShowTranslationOnHover.gif)
 

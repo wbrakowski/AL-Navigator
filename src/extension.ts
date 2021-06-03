@@ -70,10 +70,10 @@ export function activate(context: vscode.ExtensionContext) {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
 
-	if(config.get('enableHoverProviders'))
-        context.subscriptions.push(vscode.languages.registerHoverProvider(
-            'al', new fieldHover.FieldHoverProvider()
-        ));
+	// if(config.get('enableHoverProviders'))
+    //     context.subscriptions.push(vscode.languages.registerHoverProvider(
+    //         'al', new fieldHover.FieldHoverProvider()
+    //     ));
 
 	context.subscriptions.push(jumpToNextDataItemCmd);
 	context.subscriptions.push(jumpToNextDataItemBottomCmd);

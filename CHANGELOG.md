@@ -3,6 +3,9 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+
+## [0.4.6]
+- Temporarily disable hover functionality
 ## [0.4.5]
 - disableHoverProviders renamed to enableHoverProviders
 ## [0.4.4]
