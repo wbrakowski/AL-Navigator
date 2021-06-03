@@ -1,14 +1,13 @@
 import { TranslationService } from "./translationService";
 
   
-import { CancellationToken, commands, DefinitionProvider, Location, Position, Range, TextDocument, workspace, Hover } from "vscode";
+import { CancellationToken, commands, Position, Range, TextDocument, workspace, Hover } from "vscode";
 
-const descriptionRegex = /^\s*;\s*\w+(\s*\[\s*\d+\s*\])?\s*\)\s*\{(\s*\w+\s*=[^;]*;)*\s*description\s*=\s*'(?<description>([^']|'')*)';/i;
 
 exports.FieldHoverProvider = class FieldHoverProvider {
     
     /**
-     * returns the Description of a field
+     * returns the translation of symbols
      * 
      * @param {vscode.TextDocument} document 
      * @param {vscode.Position} position 
@@ -22,22 +21,21 @@ exports.FieldHoverProvider = class FieldHoverProvider {
                 if (token.isCancellationRequested) return Promise.reject('Canceled');
                 // if (definitions.length !== 1) return Promise.reject('No or multiple definitions found');
                 return definitions[0];
-            }).then(definition => {
-                return workspace.openTextDocument(definition.uri).then(async textDocument => {
-                    if (token.isCancellationRequested) return Promise.reject('Canceled');
-
-                    let currentWordRange: Range | undefined = document.getWordRangeAtPosition(position);
-                    if (!currentWordRange)
-                        return;
-                    let currentWord: string = document.getText(currentWordRange);
-                    let translation = await TranslationService.getDynNavTranslations(currentWord, false);
-                    if (translation) {
-                        return new Hover(translation);
-                    }
-                    else {
-                        return;
-                    }
-                });
+            }).then(async definition => {
+                // const textDocument = await workspace.openTextDocument(definition.uri);
+                if (token.isCancellationRequested)
+                    return Promise.reject('Canceled');
+                let currentWordRange: Range | undefined = document.getWordRangeAtPosition(position);
+                if (!currentWordRange)
+                    return;
+                let currentWord: string = document.getText(currentWordRange);
+                let translations = await TranslationService.getDynNavTranslations(currentWord, false);
+                if (translations.length > 0) {
+                    return new Hover(`${translations} (translated by AL Navigator)`);
+                }
+                else {
+                    return;
+                }
             });
     }
 }

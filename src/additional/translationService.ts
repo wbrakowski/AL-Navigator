@@ -456,7 +456,7 @@ export class TranslationService {
                 if (response.status === 200) {
                     // Status OK
                     let responseText: string = response.data;
-                    let translations: string[] | undefined = await TranslationService.extractTranslationsFromResponseText(responseText, reverse, true);
+                    let translations: string[] | undefined = await TranslationService.extractTranslationsFromResponseText(responseText, reverse);
                     return translations;
                 }
                 else {
@@ -470,11 +470,11 @@ export class TranslationService {
         }
     }
 
-    private static async extractTranslationsFromResponseText(responseText: string, reverse: boolean, onlyOneTranslation: boolean): Promise<string[] | undefined> {
+    private static async extractTranslationsFromResponseText(responseText: string, reverse: boolean): Promise<string[] | undefined> {
         let translations: string[] = [];
         let tdString = reverse ? '<td class="trs_source_clm">' : '<td class="trs_target_clm">';
         let tdStringStartIdx: number;
-        let maxNoOfTranslations = onlyOneTranslation ? 1 : this.getMaxNoOfTranslationsFromConfig();
+        let maxNoOfTranslations = this.getMaxNoOfTranslationsFromConfig();
         let pos = 0;    
         do {
             tdStringStartIdx = responseText.indexOf(tdString, pos);
