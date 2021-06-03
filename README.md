@@ -89,7 +89,7 @@ The prefix "CCO" is removed for the suggested variable name because we set the "
 |alNavigator.ignoreALSuffix   |Removes suffix from suggested variable names.   |
 |alNavigator.translationTargetLanguage   |Defines the target language for translation functionalities.   |
 |alNavigator.maxNoOfShownTranslations   |Maximum number of shown translations when using translation functionalities.   |
-|alNavigator.disableHoverProviders   |Disable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.)   |
+|alNavigator.enableHoverProviders   |Enable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.)   |
 
 
 ## Requirements

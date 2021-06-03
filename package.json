@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.",
-	"version": "0.4.4",
+	"version": "0.4.5",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -252,10 +252,10 @@
 						"minimum": 1,
 						"description": "Maximum number of shown translations when using translation functionalities."
 					},
-					"alNavigator.disableHoverProviders": {
+					"alNavigator.enableHoverProviders": {
                         "type": "boolean",
-                        "default": true,
-                        "description": "Disable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.)",
+                        "default": false,
+                        "description": "Enable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.)",
                         "scope": "application"
                     }
 				}
