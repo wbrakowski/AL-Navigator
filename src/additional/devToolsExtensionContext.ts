@@ -6,6 +6,7 @@ import { ObjectTypes } from '../al/objectTypes';
 import { StringFunctions } from './stringFunctions';
 
 export class ALCodeOutlineExtension {
+	public alCodeOutlineExtensionObject: any;
     private static alCodeOutlineExtensionObject: ALCodeOutlineExtension;
     private alCodeOutlineExtension: any;
     private constructor(alCodeOutlineExtension: vscode.Extension<any>) {

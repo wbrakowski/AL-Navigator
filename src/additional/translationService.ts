@@ -5,6 +5,11 @@ import * as vscode from 'vscode';
 const axios = require('axios');
 
 export class TranslationService {
+	public msTranslationUrl: any;
+	public msDynNavProductId: any;
+	public msDefLangId: any;
+	public msAllProductsId: any;
+	public msFinOpProductId: any;
     // static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=%22|SearchString|%22';
     static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=|SearchString|';
     static readonly msAllProductsId = '0'; // All Products
@@ -400,6 +405,49 @@ export class TranslationService {
     }
 
     public static async showMicrosoftTranslation(searchString: string | undefined, reverse: boolean, productId: string): Promise<string[] | undefined> {
+        let translations = await TranslationService.getTranslations(searchString, reverse, productId)
+        if (translations) {
+            if (translations.length > 0) {
+                vscode.window.showInformationMessage(`Input: ${searchString}, translations: ${translations}`);
+                return translations;
+            }
+            else {
+                let product1 = 'All products';
+                let product2 = 'Microsoft Dynamics NAV';
+                let product3 = 'Microsoft Dynamics 365 for Finance and Operations, Business Edition';
+                let products: string[] = [];
+                products[0] = product1;
+                products[1] = product2;
+                products[2] = product3;
+                let translationProduct = await vscode.window.showQuickPick(products, {
+                    canPickMany: false,
+                    placeHolder: `No translation found for product id ${productId}. Check translations for other products?`
+                });
+                if (translationProduct) {
+                    switch(translationProduct) 
+                    {
+                        case product1:
+                            this.showMicrosoftTranslation(searchString, reverse, this.msAllProductsId);
+                            break;
+                        case product2:
+                            this.showMicrosoftTranslation(searchString, reverse, this.msDynNavProductId);
+                            break;
+                        case product3:
+                            this.showMicrosoftTranslation(searchString, reverse, this.msFinOpProductId);
+                            break;
+                    }
+                    // vscode.window.showInformationMessage(`No translation found for input: ${searchString}`);
+                }
+                return;
+            }
+        }
+    }
+
+    public static async getDynNavTranslations(searchString: string | undefined, reverse: boolean): Promise<string[] | undefined> {
+        return await TranslationService.getTranslations(searchString, reverse, this.msDynNavProductId);
+    }
+
+    public static async getTranslations(searchString: string | undefined, reverse: boolean, productId: string): Promise<string[] | undefined> {
         if (searchString) {
             console.log(`Fetching Translation from Microsoft for string: ${searchString}`);
             let url = this.getMicrosoftSearchUrl(searchString, reverse, productId);
@@ -409,42 +457,7 @@ export class TranslationService {
                     // Status OK
                     let responseText: string = response.data;
                     let translations: string[] | undefined = await TranslationService.extractTranslationsFromResponseText(responseText, reverse);
-                    if (translations) {
-                        if (translations.length > 0) {
-                            vscode.window.showInformationMessage(`Input: ${searchString}, translations: ${translations}`);
-                            return translations;
-                        }
-                        else {
-
-                            let product1 = 'All products';
-                            let product2 = 'Microsoft Dynamics NAV';
-                            let product3 = 'Microsoft Dynamics 365 for Finance and Operations, Business Edition';
-                            let products: string[] = [];
-                            products[0] = product1;
-                            products[1] = product2;
-                            products[2] = product3;
-                            let translationProduct = await vscode.window.showQuickPick(products, {
-                                canPickMany: false,
-                                placeHolder: `No translation found for product id ${productId}. Check translations for other products?`
-                            });
-                            if (translationProduct) {
-                                switch(translationProduct) 
-                                {
-                                    case product1:
-                                        this.showMicrosoftTranslation(searchString, reverse, this.msAllProductsId);
-                                        break;
-                                    case product2:
-                                        this.showMicrosoftTranslation(searchString, reverse, this.msDynNavProductId);
-                                        break;
-                                    case product3:
-                                        this.showMicrosoftTranslation(searchString, reverse, this.msFinOpProductId);
-                                        break;
-                                }
-                                // vscode.window.showInformationMessage(`No translation found for input: ${searchString}`);
-                            }
-                            return;
-                        }
-                    }
+                    return translations;
                 }
                 else {
                     vscode.window.showErrorMessage(`An unknown occured during translation: Unexpected status: ${response.status}`);

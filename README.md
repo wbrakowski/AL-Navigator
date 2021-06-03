@@ -17,6 +17,10 @@ Create variables and parameters like a boss. Navigate through al files with awes
 
 ### Open/Show Translations
 
+Show translations on hover over symbols (field names, table names...)
+
+![Open Target Translation](resources/ShowTranslationOnHover.gif)
+
 AL Navigator: Open Microsoft Translation (English -> Target Language)
 
 ![Open Target Translation](resources/OpenTargetTranslation.gif)
@@ -85,6 +89,7 @@ The prefix "CCO" is removed for the suggested variable name because we set the "
 |alNavigator.ignoreALSuffix   |Removes suffix from suggested variable names.   |
 |alNavigator.translationTargetLanguage   |Defines the target language for translation functionalities.   |
 |alNavigator.maxNoOfShownTranslations   |Maximum number of shown translations when using translation functionalities.   |
+|alNavigator.disableHoverProviders   |Disable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.)   |
 
 
 ## Requirements

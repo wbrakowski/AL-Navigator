@@ -10,12 +10,14 @@ import { CustomConsole } from './additional/console';
 import * as Translator from './additional/translator';
 import { ALFiles } from './al/alFiles';
 import { ReportCreator } from './al/reportCreator';
+const fieldHover = require('./additional/fieldHover');
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	CustomConsole.customConsole = vscode.window.createOutputChannel("AL Navigator");
 	console.log('Congratulations, AL Navigator is ready to rumble!');
+	const config = vscode.workspace.getConfiguration('alNavigator');	
 
 	let jumpToNextDataItemCmd = commands.registerCommand("extension.DataItem", () => {
 		FileJumper.jumpToNextDataItem();
@@ -57,6 +59,7 @@ export function activate(context: vscode.ExtensionContext) {
 		Translator.showMicrosoftTranslation(true);
 	});
 
+
 	let _alFiles: ALFiles = new ALFiles();
 	let startCreateReportDialogCmd = commands.registerCommand("extension.StartCreateReportDialog", () => {
 		ReportCreator.startCreateReportDialog(_alFiles);
@@ -66,6 +69,11 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context, _alFiles), {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
+
+	if(!config.get('disableHoverProviders'))
+        context.subscriptions.push(vscode.languages.registerHoverProvider(
+            'al', new fieldHover.FieldHoverProvider()
+        ));
 
 	context.subscriptions.push(jumpToNextDataItemCmd);
 	context.subscriptions.push(jumpToNextDataItemBottomCmd);
