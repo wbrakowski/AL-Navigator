@@ -278,7 +278,7 @@
 		"andrzejzwierzchowski.al-code-outline"
 	],
 	"dependencies": {
-		"axios": "^0.21.1",
+		"axios": "^0.21.2",
 		"open": "^8.4.0"
 	}
 }
