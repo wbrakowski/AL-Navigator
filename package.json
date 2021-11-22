@@ -252,7 +252,6 @@
 						"minimum": 1,
 						"description": "Maximum number of shown translations when using translation functionalities."
 					}
-				
 				}
 			}
 		]
@@ -279,7 +278,8 @@
 		"andrzejzwierzchowski.al-code-outline"
 	],
 	"dependencies": {
-		"axios": "^0.21.1",
-		"open": "^8.2.0"
+		"axios": "^0.21.4",
+		"open": "^8.2.0",
+		"vsce": "^2.3.0"
 	}
 }
