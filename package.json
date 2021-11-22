@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.",
-	"version": "0.4.6",
+	"version": "0.4.7",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -252,7 +252,6 @@
 						"minimum": 1,
 						"description": "Maximum number of shown translations when using translation functionalities."
 					}
-				
 				}
 			}
 		]
@@ -280,6 +279,6 @@
 	],
 	"dependencies": {
 		"axios": "^0.21.1",
-		"open": "^8.2.0"
+		"open": "^8.4.0"
 	}
 }

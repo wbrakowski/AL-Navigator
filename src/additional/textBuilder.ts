@@ -5,6 +5,7 @@ import { VarDeclaration } from "../al/alVarDeclaration";
 import { ALVariable } from "../al/alVariable";
 import { CommandType } from "./commandType";
 import { ALFile } from "../al/alFile";
+import { clear } from "console";
 
 export module TextBuilder {
     let indentPart: string = "    ";
@@ -52,7 +53,7 @@ export module TextBuilder {
             }
             case CommandType.Parameter: {
                 varStartLineNo = ALFileCrawler.findProcedureStartLineNo();
-                let lineText: string = ALFileCrawler.getText(varStartLineNo);;
+                let lineText: string = ALFileCrawler.getText(varStartLineNo);
                 let openingBracketIdx: number = lineText.lastIndexOf("(");
                 let closingBracketIdx: number = lineText.lastIndexOf(")");
                 if (openingBracketIdx > -1 && closingBracketIdx > -1) {
@@ -68,13 +69,17 @@ export module TextBuilder {
                 break;
             }
         }
+        if (alVariable.cmdType === CommandType.LocalVariable) {
+            indentText = '';
+        }
         if (varStartLineNo !== -1 && alVariable.cmdType !== CommandType.Parameter) {
             let varText = ALFileCrawler.getText(varStartLineNo);
             noWhiteSpaces = StringFunctions.getNoOfLeftSpaces(varText);
             for (let i = 0; i < noWhiteSpaces; i++) {
                 indentText += " ";
             }
-            if (alVariable.cmdType === CommandType.GlobalVariable && createVarSection) {
+            // if (alVariable.cmdType === CommandType.GlobalVariable && createVarSection) {
+            if (createVarSection) {
                 indentText += "    ";
             }
         }
