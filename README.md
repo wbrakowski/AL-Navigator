@@ -1,6 +1,6 @@
 # AL Navigator
 
-[![Open in Visual Studio Code](https://open.vscode.dev/badges/open-in-vscode.svg)](https://open.vscode.dev/wbrakowski/AL-Navigator)
+[![Open in Visual Studio Code](https://open.vscode.dev/badges/open-in-vscode.png)](https://open.vscode.dev/wbrakowski/AL-Navigator)
 
 Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.
 
