@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.",
-	"version": "0.4.7",
+	"version": "0.4.8",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -270,7 +270,6 @@
 		"@types/vscode": "^1.39.0",
 		"glob": "^7.1.4",
 		"mocha": "^6.1.4",
-		"typescript": "^3.3.1",
 		"tslint": "^5.12.1",
 		"vscode-test": "^1.2.0"
 	},
@@ -280,6 +279,7 @@
 	"dependencies": {
 		"axios": "^0.21.4",
 		"open": "^8.2.0",
+		"typescript": "^4.5.2",
 		"vsce": "^2.3.0"
 	}
 }

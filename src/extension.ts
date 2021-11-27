@@ -85,7 +85,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(openMSTranslationReverseCmd);
 	context.subscriptions.push(showMSTranslationCmd);
 	context.subscriptions.push(showMSTranslationReverseCmd);
-	context.subscriptions.push(startCreateReportDialogCmd);
+	// context.subscriptions.push(startCreateReportDialogCmd);
 }
 
 // this method is called when your extension is deactivated
