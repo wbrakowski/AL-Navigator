@@ -3,13 +3,15 @@ import { window } from 'vscode';
 import { StringFunctions } from './stringFunctions';
 import * as vscode from 'vscode';
 const axios = require('axios');
+import * as html from 'html';
+import { decodeHTML } from 'entities';
 
 export class TranslationService {
-	public msTranslationUrl: any;
-	public msDynNavProductId: any;
-	public msDefLangId: any;
-	public msAllProductsId: any;
-	public msFinOpProductId: any;
+    public msTranslationUrl: any;
+    public msDynNavProductId: any;
+    public msDefLangId: any;
+    public msAllProductsId: any;
+    public msFinOpProductId: any;
     // static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=%22|SearchString|%22';
     static readonly msTranslationUrl = 'https://www.microsoft.com/en-us/language/Search?&searchTerm=|SearchString|';
     static readonly msAllProductsId = '0'; // All Products
@@ -405,7 +407,7 @@ export class TranslationService {
     }
 
     public static async showMicrosoftTranslation(searchString: string | undefined, reverse: boolean, productId: string): Promise<string[] | undefined> {
-        let translations = await TranslationService.getTranslations(searchString, reverse, productId)
+        let translations = await TranslationService.getTranslations(searchString, reverse, productId);
         if (translations) {
             if (translations.length > 0) {
                 vscode.window.showInformationMessage(`Input: ${searchString}, translations: ${translations}`);
@@ -424,8 +426,7 @@ export class TranslationService {
                     placeHolder: `No translation found for product id ${productId}. Check translations for other products?`
                 });
                 if (translationProduct) {
-                    switch(translationProduct) 
-                    {
+                    switch (translationProduct) {
                         case product1:
                             this.showMicrosoftTranslation(searchString, reverse, this.msAllProductsId);
                             break;
@@ -475,7 +476,7 @@ export class TranslationService {
         let tdString = reverse ? '<td class="trs_source_clm">' : '<td class="trs_target_clm">';
         let tdStringStartIdx: number;
         let maxNoOfTranslations = this.getMaxNoOfTranslationsFromConfig();
-        let pos = 0;    
+        let pos = 0;
         do {
             tdStringStartIdx = responseText.indexOf(tdString, pos);
             if (tdStringStartIdx > -1) {
@@ -487,6 +488,7 @@ export class TranslationService {
                 let tdStringEndIdx: number = responseText.indexOf('</td>', translationStartIdx);
                 if (tdStringEndIdx > -1) {
                     let translationText = responseText.substring(translationStartIdx, tdStringEndIdx);
+                    translationText = decodeHTML(translationText);
                     if (!translations.includes(translationText)) {
                         translations.push(translationText);
                     }

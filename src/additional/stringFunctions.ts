@@ -95,4 +95,5 @@ export module StringFunctions {
     export function escapeRegExp(str: string) {
         return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
     }
+
 }
