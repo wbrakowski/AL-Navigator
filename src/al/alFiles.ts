@@ -9,6 +9,8 @@ import { ObjectTypes } from './objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALDataTypes } from './alDataTypes';
 import { StringFunctions } from '../additional/stringFunctions';
+import { DiagnosticAnalyzer } from "../additional/diagnosticAnalyzer";
+import * as semver from 'semver';
 
 export class ALFiles {
     populatedFromCache: boolean = false;
@@ -24,7 +26,7 @@ export class ALFiles {
     public alObjects: ALObject[] = new Array();
 
     constructor() {
-        this.populateALFilesArray();    
+        this.populateALFilesArray();
         // this.fillObjects();
         let watcherALFiles = vscode.workspace.createFileSystemWatcher('**/*.al');
         watcherALFiles.onDidCreate(async (e: vscode.Uri) => {
@@ -179,30 +181,30 @@ export class ALFiles {
                     this.alObjects.push(workspaceALFile.alObject);
                 }
             }
-            case UpdateTypes.delete,
-                UpdateTypes.modify: {
-                    if (uri.fsPath !== "") {
-                        let workspaceALFile: ALFile = new ALFile(uri);
-                        let deleteIndex = await this.getDeleteIdxInWorkspacefiles(workspaceALFile);
-                        if (deleteIndex === -1) {
-                            return;
-                        }
-                        let deleteIndex2 = await this.getDeleteIdxInALObjects(deleteIndex);
-                        if (deleteIndex2 > -1) {
-                            this.alObjects.splice(deleteIndex2, 1);
-                        }
-                        this.workspaceALFiles.splice(deleteIndex, 1);
+            case UpdateTypes.delete || UpdateTypes.modify: {
+                if (uri.fsPath !== "") {
+                    let workspaceALFile: ALFile = new ALFile(uri);
+                    let deleteIndex = await this.getDeleteIdxInWorkspacefiles(workspaceALFile);
+                    if (deleteIndex === -1) {
+                        return;
+                    }
+                    let deleteIndex2 = await this.getDeleteIdxInALObjects(deleteIndex);
+                    if (deleteIndex2 > -1) {
+                        this.alObjects.splice(deleteIndex2, 1);
+                    }
+                    this.workspaceALFiles.splice(deleteIndex, 1);
 
-                        if (updateType !== UpdateTypes.modify) {
-                            return;
-                        }
+                    if (updateType !== UpdateTypes.modify) {
+                        return;
+                    }
 
-                        if (!this.workspaceALFiles.find(i => workspaceALFile.alObject.objectType === i.alObject.objectType && workspaceALFile.alObject.objectName === i.alObject.objectName)) {
-                            this.workspaceALFiles.push(workspaceALFile);
-                            this.alObjects.push(workspaceALFile.alObject);
-                        }
+                    if (!this.workspaceALFiles.find(i => workspaceALFile.alObject.objectType === i.alObject.objectType && workspaceALFile.alObject.objectName === i.alObject.objectName)) {
+                        this.workspaceALFiles.push(workspaceALFile);
+                        this.alObjects.push(workspaceALFile.alObject);
                     }
                 }
+            }
+
         }
     }
 
@@ -245,35 +247,67 @@ export class ALFiles {
         if (!this.document) {
             return;
         }
+        // let diagnostics = vscode.languages.getDiagnostics(this.document.uri);
         let diagnostics = vscode.languages.getDiagnostics(this.document.uri).filter(d => {
-            let isAL = this.checkDiagnosticsLanguage(d);
-            let samePos = this.checkDiagnosticsPosition(d, range);
-            let validCode: boolean = this.checkDiagnosticsCode(d);
-            return isAL && samePos && validCode;
+            //     let isAL = DiagnosticAnalyzer.checkDiagnosticsLanguage(d);
+            let samePos = DiagnosticAnalyzer.checkDiagnosticsPosition(d, range);
+            let validCode = DiagnosticAnalyzer.checkDiagnosticsCode(d);
+            //     return isAL && samePos && validCode;
+            return samePos && validCode;
         });
-        return diagnostics.length === 1 ? diagnostics[0] : undefined;
+
+        return diagnostics.length >= 0 ? diagnostics[0] : undefined;
     }
 
+    // private getDiagnosticCode(d: vscode.Diagnostic): string {
+    //     let microsoftExtension = vscode.extensions.getExtension('ms-dynamics-smb.al');
+    //     if (semver.gte(microsoftExtension?.packageJSON.version, '8.2.545335'))
+    //         // return (d.code as { value: string, target: Uri }).value;
+    //         return (d.code as unknown as { value: string, target: vscode.Uri }).value;
+    //     else
+    //         return d.code!.toString();
+    // }
     private checkDiagnosticsLanguage(d: vscode.Diagnostic): boolean {
         if (!d.source) {
             return false;
         }
         return d.source.toLowerCase() === 'al';
     }
-    private checkDiagnosticsCode(d: vscode.Diagnostic): boolean {
-        if (!d.code) {
-            return false;
-        }
-        let supportedDiagnosticCodes: string[] = [];
-        for (var enumMember in DiagnosticCodes) {
-            supportedDiagnosticCodes.push(enumMember.toString());
-        }
-        return supportedDiagnosticCodes.includes(d.code.toString());
-    }
+    // private checkDiagnosticsCode(d: vscode.Diagnostic): boolean {
+    //     if (!d.code) {
+    //         return false;
+    //     }
+    //     let supportedDiagnosticCodes: string[] = [];
+    //     for (var enumMember in DiagnosticCodes) {
+    //         supportedDiagnosticCodes.push(enumMember.toString());
+    //     }
+    //     return supportedDiagnosticCodes.includes(this.getDiagnosticCode(d));
+    // }
 
     private checkDiagnosticsPosition(d: vscode.Diagnostic, range: vscode.Range): boolean {
         return d.range.contains(range);
     }
+
+    // private checkDiagnosticsLanguage(d: vscode.Diagnostic): boolean {
+    //     if (!d.source) {
+    //         return false;
+    //     }
+    //     return d.source.toLowerCase() === 'al';
+    // }
+    // private checkDiagnosticsCode(d: vscode.Diagnostic): boolean {
+    //     if (!d.code) {
+    //         return false;
+    //     }
+    //     let supportedDiagnosticCodes: string[] = [];
+    //     for (var enumMember in DiagnosticCodes) {
+    //         supportedDiagnosticCodes.push(enumMember.toString());
+    //     }
+    //     return supportedDiagnosticCodes.includes(d.code.toString());
+    // }
+
+    // private checkDiagnosticsPosition(d: vscode.Diagnostic, range: vscode.Range): boolean {
+    //     return d.range.contains(range);
+    // }
 
     public async fillObjects() {
         if (this.populatedFromCache && !this.appFilesChanged) {

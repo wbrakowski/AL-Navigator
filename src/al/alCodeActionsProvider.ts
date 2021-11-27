@@ -4,6 +4,7 @@ import { ALFileCrawler } from './alFileCrawler';
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { ALAddVarOrParamCodeCommand } from './alAddVarOrParamCodeCommand';
 import { CommandType } from '../additional/commandType';
+import { DiagnosticAnalyzer } from "../additional/diagnosticAnalyzer";
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     // protected _alFiles: ALFiles = new ALFiles();
@@ -25,7 +26,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         vscode.CodeActionKind.QuickFix
     ];
 
-    public async provideCodeActions(document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction[] | undefined> {
+    public provideCodeActions(document: vscode.TextDocument, range: vscode.Range): vscode.CodeAction[] | undefined {
         if (!document) {
             return;
         }
@@ -35,16 +36,13 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
             return;
         }
 
+        let actions: vscode.CodeAction[] = [];
         let varName = ALFileCrawler.getRangeText(diagnostic.range);
 
-        let createGlobalVarCodeAction: vscode.CodeAction | undefined;
-        createGlobalVarCodeAction = await this.createCodeAction(document, diagnostic, varName, CommandType.GlobalVariable);
-        let createLocalVarCodeAction: vscode.CodeAction | undefined;
-        createLocalVarCodeAction = await this.createCodeAction(document, diagnostic, varName, CommandType.LocalVariable);
-        let createParamCodeAction: vscode.CodeAction | undefined;
-        createParamCodeAction = await this.createCodeAction(document, diagnostic, varName, CommandType.Parameter);
+        let createGlobalVarCodeAction = this.createCodeAction(document, diagnostic, varName, CommandType.GlobalVariable);
+        let createLocalVarCodeAction = this.createCodeAction(document, diagnostic, varName, CommandType.LocalVariable);
+        let createParamCodeAction = this.createCodeAction(document, diagnostic, varName, CommandType.Parameter);
 
-        let actions: vscode.CodeAction[] = [];
         if (createLocalVarCodeAction) {
             actions.push(createLocalVarCodeAction);
         }
@@ -54,17 +52,27 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         if (createParamCodeAction) {
             actions.push(createParamCodeAction);
         }
-        return actions;
+        if (actions) {
+            return actions;
+        }
+        else {
+            return;
+        }
     }
 
-    private async createCodeAction(currentDocument: vscode.TextDocument, diagnostic: vscode.Diagnostic, varName: string, cmdType: CommandType): Promise<vscode.CodeAction | undefined> {
-        let createVarCodeAction: vscode.CodeAction | undefined;
-        switch (diagnostic.code as string) {
+
+    private createCodeAction(currentDocument: vscode.TextDocument, diagnostic: vscode.Diagnostic, varName: string, cmdType: CommandType): vscode.CodeAction | undefined {
+        if (!diagnostic) {
+            return;
+        }
+        let createVarCodeAction: vscode.CodeAction;
+        let dCode = DiagnosticAnalyzer.getDiagnosticCode(diagnostic);
+        switch (dCode) {
             case DiagnosticCodes.AL0118.toString():
                 if (!ALFileCrawler.isProcedureCall(diagnostic.range)) {
                     let lineText = ALFileCrawler.getLineText(diagnostic.range);
                     if (cmdType === CommandType.GlobalVariable || !lineText.toUpperCase().includes('COLUMN') && !ALFileCrawler.isPageField(diagnostic.range)) {
-                        createVarCodeAction = await this.createVarCodeActionForLine(varName, cmdType, currentDocument, diagnostic.range);
+                        createVarCodeAction = this.createVarCodeActionForLine(varName, cmdType, currentDocument, diagnostic);
                     }
                 }
                 break;
@@ -80,9 +88,16 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         }
     }
 
-    private async createVarCodeActionForLine(varName: string, cmdType: CommandType, document: vscode.TextDocument, range: vscode.Range): Promise<vscode.CodeAction | undefined> {
+    private createVarCodeActionForLine(varName: string, cmdType: CommandType, document: vscode.TextDocument, diagnostic: vscode.Diagnostic): vscode.CodeAction | undefined {
+        // const action = new vscode.CodeAction('Add local var TEST', vscode.CodeActionKind.QuickFix);
+        // action.command = {
+        //     command: this._addLocalVarCmd.name,
+        //     arguments: [vscode.CodeActionKind.QuickFix, diagnostic, document],
+        //     title: 'just a title'
+        // };
+        // return action;
         let actionTitle: string = "";
-        let action: vscode.CodeAction | undefined;
+        let action: vscode.CodeAction;
         switch (cmdType) {
             case CommandType.LocalVariable: {
                 actionTitle = `Add local variable ${varName} (AL Navigator)`;
