@@ -3,6 +3,9 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+
+## [0.4.9]
+- Show Microsoft Translations: Show special characters properly
 ## [0.4.8]
 - Compatibility with AL Language Extension version 8.2.545335
 ## [0.4.7]

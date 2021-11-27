@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.",
-	"version": "0.4.8",
+	"version": "0.4.9",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -277,7 +277,10 @@
 		"andrzejzwierzchowski.al-code-outline"
 	],
 	"dependencies": {
+		"-": "^0.0.1",
 		"axios": "^0.21.4",
+		"entities": "^3.0.1",
+		"html": "^1.0.0",
 		"open": "^8.2.0",
 		"typescript": "^4.5.2",
 		"vsce": "^2.3.0"
