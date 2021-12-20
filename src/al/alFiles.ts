@@ -133,32 +133,55 @@ export class ALFiles {
             varNameSearchString = varNameSearchString.substr(0, varNameSearchString.length - 1);
         }
 
-        let alObject = this.alObjects.find(i => varNameSearchString.toUpperCase() === i.longVarName.toUpperCase());
-        if (!alObject) {
-            alObject = this.alObjects.find(f => varNameSearchString.toUpperCase() === f.shortVarName.toUpperCase());
+        let alObjects = this.alObjects.filter(i => varNameSearchString.toUpperCase() === i.longVarName.toUpperCase());
+        if (!alObjects) {
+            alObjects = this.alObjects.filter(f => varNameSearchString.toUpperCase() === f.shortVarName.toUpperCase());
         }
         // TODO Split words in title case and check if name can then be found
-        if (alObject) {
+        if (alObjects.length > 0) {
             alVariable.name = varName;
-            if (alObject.objectType.toLowerCase() === ObjectTypes.page) {
-                let pageTypes: string[] = ["Page", "TestPage"];
-                let selectedType = await vscode.window.showQuickPick(pageTypes, {
+            let objTypes: string[] = [];
+            if (hasObjectType(alObjects, ObjectTypes.table)) {
+                objTypes.push("Table");
+            }
+            if (hasObjectType(alObjects, ObjectTypes.page)) {
+                objTypes.push("Page");
+                objTypes.push("TestPage");
+            }
+            if (hasObjectType(alObjects, ObjectTypes.codeunit)) {
+                objTypes.push("Codeunit");
+            }
+            if (hasObjectType(alObjects, ObjectTypes.report)) {
+                objTypes.push("Report");
+            }
+
+            if (objTypes.length === 1) {
+                alVariable.setDataType(alObjects[0].objectType, 1, alObjects[0].objectName);
+            }
+            else {
+                let selectedType = await vscode.window.showQuickPick(objTypes, {
                     canPickMany: false,
-                    placeHolder: 'Select page type'
+                    placeHolder: 'Select object type'
                 });
                 switch (selectedType) {
+                    case ("Table"):
+                        alVariable.setDataType("Record", 1, alObjects[0].objectName);
+                        break;
                     case ("Page"):
-                        alVariable.setDataType("Page", 1, alObject.objectName);
+                        alVariable.setDataType("Page", 1, alObjects[0].objectName);
                         break;
                     case ("TestPage"):
-                        alVariable.setDataType("TestPage", 1, alObject.objectName);
+                        alVariable.setDataType("TestPage", 1, alObjects[0].objectName);
+                        break;
+                    case ("Codeunit"):
+                        alVariable.setDataType("Codeunit", 1, alObjects[0].objectName);
+                        break;
+                    case ("Report"):
+                        alVariable.setDataType("Report", 1, alObjects[0].objectName);
                         break;
                     default:
                         return;
                 }
-            }
-            else {
-                alVariable.setDataType(alObject.objectType, 1, alObject.objectName);
             }
         }
         else {
@@ -369,4 +392,18 @@ export class ALFiles {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
+}
+
+function hasObjectType(alObjects: ALObject[], objectType: ObjectTypes): boolean {
+    if (objectType === ObjectTypes.table) {
+        if (alObjects.find(i => i.objectType.toLowerCase() === "record")) {
+            return true;
+        }
+    }
+    else if (alObjects.find(i => i.objectType.toLowerCase() === objectType)) {
+        return true;
+    }
+    else {
+        return false;
+    }
 }

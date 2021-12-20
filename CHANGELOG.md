@@ -5,7 +5,7 @@ All notable changes to the "AL-Navigator" extension will be documented in this f
 ## Release Notes
 ## [0.5.0]
 - Fixed bug 87 - Better finding of the correct variable insertion position
-
+- Fixed bug 88 - Suggest table and page if 2 objects have the same name
 ## [0.4.9]
 - Show Microsoft Translations: Show special characters properly
 ## [0.4.8]
