@@ -1,12 +1,12 @@
-import * as assert from 'assert';
-import { suite, test } from 'mocha';
-import { TranslationService } from '../../additional/translationService';
+// import * as assert from 'assert';
+// import { suite, test } from 'mocha';
+// import { TranslationService } from '../../additional/translationService';
 
-suite('DocUtils Tests', () => {
+// suite('DocUtils Tests', () => {
 
-    test('TODO', () => {
+//     test('TODO', () => {
 
-    });
-    // TODO Test getCurrentLineText^
-    // TODO Test getSelectedWord
-});
+//     });
+//     // TODO Test getCurrentLineText^
+//     // TODO Test getSelectedWord
+// });

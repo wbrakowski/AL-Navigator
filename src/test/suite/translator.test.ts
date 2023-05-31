@@ -1,12 +1,12 @@
-import * as assert from 'assert';
-import { suite, test } from 'mocha';
-import { TranslationService } from '../../additional/translationService';
+// import * as assert from 'assert';
+// import { suite, test } from 'mocha';
+// import { TranslationService } from '../../additional/translationService';
 
-suite('Translator Tests', () => {
+// suite('Translator Tests', () => {
 
-    test('TODO', () => {
+//     test('TODO', () => {
 
-    });
+//     });
 
-    // TODO Test openMicrosoftTranslation
-});
+//     // TODO Test openMicrosoftTranslation
+// });

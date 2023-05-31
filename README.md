@@ -1,35 +1,30 @@
 # AL Navigator
 
-[![Open in Visual Studio Code](https://open.vscode.dev/badges/open-in-vscode.png)](https://open.vscode.dev/wbrakowski/AL-Navigator)
+Create variables and parameters like a boss. Translate fields on hover. Navigate through al files with awesome shortcuts. 
 
-Create variables and parameters like a boss. Navigate through al files with awesome shortcuts.
+[![This extension is written in TypeScript](https://img.shields.io/github/languages/top/wbrakowski/al-navigator)](https://www.typescriptlang.org/)
+[![Number of installs](https://img.shields.io/visual-studio-marketplace/i/wbrakowski.al-navigator)](https://marketplace.visualstudio.com/items?itemName=wbrakowski.al-navigator)
+[![Share the love! If you like AL Object ID Ninja, give it 5 stars.](https://img.shields.io/visual-studio-marketplace/stars/wbrakowski.al-navigator)](https://marketplace.visualstudio.com/items?itemName=wbrakowski.al-navigator&ssr=false#review-details)
+[![Last Visual Studio Code Marketplace update](https://img.shields.io/visual-studio-marketplace/last-updated/wbrakowski.al-navigator)](https://marketplace.visualstudio.com/items?itemName=wbrakowski.al-navigator&ssr=false#version-history)
 
 ## Features
 
 ### Shortcuts
 
-|Shortcut   |Command Name   |Description   |
-|---|---|---|
-|**Ctrl+Alt+g**   |AL Navigator: End of global variables  |Moves cursor to the end of your global variables.   |
-|**Ctrl+Alt+l**   |AL Navigator: End of local variables   |Moves cursor to the end of your local variables.   |
-|**Ctrl+Alt+k**   |AL Navigator: Keys  |Moves cursor to the keys in your .al table file.    |
-|**Ctrl+Alt+a**   |AL Navigator: Next Action   |Moves cursor to next action in a page .al file.   |
-|**Ctrl+Alt+d**   |AL Navigator: Next DataItem (starting from top)  |Moves cursor through data items in your .al report file.    |
-|**Shift+Alt+d**   |AL Navigator: Next DataItem (starting from bottom)   |Moves cursor through data items in your .al report file.    |
+| Shortcut        | Command Name                                       | Description                                              |
+| --------------- | -------------------------------------------------- | -------------------------------------------------------- |
+| **Ctrl+Alt+g**  | AL Navigator: End of global variables              | Moves cursor to the end of your global variables.        |
+| **Ctrl+Alt+l**  | AL Navigator: End of local variables               | Moves cursor to the end of your local variables.         |
+| **Ctrl+Alt+k**  | AL Navigator: Keys                                 | Moves cursor to the keys in your .al table file.         |
+| **Ctrl+Alt+a**  | AL Navigator: Next Action                          | Moves cursor to next action in a page .al file.          |
+| **Ctrl+Alt+d**  | AL Navigator: Next DataItem (starting from top)    | Moves cursor through data items in your .al report file. |
+| **Shift+Alt+d** | AL Navigator: Next DataItem (starting from bottom) | Moves cursor through data items in your .al report file. |
 
-### Open/Show Translations
+### Show Translations
 
-Show translations on hover over symbols (field names, table names...) - CURRENTLY DISABLED
+Show translations on hover over symbols (field names, table names...)
 
-![Open Target Translation](resources/ShowTranslationOnHover.gif)
-
-AL Navigator: Open Microsoft Translation (English -> Target Language)
-
-![Open Target Translation](resources/OpenTargetTranslation.gif)
-
-AL Navigator: Open Microsoft Translation (Target Language -> English)
-
-![Open English Translation](resources/OpenEnglishTranslation.gif)
+![Show Translation On Hover](resources/ShowTranslationOnHover.gif)
 
 AL Navigator: Show Microsoft Translation (English -> Target Language)
 
@@ -56,14 +51,14 @@ Example 3: Create parameters
 ![Create Variables 2](resources/ALNavigator3.gif)
 
 #### Tips: How To Use the CodeAction
-|Tip   |Example   |
-|---|---|
-|Variable Names for objects like records can automatically be created if they follow the [naming conventions.](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode#variable-and-field-naming "naming conventions.")   |Vendor can be recognized as Record "Vendor". [Demo](#create-variables-for-objects-like-records)   |
-|Use the Prefix "Temp" to create a temporary record variable.   |TempItem can be recognized as temporary Record "Item". [Demo](#prefix-temp)   |
-|You can use [Microsoft's suggested abbreviated variable names](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviated variable names") to create variables.   |GLSetup will be recognized as Record "General Ledger Setup". [Demo](#abbreviated-variable-names)   |
-|Some frequently used variable names will be automatically created.   |ItemNo can be recognized as Code[20]. [Demo](#frequently-used-variable-names)   |
-|Use a placeholder character as variable name and replace it with the suggested variable name.   |variable name "x" can be replaced by "SalesLine" when the record "Sales Line" has been selected. [Demo](#replace-placeholder)   |
-|Change the settings "alNavigator.ignoreALPrefix" and "alNavigator.ignoreALSuffix" to ignore these affixes when detecting or creating variables.   |   Set "alNavigator.ignoreALPrefix" to "EX". If you have a table called "EX Test Table" and use the variable name "TestTable", it can be automatically be created. [Demo](#affixes)   |
+| Tip                                                                                                                                                                                                                                                                              | Example                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Variable Names for objects like records can automatically be created if they follow the [naming conventions.](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode#variable-and-field-naming "naming conventions.") | Vendor can be recognized as Record "Vendor". [Demo](#create-variables-for-objects-like-records)                                                                                  |
+| Use the Prefix "Temp" to create a temporary record variable.                                                                                                                                                                                                                     | TempItem can be recognized as temporary Record "Item". [Demo](#prefix-temp)                                                                                                      |
+| You can use [Microsoft's suggested abbreviated variable names](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviated variable names") to create variables.                                                          | GLSetup will be recognized as Record "General Ledger Setup". [Demo](#abbreviated-variable-names)                                                                                 |
+| Some frequently used variable names will be automatically created.                                                                                                                                                                                                               | ItemNo can be recognized as Code[20]. [Demo](#frequently-used-variable-names)                                                                                                    |
+| Use a placeholder character as variable name and replace it with the suggested variable name.                                                                                                                                                                                    | variable name "x" can be replaced by "SalesLine" when the record "Sales Line" has been selected. [Demo](#replace-placeholder)                                                    |
+| Change the settings "alNavigator.ignoreALPrefix" and "alNavigator.ignoreALSuffix" to ignore these affixes when detecting or creating variables.                                                                                                                                  | Set "alNavigator.ignoreALPrefix" to "EX". If you have a table called "EX Test Table" and use the variable name "TestTable", it can be automatically be created. [Demo](#affixes) |
 
 #### Create Variables for Objects Like Records
 ![Create Variables 4](resources/ALNavigator4.gif)
@@ -85,21 +80,21 @@ The prefix "CCO" is removed for the suggested variable name because we set the "
 ![Create Variables 9](resources/ALNavigator9.gif)
 
 ## Settings
-|Setting   |Description|
-|---|---|
-|alNavigator.ignoreALPrefix   |Removes prefix from suggested variable names.   |
-|alNavigator.ignoreALSuffix   |Removes suffix from suggested variable names.   |
-|alNavigator.translationTargetLanguage   |Defines the target language for translation functionalities.   |
-|alNavigator.maxNoOfShownTranslations   |Maximum number of shown translations when using translation functionalities.   |
-|alNavigator.enableHoverProviders   |Enable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.)   |
+| Setting                               | Description                                                                                                                                   |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| alNavigator.ignoreALPrefix            | Removes prefix from suggested variable names.                                                                                                 |
+| alNavigator.ignoreALSuffix            | Removes suffix from suggested variable names.                                                                                                 |
+| alNavigator.translationTargetLanguage | Defines the target language for translation functionalities.                                                                                  |
+| alNavigator.maxNoOfShownTranslations  | Maximum number of shown translations when using translation functionalities.                                                                  |
+| alNavigator.enableHoverProviders      | Enable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.) |
 
 
 ## Requirements
 
-|              |         |
-|--------------|---------|
-| AL Language               | [![vs marketplace](https://img.shields.io/vscode-marketplace/v/ms-dynamics-smb.al.svg?label=vs%20marketplace)](https://marketplace.visualstudio.com/items?itemName=ms-dynamics-smb.al) |
-| AZ AL Dev Tools/AL Code Outline           | [![vs marketplace](https://img.shields.io/vscode-marketplace/v/andrzejzwierzchowski.al-code-outline.svg?label=vs%20marketplace)](https://marketplace.visualstudio.com/items?itemName=andrzejzwierzchowski.al-code-outline) |
+|                                 |                                                                                                                                                                                                                            |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AL Language                     | [![vs marketplace](https://img.shields.io/vscode-marketplace/v/ms-dynamics-smb.al.svg?label=vs%20marketplace)](https://marketplace.visualstudio.com/items?itemName=ms-dynamics-smb.al)                                     |
+| AZ AL Dev Tools/AL Code Outline | [![vs marketplace](https://img.shields.io/vscode-marketplace/v/andrzejzwierzchowski.al-code-outline.svg?label=vs%20marketplace)](https://marketplace.visualstudio.com/items?itemName=andrzejzwierzchowski.al-code-outline) |
 
 ## Thanks to
 - David Feldhoff for his contributions and feedback
