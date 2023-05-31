@@ -3,6 +3,10 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.5.1]
+- Improved translation functionalities (faster and more reliable)
+- Translations on hover of fields reactivated
+- Removed Open Microsoft Translation functionality
 ## [0.5.0]
 - Fixed bug 87 - Better finding of the correct variable insertion position
 - Fixed bug 88 - Suggest table and page if 2 objects have the same name

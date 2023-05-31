@@ -17,7 +17,7 @@ const fieldHover = require('./additional/fieldHover');
 export function activate(context: vscode.ExtensionContext) {
 	CustomConsole.customConsole = vscode.window.createOutputChannel("AL Navigator");
 	console.log('Congratulations, AL Navigator is ready to rumble!');
-	const config = vscode.workspace.getConfiguration('alNavigator');	
+	const config = vscode.workspace.getConfiguration('alNavigator');
 
 	let jumpToNextDataItemCmd = commands.registerCommand("extension.DataItem", () => {
 		FileJumper.jumpToNextDataItem();
@@ -43,13 +43,6 @@ export function activate(context: vscode.ExtensionContext) {
 		FileJumper.jumpToNextActions();
 	});
 
-	let openMSTranslationCmd = commands.registerCommand("extension.OpenMSTranslation", () => {
-		Translator.openMicrosoftTranslation(false);
-	});
-
-	let openMSTranslationReverseCmd = commands.registerCommand("extension.OpenMSTranslationReverse", () => {
-		Translator.openMicrosoftTranslation(true);
-	});
 
 	let showMSTranslationCmd = commands.registerCommand("extension.ShowMSTranslation", () => {
 		Translator.showMicrosoftTranslation(false);
@@ -58,7 +51,6 @@ export function activate(context: vscode.ExtensionContext) {
 	let showMSTranslationReverseCmd = commands.registerCommand("extension.ShowMSTranslationReverse", () => {
 		Translator.showMicrosoftTranslation(true);
 	});
-
 
 	let _alFiles: ALFiles = new ALFiles();
 	let startCreateReportDialogCmd = commands.registerCommand("extension.StartCreateReportDialog", () => {
@@ -70,10 +62,10 @@ export function activate(context: vscode.ExtensionContext) {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
 
-	// if(config.get('enableHoverProviders'))
-    //     context.subscriptions.push(vscode.languages.registerHoverProvider(
-    //         'al', new fieldHover.FieldHoverProvider()
-    //     ));
+	if (config.get('enableHoverProviders'))
+		context.subscriptions.push(vscode.languages.registerHoverProvider(
+			'al', new fieldHover.FieldHoverProvider()
+		));
 
 	context.subscriptions.push(jumpToNextDataItemCmd);
 	context.subscriptions.push(jumpToNextDataItemBottomCmd);
@@ -81,8 +73,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToLastLocalVarLineCmd);
 	context.subscriptions.push(jumpToLastGlobalVarLineCmd);
 	context.subscriptions.push(jumpToActionsCmd);
-	context.subscriptions.push(openMSTranslationCmd);
-	context.subscriptions.push(openMSTranslationReverseCmd);
 	context.subscriptions.push(showMSTranslationCmd);
 	context.subscriptions.push(showMSTranslationReverseCmd);
 	// context.subscriptions.push(startCreateReportDialogCmd);

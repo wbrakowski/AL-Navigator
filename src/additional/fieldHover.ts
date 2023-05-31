@@ -1,11 +1,11 @@
-import { TranslationService } from "./translationService";
+import * as tsl from './translationService';
 
-  
+
 import { CancellationToken, commands, Position, Range, TextDocument, workspace, Hover } from "vscode";
 
 
 exports.FieldHoverProvider = class FieldHoverProvider {
-    
+
     /**
      * returns the translation of symbols
      * 
@@ -29,7 +29,8 @@ exports.FieldHoverProvider = class FieldHoverProvider {
                 if (!currentWordRange)
                     return;
                 let currentWord: string = document.getText(currentWordRange);
-                let translations = await TranslationService.getDynNavTranslations(currentWord, false);
+                currentWord = currentWord.replace(/"/g, "");
+                let translations = await tsl.showBaseAppTranslation(currentWord, false, false);
                 if (translations.length > 0) {
                     return new Hover(`${translations} (translated by AL Navigator)`);
                 }
