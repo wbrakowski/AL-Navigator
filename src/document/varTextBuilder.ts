@@ -1,13 +1,13 @@
 import { Range } from "vscode";
 import { ALFileCrawler } from "../al/alFileCrawler";
-import { StringFunctions } from "./stringFunctions";
+import { StringFunctions } from "../additional/stringFunctions";
 import { VarDeclaration } from "../al/alVarDeclaration";
 import { ALVariable } from "../al/alVariable";
-import { CommandType } from "./commandType";
+import { CommandType } from "../additional/commandType";
 import { ALFile } from "../al/alFile";
 import { clear } from "console";
 
-export module TextBuilder {
+export module VarTextBuilder {
     let indentPart: string = "    ";
     export function buildVarDeclaration(range: Range, alVariable: ALVariable): VarDeclaration {
         let varDeclaration = new VarDeclaration();
@@ -96,3 +96,5 @@ export module TextBuilder {
         return varDeclaration;
     }
 }
+
+

@@ -31,7 +31,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
             return;
         }
         this._alFiles.document = document;
-        let diagnostic = this._alFiles.getRelevantDiagnosticOfCurrentPosition(range);
+        let diagnostic = DiagnosticAnalyzer.getRelevantDiagnosticOfCurrentPosition(range, document);
         if (!diagnostic) {
             return;
         }
@@ -39,9 +39,9 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
         let actions: vscode.CodeAction[] = [];
         let varName = ALFileCrawler.getRangeText(diagnostic.range);
 
-        let createGlobalVarCodeAction = this.createCodeAction(document, diagnostic, varName, CommandType.GlobalVariable);
-        let createLocalVarCodeAction = this.createCodeAction(document, diagnostic, varName, CommandType.LocalVariable);
-        let createParamCodeAction = this.createCodeAction(document, diagnostic, varName, CommandType.Parameter);
+        let createGlobalVarCodeAction = this.createVarCodeAction(document, diagnostic, varName, CommandType.GlobalVariable);
+        let createLocalVarCodeAction = this.createVarCodeAction(document, diagnostic, varName, CommandType.LocalVariable);
+        let createParamCodeAction = this.createVarCodeAction(document, diagnostic, varName, CommandType.Parameter);
 
         if (createLocalVarCodeAction) {
             actions.push(createLocalVarCodeAction);
@@ -61,7 +61,7 @@ export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     }
 
 
-    private createCodeAction(currentDocument: vscode.TextDocument, diagnostic: vscode.Diagnostic, varName: string, cmdType: CommandType): vscode.CodeAction | undefined {
+    private createVarCodeAction(currentDocument: vscode.TextDocument, diagnostic: vscode.Diagnostic, varName: string, cmdType: CommandType): vscode.CodeAction | undefined {
         if (!diagnostic) {
             return;
         }

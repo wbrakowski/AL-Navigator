@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { ALObject } from './alObject';
-import { StringFunctions} from '../additional/stringFunctions';
+import { StringFunctions } from '../additional/stringFunctions';
 
 export class ALFile {
     public uri: vscode.Uri;
@@ -10,8 +10,8 @@ export class ALFile {
     public fileText: string;
     public alObject: ALObject = new ALObject();
     public procedures: string[] = new Array();
-    
-    constructor(file : vscode.Uri) {
+
+    constructor(file: vscode.Uri) {
         this.uri = file;
         this.filePath = file.fsPath;
         this.fileName = this.getFileNameFromPath(this.filePath);
@@ -19,7 +19,7 @@ export class ALFile {
         this.getObjectInfoFromText();
     }
 
-    private getFileNameFromPath(path : string) : string {
+    private getFileNameFromPath(path: string): string {
         return path.replace(/^.*[\\\/]/, '');
     }
 
@@ -27,7 +27,7 @@ export class ALFile {
         return fs.readFileSync(this.uri.fsPath).toString();
     }
 
-    public procedureExistsInFile(procedureName : string): boolean {
+    public procedureExistsInFile(procedureName: string): boolean {
         return (this.procedures.includes(procedureName));
     }
 
@@ -42,7 +42,7 @@ export class ALFile {
         let procedureArr = this.fileText.match(patternProcedure);
 
         if (!objectTypeArr) {
-             return;
+            return;
         }
 
         if (objectTypeArr) {
@@ -54,20 +54,20 @@ export class ALFile {
                 case 'report':
                 case 'table':
                 case 'tableextension':
-                case 'xmlport': 
-                {
-                    var patternObject = new RegExp(`(${objectTypeArr[0].trim().toLowerCase()}) +([0-9]+) +(${objectNamePattern}|${objectNameNoQuotesPattern})([^"\n]*"[^"\n]*)?`, "i");
-                    let currObject = firstLineFileText.match(patternObject);
-                    if (currObject === null) {
-                        return;
+                case 'xmlport':
+                    {
+                        var patternObject = new RegExp(`(${objectTypeArr[0].trim().toLowerCase()}) +([0-9]+) +(${objectNamePattern}|${objectNameNoQuotesPattern})([^"\n]*"[^"\n]*)?`, "i");
+                        let currObject = firstLineFileText.match(patternObject);
+                        if (currObject === null) {
+                            return;
+                        }
+
+                        this.alObject.objectType = currObject[1];
+                        this.alObject.objectID = currObject[2];
+                        this.alObject.objectName = currObject[3];
+
+                        break;
                     }
-
-                    this.alObject.objectType = currObject[1];
-                    this.alObject.objectID = currObject[2];
-                    this.alObject.objectName = currObject[3];
-
-                    break;
-                }
                 default: {
                     return;
                 }
@@ -84,16 +84,16 @@ export class ALFile {
 
         if (!objectTypeArr) {
             return;
-       }
+        }
 
-       if (procedureArr) {
-            for(let i = 0; i < procedureArr.length; i++) {
-                let lastSpaceIndex : number = procedureArr[i].lastIndexOf(" ");
-                let procedureName : string = procedureArr[i].substring(lastSpaceIndex + 1);
+        if (procedureArr) {
+            for (let i = 0; i < procedureArr.length; i++) {
+                let lastSpaceIndex: number = procedureArr[i].lastIndexOf(" ");
+                let procedureName: string = procedureArr[i].substring(lastSpaceIndex + 1);
                 if (procedureName) {
                     this.procedures.push(procedureName);
                 }
             }
         }
     }
- }
+}

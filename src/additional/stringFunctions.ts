@@ -96,4 +96,8 @@ export module StringFunctions {
         return str.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1");
     }
 
+    export function removeSpecialCharsAndSpaces(input: string): string {
+        return (input.replace(/[^\w]/g, ''));
+    }
+
 }

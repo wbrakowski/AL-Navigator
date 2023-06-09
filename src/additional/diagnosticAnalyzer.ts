@@ -1,6 +1,7 @@
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { TextDocument, Range, Diagnostic, languages, Uri, extensions } from 'vscode';
-import * as semver from 'semver';
+// import * as semver from 'semver';
+import * as vscode from 'vscode';
 
 export class DiagnosticAnalyzer {
     public constructor() {
@@ -23,12 +24,6 @@ export class DiagnosticAnalyzer {
         else
             return d.code as string;
     }
-    public static checkDiagnosticsLanguage(d: Diagnostic): boolean {
-        if (!d.source) {
-            return false;
-        }
-        return d.source.toLowerCase() === 'al';
-    }
     public static checkDiagnosticsCode(d: Diagnostic): boolean {
         if (!d.code) {
             return false;
@@ -43,4 +38,28 @@ export class DiagnosticAnalyzer {
     public static checkDiagnosticsPosition(d: Diagnostic, range: Range): boolean {
         return d.range.contains(range);
     }
+
+    public static getRelevantDiagnosticOfCurrentPosition(range: vscode.Range, document: vscode.TextDocument | undefined) {
+        if (!document) {
+            return;
+        }
+        // let diagnostics = vscode.languages.getDiagnostics(this.document.uri);
+        let diagnostics = vscode.languages.getDiagnostics(document.uri).filter(d => {
+            //     let isAL = DiagnosticAnalyzer.checkDiagnosticsLanguage(d);
+            let samePos = DiagnosticAnalyzer.checkDiagnosticsPosition(d, range);
+            let validCode = DiagnosticAnalyzer.checkDiagnosticsCode(d);
+            //     return isAL && samePos && validCode;
+            return samePos && validCode;
+        });
+
+        return diagnostics.length >= 0 ? diagnostics[0] : undefined;
+    }
+
+    public static checkDiagnosticsLanguage(d: vscode.Diagnostic): boolean {
+        if (!d.source) {
+            return false;
+        }
+        return d.source.toLowerCase() === 'al';
+    }
+
 }

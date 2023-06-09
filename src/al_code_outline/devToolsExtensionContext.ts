@@ -3,10 +3,12 @@
 import * as vscode from 'vscode';
 import { isNullOrUndefined } from "util";
 import { ObjectTypes } from '../al/objectTypes';
-import { StringFunctions } from './stringFunctions';
+import { StringFunctions } from '../additional/stringFunctions';
+import { ToolsSymbolInformationRequest } from './toolsSymbolInformationRequest';
+import { SymbolWithNameInformation } from './smbolWithNameInformation';
 
 export class ALCodeOutlineExtension {
-	public alCodeOutlineExtensionObject: any;
+    public alCodeOutlineExtensionObject: any;
     private static alCodeOutlineExtensionObject: ALCodeOutlineExtension;
     private alCodeOutlineExtension: any;
     private constructor(alCodeOutlineExtension: vscode.Extension<any>) {
@@ -53,14 +55,14 @@ export class ALCodeOutlineExtension {
         return kinds;
     }
 
-    public static async getObjectList(objectType: string) : Promise<string[]> {
+    public static async getObjectList(objectType: string): Promise<string[]> {
         let azALDevTools = (await ALCodeOutlineExtension.getInstance()).getAPI();
         let fileContent: string = "";
         switch (objectType) {
             case ObjectTypes.table:
                 //  return azALDevTools.alLangProxy.getTableList(undefined);
-                 fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:record ;\nbegin\nend;\n}";
-                 break;
+                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:record ;\nbegin\nend;\n}";
+                break;
             case ObjectTypes.codeunit:
                 fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:codeunit ;\nbegin\nend;\n}";
                 break;
@@ -96,16 +98,16 @@ export class ALCodeOutlineExtension {
         else {
             list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, "", fileContent, 4, 7, 7, 1);
         }
-        
+
         //process results
-        let out : string[] = [];
-        
+        let out: string[] = [];
+
         if (list && list.items) {
-            for (let i=0; i<list.items.length; i++) {
+            for (let i = 0; i < list.items.length; i++) {
                 let item = list.items[i];
                 switch (objectType) {
                     case ObjectTypes.enum:
-                        if (item.kind === vscode.CompletionItemKind.Enum) { 
+                        if (item.kind === vscode.CompletionItemKind.Enum) {
                             out.push(StringFunctions.fromNameText(item.label));
                         }
                         break;
@@ -114,19 +116,35 @@ export class ALCodeOutlineExtension {
                     case ObjectTypes.xmlport:
                     case ObjectTypes.interface:
                     case ObjectTypes.query:
-                        if (item.kind === vscode.CompletionItemKind.Reference) { 
+                        if (item.kind === vscode.CompletionItemKind.Reference) {
                             out.push(StringFunctions.fromNameText(item.label));
                         }
                         break;
                     default:
-                        if (item.kind === vscode.CompletionItemKind.Class) { 
+                        if (item.kind === vscode.CompletionItemKind.Class) {
                             out.push(StringFunctions.fromNameText(item.label));
                         }
                         break;
                 }
-                
+
             }
         }
         return out;
+    }
+
+    public static async getReportList(): Promise<string[]> {
+        let reportList: string[] = [];
+        let azALDevTools = (await ALCodeOutlineExtension.getInstance()).getAPI();
+        let response = azALDevTools.toolsLangServerClient.getReportsList(new ToolsSymbolInformationRequest('', false));
+        if (response)
+            reportList = SymbolWithNameInformation.toNamesList(response.symbols);
+
+        if ((reportList) && (reportList.length > 0)) {
+            // this.sendMessage({
+            //     command : "setReports",
+            //     data : this._reportExtWizardData.reportList
+            // });
+        }
+        return reportList;
     }
 }
