@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as tsl from './translationService';
-import * as DocUtils from './docUtils';
+import * as DocUtils from '../document/docUtils';
 import { baseAppTranslationFiles } from "../external_resources/BaseAppTranslationFiles";
 
 export function showMicrosoftTranslation(reverse: boolean) {

@@ -34,6 +34,16 @@ AL Navigator: Show Microsoft Translation (Target Language -> English)
 
 ![Show English Translation](resources/ShowEnglishTranslation.gif)
 
+### Copy Reports including Layout
+
+Copy reports including layout
+
+![Copy reports including layout](resources/createNewReport.gif)
+
+Create report extension including layout
+
+![Create report extension including layout](resources/createNewReportExtension.gif)
+
 ### Create Variables and Parameters
 
 CodeAction for AL0118: Create a local/global variable or a parameter by using the quick fix lamp (Ctrl + .).

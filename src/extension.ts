@@ -62,6 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
 	}));
 
+
 	if (config.get('enableHoverProviders'))
 		context.subscriptions.push(vscode.languages.registerHoverProvider(
 			'al', new fieldHover.FieldHoverProvider()
@@ -75,7 +76,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(jumpToActionsCmd);
 	context.subscriptions.push(showMSTranslationCmd);
 	context.subscriptions.push(showMSTranslationReverseCmd);
-	// context.subscriptions.push(startCreateReportDialogCmd);
+	context.subscriptions.push(startCreateReportDialogCmd);
 }
 
 // this method is called when your extension is deactivated

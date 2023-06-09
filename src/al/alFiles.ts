@@ -4,13 +4,15 @@ import { ALObject } from './alObject';
 import { DiagnosticCodes } from '../additional/diagnosticCodes';
 import { UpdateTypes } from '../additional/updateTypes';
 import { ALVariable } from './alVariable';
-import { ALCodeOutlineExtension } from '../additional/devToolsExtensionContext';
+import { ALCodeOutlineExtension } from '../al_code_outline/devToolsExtensionContext';
 import { ObjectTypes } from './objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALDataTypes } from './alDataTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 import { DiagnosticAnalyzer } from "../additional/diagnosticAnalyzer";
 import * as semver from 'semver';
+import { getActiveWorkspacePath as getActiveFolder } from '../additional/folderAndFileHelper';
+
 
 export class ALFiles {
     populatedFromCache: boolean = false;
@@ -24,6 +26,7 @@ export class ALFiles {
     }
     public workspaceALFiles: ALFile[] = new Array();
     public alObjects: ALObject[] = new Array();
+    private lastActiveFolder: string = "";
 
     constructor() {
         this.populateALFilesArray();
@@ -266,74 +269,11 @@ export class ALFiles {
         }
     }
 
-    public getRelevantDiagnosticOfCurrentPosition(range: vscode.Range) {
-        if (!this.document) {
-            return;
-        }
-        // let diagnostics = vscode.languages.getDiagnostics(this.document.uri);
-        let diagnostics = vscode.languages.getDiagnostics(this.document.uri).filter(d => {
-            //     let isAL = DiagnosticAnalyzer.checkDiagnosticsLanguage(d);
-            let samePos = DiagnosticAnalyzer.checkDiagnosticsPosition(d, range);
-            let validCode = DiagnosticAnalyzer.checkDiagnosticsCode(d);
-            //     return isAL && samePos && validCode;
-            return samePos && validCode;
-        });
 
-        return diagnostics.length >= 0 ? diagnostics[0] : undefined;
-    }
-
-    // private getDiagnosticCode(d: vscode.Diagnostic): string {
-    //     let microsoftExtension = vscode.extensions.getExtension('ms-dynamics-smb.al');
-    //     if (semver.gte(microsoftExtension?.packageJSON.version, '8.2.545335'))
-    //         // return (d.code as { value: string, target: Uri }).value;
-    //         return (d.code as unknown as { value: string, target: vscode.Uri }).value;
-    //     else
-    //         return d.code!.toString();
-    // }
-    private checkDiagnosticsLanguage(d: vscode.Diagnostic): boolean {
-        if (!d.source) {
-            return false;
-        }
-        return d.source.toLowerCase() === 'al';
-    }
-    // private checkDiagnosticsCode(d: vscode.Diagnostic): boolean {
-    //     if (!d.code) {
-    //         return false;
-    //     }
-    //     let supportedDiagnosticCodes: string[] = [];
-    //     for (var enumMember in DiagnosticCodes) {
-    //         supportedDiagnosticCodes.push(enumMember.toString());
-    //     }
-    //     return supportedDiagnosticCodes.includes(this.getDiagnosticCode(d));
-    // }
-
-    private checkDiagnosticsPosition(d: vscode.Diagnostic, range: vscode.Range): boolean {
-        return d.range.contains(range);
-    }
-
-    // private checkDiagnosticsLanguage(d: vscode.Diagnostic): boolean {
-    //     if (!d.source) {
-    //         return false;
-    //     }
-    //     return d.source.toLowerCase() === 'al';
-    // }
-    // private checkDiagnosticsCode(d: vscode.Diagnostic): boolean {
-    //     if (!d.code) {
-    //         return false;
-    //     }
-    //     let supportedDiagnosticCodes: string[] = [];
-    //     for (var enumMember in DiagnosticCodes) {
-    //         supportedDiagnosticCodes.push(enumMember.toString());
-    //     }
-    //     return supportedDiagnosticCodes.includes(d.code.toString());
-    // }
-
-    // private checkDiagnosticsPosition(d: vscode.Diagnostic, range: vscode.Range): boolean {
-    //     return d.range.contains(range);
-    // }
 
     public async fillObjects() {
-        if (this.populatedFromCache && !this.appFilesChanged) {
+        let activeFolder = getActiveFolder();
+        if (this.populatedFromCache && !this.appFilesChanged && this.lastActiveFolder === activeFolder) {
             return;
         }
 
@@ -347,7 +287,16 @@ export class ALFiles {
         let controllAddIns: string[] = await ALCodeOutlineExtension.getObjectList(ObjectTypes.controlAddIn);
         let interfaces: string[] = await ALCodeOutlineExtension.getObjectList(ObjectTypes.interface);
 
-        if (!tables && !pages && !cus && !reports && !enums && !queries && !xmlports && !controllAddIns && !interfaces) {
+        if (
+            tables.length === 0 &&
+            pages.length === 0 &&
+            cus.length === 0 &&
+            reports.length === 0 &&
+            enums.length === 0 &&
+            queries.length === 0 &&
+            xmlports.length === 0 &&
+            controllAddIns.length === 0 &&
+            interfaces.length === 0) {
             return;
         }
 
@@ -362,6 +311,9 @@ export class ALFiles {
         await this.pushToObjects(interfaces, ObjectTypes.interface);
 
         this.populatedFromCache = true;
+        if (this.lastActiveFolder !== activeFolder) {
+            this.lastActiveFolder = activeFolder;
+        }
     }
 
     public getObjectList(objectType: ObjectTypes): string[] {
@@ -371,6 +323,12 @@ export class ALFiles {
         for (let i = 0; i < filteredObjects.length; i++) {
             objects.push(filteredObjects[i].objectName);
         }
+        return objects;
+    }
+
+    public async getReportList(): Promise<string[]> {
+        let objects: string[] = [];
+        objects = await ALCodeOutlineExtension.getReportList();
         return objects;
     }
 
@@ -407,3 +365,5 @@ function hasObjectType(alObjects: ALObject[], objectType: ObjectTypes): boolean 
         return false;
     }
 }
+
+

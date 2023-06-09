@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Translate fields on hover. Navigate through al files with awesome shortcuts. ",
-	"version": "0.5.1",
+	"version": "0.5.2",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -33,10 +33,6 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.DataItem",
-		"onCommand:extension.DataItemBottom",
-		"onCommand:extension.Keys",
-		"onCommand:extension.Actions",
 		"onLanguage:al"
 	],
 	"main": "./out/extension.js",
@@ -73,6 +69,10 @@
 			{
 				"command": "extension.ShowMSTranslationReverse",
 				"title": "AL Navigator: Show Microsoft Translation (Target Language -> English)"
+			},
+			{
+				"command": "extension.StartCreateReportDialog",
+				"title": "AL Navigator: Create a new report"
 			}
 		],
 		"keybindings": [
@@ -186,8 +186,10 @@
 	],
 	"dependencies": {
 		"-": "^0.0.1",
+		"adm-zip": "^0.5.10",
 		"axios": "^0.21.4",
 		"entities": "^3.0.1",
+		"fs-extra": "^11.1.1",
 		"html": "^1.0.0",
 		"open": "^8.2.0",
 		"typescript": "^4.5.2",

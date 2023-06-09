@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ALCodeCommand } from './alCodeCommand';
 import { ALVariable } from './alVariable';
 import { ALFileCrawler } from './alFileCrawler';
-import { TextBuilder } from '../additional/textBuilder';
+import { VarTextBuilder } from '../document/varTextBuilder';
 import { ObjectTypes } from './objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALFiles } from './alFiles';
@@ -81,7 +81,7 @@ export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
             alVariable.typeAutomaticallyDetected = true;
         }
 
-        let varDeclaration = TextBuilder.buildVarDeclaration(range, alVariable);
+        let varDeclaration = VarTextBuilder.buildVarDeclaration(range, alVariable);
         let content: string = varDeclaration.declaration;
         if (this.cmdType !== CommandType.Parameter) {
             content += '\n';
