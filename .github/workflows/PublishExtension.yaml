@@ -25,8 +25,11 @@ jobs:
           # Retrieve the current version
           CURRENT_VERSION=$(node -pe "require('./package.json').version")
 
-          # Increment the version number (example: from 1.0.0 to 1.0.1)
-          NEW_VERSION=$(node -pe "const [major, minor, patch] = '${CURRENT_VERSION}'.split('.'); `${major}.${minor}.${+patch + 1}`")
+         # Increment the version number (example: from 1.0.0 to 1.0.1)
+          MAJOR=$(echo $CURRENT_VERSION | cut -d'.' -f1)
+          MINOR=$(echo $CURRENT_VERSION | cut -d'.' -f2)
+          PATCH=$(echo $CURRENT_VERSION | cut -d'.' -f3)
+          NEW_VERSION="${MAJOR}.${MINOR}.$(($PATCH + 1))"
 
           # Update the package.json file with the new version
           node -e "const fs = require('fs'); const packageJson = JSON.parse(fs.readFileSync('./package.json')); packageJson.version = '${NEW_VERSION}'; fs.writeFileSync('./package.json', JSON.stringify(packageJson, null, 2))"
