@@ -41,3 +41,4 @@ jobs:
         with:
           name: vscode-extension
           path: '*.vsix'
+          token: ${{ secrets.VSMARKETPLACE_TOKEN }}
