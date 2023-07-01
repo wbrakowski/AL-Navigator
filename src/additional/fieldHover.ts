@@ -1,4 +1,4 @@
-import * as tsl from './translationService';
+import * as tsl from '../translation/translationService';
 
 
 import { CancellationToken, commands, Position, Range, TextDocument, workspace, Hover } from "vscode";

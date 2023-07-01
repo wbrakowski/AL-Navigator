@@ -1,5 +1,5 @@
 import { isUndefined } from "util";
-import { CommandType } from "../additional/commandType";
+import { CommandType } from "./codeActions/commandType";
 import { StringFunctions } from '../additional/stringFunctions';
 import { ALDataType, ArrayDataType, CodeTextDataType, DefaultDataType, DictionaryDataType, LabelDataType, ListDataType, ObjectDataType } from "./alDataType";
 import { ALDataTypes } from "./alDataTypes";

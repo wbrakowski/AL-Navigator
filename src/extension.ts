@@ -4,12 +4,12 @@
 
 import * as vscode from 'vscode';
 import { commands } from 'vscode';
-import { FileJumper } from './additional/fileJumper';
-import { ALCodeActionsProvider } from './al/alCodeActionsProvider';
+import { FileJumper } from './files/fileJumper';
 import { CustomConsole } from './additional/console';
-import * as Translator from './additional/translator';
+import * as Translator from './translation/translator';
 import { ALFiles } from './al/alFiles';
-import { ReportCreator } from './al/reportCreator';
+import { ReportCreator } from './al/report/reportCreator';
+import { ALCodeActionsProvider } from './al/codeActions/alCodeActionsProvider';
 const fieldHover = require('./additional/fieldHover');
 
 // this method is called when your extension is activated

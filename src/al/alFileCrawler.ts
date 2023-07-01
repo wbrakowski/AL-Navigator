@@ -2,7 +2,7 @@ import { TextLine, TextEditor, window, Range, Selection, TextDocument, TextEdito
 import { ALKeywordHelper } from './alKeyWordHelper';
 import { ALFile } from './alFile';
 import * as vscode from 'vscode';
-import { CommandType } from '../additional/commandType';
+import { CommandType } from './codeActions/commandType';
 
 export module ALFileCrawler {
     //#region text search

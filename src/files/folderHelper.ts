@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export function getActiveWorkspacePath(): string {
     const activeTextEditor = vscode.window.activeTextEditor;
@@ -19,6 +21,8 @@ export function getActiveWorkspacePath(): string {
     return activeWorkspaceFolder.uri.fsPath;
 }
 
+
+
 function getFirstOpenedFolderPath(): string {
     const folders = vscode.workspace.workspaceFolders;
     if (folders && folders.length > 0) {
@@ -33,4 +37,32 @@ export function stripReportFolder(reportFolder): string {
     newFolder += reportFolder.replace(getActiveWorkspacePath(), '');
     newFolder += '\\';
     return newFolder;
+}
+
+export function findReportFolder(workspacePath: string): string | undefined {
+    const alFolders = ['src', 'app'];
+
+    for (const folder of alFolders) {
+        const reportFolder = path.join(workspacePath, folder, 'report');
+        const reportsFolder = path.join(workspacePath, folder, 'reports');
+        if (fs.existsSync(reportFolder)) {
+            return reportFolder;
+        }
+        else {
+            if (fs.existsSync(reportsFolder)) {
+                return reportsFolder;
+            }
+        }
+    }
+    return undefined;
+}
+
+export function getAlPackagesFolder(workspacePath: string): string | undefined {
+    let alPackagesFolder = path.join(workspacePath, '.alpackages');
+    if (fs.existsSync(alPackagesFolder)) {
+        return alPackagesFolder;
+    }
+    else {
+        return undefined;
+    }
 }

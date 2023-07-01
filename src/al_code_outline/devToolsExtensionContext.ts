@@ -6,6 +6,7 @@ import { ObjectTypes } from '../al/objectTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 import { ToolsSymbolInformationRequest } from './toolsSymbolInformationRequest';
 import { SymbolWithNameInformation } from './smbolWithNameInformation';
+import { ALDataTypes } from '../al/alDataTypes';
 
 export class ALCodeOutlineExtension {
     public alCodeOutlineExtensionObject: any;
@@ -146,5 +147,11 @@ export class ALCodeOutlineExtension {
             // });
         }
         return reportList;
+    }
+
+    public static async getFirstSuggestedReportId(): Promise<number> {
+        let azALDevTools = (await ALCodeOutlineExtension.getInstance()).getAPI();
+        let objId = await azALDevTools.idReservationService.suggestObjectId(undefined, undefined, ALDataTypes.Report);
+        return objId;
     }
 }
