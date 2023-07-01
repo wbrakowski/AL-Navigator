@@ -3,6 +3,10 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.5.3]
+- Extended copy report functionality:
+  - Automatic ID assignment to new reports
+  - User can select report names in the dialog
 ## [0.5.2]
 - Added copy report functionality
 ## [0.5.1]

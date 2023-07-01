@@ -1,20 +1,28 @@
 export module reportTextBuilder {
 
-    export function getReportExtensionFileContent(reportName: string, rdlcFileName: string, wordFileName: string, reportFolder: string): string {
+    export function getRDLCLayoutBlock(rdlcFileName: string, reportFolder: string): string {
+        return `RDLCLayout = '${reportFolder}${rdlcFileName}';`;
+    }
+
+    export function getWordLayoutBlock(wordFileName: string, reportFolder: string): string {
+        return `WordLayout = '${reportFolder}${wordFileName}';`;
+    }
+
+    export function getReportExtensionFileContent(reportName: string, objectName: string, objectId: number, rdlcFileName: string, wordFileName: string, reportFolder: string): string {
         let fileContent = '';
 
-        fileContent += addHeaderBlock(reportName);
+        fileContent += addHeaderBlock(reportName, objectName, objectId);
         fileContent += getLineBreak(1);
         fileContent += getCurlyOpenParanthesis();
         fileContent += getLineBreak(1);
         fileContent += getTab();
         if (rdlcFileName !== '') {
-            fileContent += getRDLCLayout(rdlcFileName, reportFolder);
+            fileContent += getRDLCLayoutBlock(rdlcFileName, reportFolder);
         }
         fileContent += getLineBreak(1);
         fileContent += getTab();
         if (wordFileName !== '') {
-            fileContent += getWordLayout(wordFileName, reportFolder);
+            fileContent += getWordLayoutBlock(wordFileName, reportFolder);
         }
         fileContent += getLineBreak(1);
         fileContent += getTab();
@@ -25,8 +33,8 @@ export module reportTextBuilder {
         return fileContent;
     }
 
-    function addHeaderBlock(reportName: string): string {
-        return `reportextension Id "${reportName}" extends "${reportName}"`;
+    function addHeaderBlock(reportName: string, objectName: string, objectId: number): string {
+        return `reportextension ${objectId} "${objectName}" extends "${reportName}"`;
     }
 
     function getWhitespaces(count: number): string {
@@ -66,11 +74,4 @@ function getCurlyCloseParanthesis(): string {
     return '}';
 }
 
-function getRDLCLayout(rdlcFileName: string, reportFolder: string): string {
-    return `RDLCLayout = '${reportFolder}${rdlcFileName}';`;
-}
-
-function getWordLayout(wordFileName: string, reportFolder: string): string {
-    return `WordLayout = '${reportFolder}${wordFileName}';`;
-}
 

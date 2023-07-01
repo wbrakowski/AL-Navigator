@@ -3,7 +3,7 @@ import { ALFileCrawler } from "../al/alFileCrawler";
 import { StringFunctions } from "../additional/stringFunctions";
 import { VarDeclaration } from "../al/alVarDeclaration";
 import { ALVariable } from "../al/alVariable";
-import { CommandType } from "../additional/commandType";
+import { CommandType } from "../al/codeActions/commandType";
 import { ALFile } from "../al/alFile";
 import { clear } from "console";
 

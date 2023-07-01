@@ -1,4 +1,4 @@
-import { DiagnosticCodes } from '../additional/diagnosticCodes';
+import { DiagnosticCodes } from './diagnosticCodes';
 import { TextDocument, Range, Diagnostic, languages, Uri, extensions } from 'vscode';
 // import * as semver from 'semver';
 import * as vscode from 'vscode';

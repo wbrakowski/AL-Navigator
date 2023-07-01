@@ -1,18 +1,18 @@
 import * as vscode from 'vscode';
 import { ALCodeCommand } from './alCodeCommand';
-import { ALVariable } from './alVariable';
-import { ALFileCrawler } from './alFileCrawler';
-import { VarTextBuilder } from '../document/varTextBuilder';
-import { ObjectTypes } from './objectTypes';
-import { ALVarHelper } from './alVarHelper';
-import { ALFiles } from './alFiles';
-import { ALDataTypes } from './alDataTypes';
-import { StringFunctions } from '../additional/stringFunctions';
-import { FileJumper } from '../additional/fileJumper';
+import { ALVariable } from '../alVariable';
+import { ALFileCrawler } from '../alFileCrawler';
+import { VarTextBuilder } from '../../document/varTextBuilder';
+import { ObjectTypes } from '../objectTypes';
+import { ALVarHelper } from '../alVarHelper';
+import { ALFiles } from '../alFiles';
+import { ALDataTypes } from '../alDataTypes';
+import { StringFunctions } from '../../additional/stringFunctions';
+import { FileJumper } from '../../files/fileJumper';
 import { strict } from 'assert';
 import { Settings } from 'http2';
 import { abort } from 'process';
-import { CommandType } from '../additional/commandType';
+import { CommandType } from './commandType';
 // import { Settings } from '../additional/Settings';
 
 

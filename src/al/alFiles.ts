@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ALFile } from './alFile';
 import { ALObject } from './alObject';
-import { DiagnosticCodes } from '../additional/diagnosticCodes';
+import { DiagnosticCodes } from '../diagnostic/diagnosticCodes';
 import { UpdateTypes } from '../additional/updateTypes';
 import { ALVariable } from './alVariable';
 import { ALCodeOutlineExtension } from '../al_code_outline/devToolsExtensionContext';
@@ -9,9 +9,9 @@ import { ObjectTypes } from './objectTypes';
 import { ALVarHelper } from './alVarHelper';
 import { ALDataTypes } from './alDataTypes';
 import { StringFunctions } from '../additional/stringFunctions';
-import { DiagnosticAnalyzer } from "../additional/diagnosticAnalyzer";
+import { DiagnosticAnalyzer } from "../diagnostic/diagnosticAnalyzer";
 import * as semver from 'semver';
-import { getActiveWorkspacePath as getActiveFolder } from '../additional/folderAndFileHelper';
+import { getActiveWorkspacePath as getActiveFolder } from '../files/folderHelper';
 
 
 export class ALFiles {

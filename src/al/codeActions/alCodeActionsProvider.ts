@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { ALFiles } from './alFiles';
-import { ALFileCrawler } from './alFileCrawler';
-import { DiagnosticCodes } from '../additional/diagnosticCodes';
+import { ALFiles } from '../alFiles';
+import { ALFileCrawler } from '../alFileCrawler';
 import { ALAddVarOrParamCodeCommand } from './alAddVarOrParamCodeCommand';
-import { CommandType } from '../additional/commandType';
-import { DiagnosticAnalyzer } from "../additional/diagnosticAnalyzer";
+import { DiagnosticAnalyzer } from '../../diagnostic/diagnosticAnalyzer';
+import { CommandType } from './commandType';
+import { DiagnosticCodes } from '../../diagnostic/diagnosticCodes';
 
 export class ALCodeActionsProvider implements vscode.CodeActionProvider {
     // protected _alFiles: ALFiles = new ALFiles();
