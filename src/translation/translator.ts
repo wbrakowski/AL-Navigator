@@ -7,11 +7,20 @@ export function showMicrosoftTranslation(reverse: boolean) {
   console.log('Running: showMicrosoftTranslationLocal');
   let currentWord = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
   vscode.window.showInputBox({ value: currentWord, prompt: "Translate String:" }).then(searchString =>
-    tsl.showBaseAppTranslation(searchString, reverse, true));
+    tsl.showBaseAppTranslation(searchString, reverse, true, false));
 
   console.log('Done: showMicrosoftTranslationLocal');
 }
 
+
+export function translateAndCopyToClipboard(reverse: boolean) {
+  console.log('Running: translateAndCopyToClipboard');
+  let currentWord = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
+  vscode.window.showInputBox({ value: currentWord, prompt: "Translate and copy translation for string:" }).then(searchString =>
+    tsl.showBaseAppTranslation(searchString, reverse, true, true));
+
+  console.log('Done: translateAndCopyToClipboard');
+}
 // export async function downloadBaseAppTranslationFiles(): Promise<void> {
 //   console.log("Running: downloadBaseAppTranslationFiles");
 //   let targetLanguageCodes: string[] = [];

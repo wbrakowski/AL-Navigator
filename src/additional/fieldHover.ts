@@ -30,7 +30,7 @@ exports.FieldHoverProvider = class FieldHoverProvider {
                     return;
                 let currentWord: string = document.getText(currentWordRange);
                 currentWord = currentWord.replace(/"/g, "");
-                let translations = await tsl.showBaseAppTranslation(currentWord, false, false);
+                let translations = await tsl.showBaseAppTranslation(currentWord, false, false, false);
                 if (translations.length > 0) {
                     return new Hover(`${translations} (translated by AL Navigator)`);
                 }

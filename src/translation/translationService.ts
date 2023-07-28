@@ -6,7 +6,7 @@ import {
 } from "../external_resources/BaseAppTranslationFiles";
 import { readFileSync } from "fs";
 
-export async function showBaseAppTranslation(searchString: string | undefined, reverse: boolean, showTranslation: boolean): Promise<string[]> {
+export async function showBaseAppTranslation(searchString: string | undefined, reverse: boolean, showTranslation: boolean, copyToClipboard: boolean): Promise<string[]> {
     console.log("Running: showBaseAppTranslation");
     let translations: string[];
     try {
@@ -25,6 +25,10 @@ export async function showBaseAppTranslation(searchString: string | undefined, r
         else {
             vscode.window.showInformationMessage(`Input: "${searchString}, translation: ${translations}"`);
         }
+    }
+
+    if (copyToClipboard) {
+        vscode.env.clipboard.writeText(translations[0]);
     }
     return translations;
 }
@@ -125,6 +129,7 @@ export function matchTranslationsFromTranslationMap(matchMap: Map<string, string
     }
     return translations;
 }
+
 
 
 

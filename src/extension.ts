@@ -57,6 +57,10 @@ export function activate(context: vscode.ExtensionContext) {
 		ReportCreator.startCreateReportDialog(_alFiles);
 	});
 
+	let translateAndCopyToClipboardCmd = commands.registerCommand("extension.TranslateAndCopyToClipboard", () => {
+		Translator.translateAndCopyToClipboard(false);
+	});
+
 
 	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context, _alFiles), {
 		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
@@ -77,6 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(showMSTranslationCmd);
 	context.subscriptions.push(showMSTranslationReverseCmd);
 	context.subscriptions.push(startCreateReportDialogCmd);
+	context.subscriptions.push(translateAndCopyToClipboardCmd);
 }
 
 // this method is called when your extension is deactivated
