@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Translate fields on hover. Navigate through al files with awesome shortcuts. ",
-	"version": "0.5.3",
+	"version": "0.5.4",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -65,6 +65,10 @@
 			{
 				"command": "extension.ShowMSTranslation",
 				"title": "AL Navigator: Show Microsoft Translation (English -> Target Language)"
+			},
+			{
+				"command": "extension.TranslateAndCopyToClipboard",
+				"title": "AL Navigator: Show translation and copy to clipboard (English -> Target Language)"
 			},
 			{
 				"command": "extension.ShowMSTranslationReverse",
