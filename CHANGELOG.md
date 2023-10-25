@@ -3,6 +3,9 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.5.5]
+- Fixed create variable issue (#112) - thanks dannoe
+  
 ## [0.5.4]
 - New functionality: Translate and copy to clipboard
 

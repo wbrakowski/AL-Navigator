@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a boss. Translate fields on hover. Navigate through al files with awesome shortcuts. ",
-	"version": "0.5.4",
+	"version": "0.5.5",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -27,7 +27,7 @@
 		"url": "https://github.com/wbrakowski/AL-Navigator/issues"
 	},
 	"engines": {
-		"vscode": "^1.40.0"
+		"vscode": "^1.83.0"
 	},
 	"categories": [
 		"Other"
