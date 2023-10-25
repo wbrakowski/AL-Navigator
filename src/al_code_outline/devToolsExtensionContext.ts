@@ -92,7 +92,7 @@ export class ALCodeOutlineExtension {
         if (!fileContent) {
             return [];
         }
-        let list: any;
+        let list: vscode.CompletionList | undefined;
         if (objectType === ObjectTypes.table) {
             list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, "", fileContent, 4, 9, 7, 1);
         }

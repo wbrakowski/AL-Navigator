@@ -1,3 +1,5 @@
+import { CompletionItemLabel } from "vscode";
+
 export module StringFunctions {
     export function removeDoubleQuotesFromString(text: string): string {
         return text.replace(/"/g, "");
@@ -15,7 +17,15 @@ export module StringFunctions {
         return (text.includes(" ") || text.includes("+") || text.includes("/") || text.includes("-"));
     }
 
-    export function fromNameText(name: string): string {
+    function isCompletionItemLabel(obj: any): obj is CompletionItemLabel {
+        return typeof obj === 'object' && 'label' in obj && typeof obj.label === 'string';
+    }
+
+    export function fromNameText(name: string | CompletionItemLabel): string {
+        if (isCompletionItemLabel(name)) {
+            name = name.label;
+        }
+
         name = name.trim();
         if ((name.length > 1) && (name.substr(0, 1) === "\"") && (name.substr(name.length - 1, 1) === "\"")) {
             name = name.substr(1, name.length - 2).replace(new RegExp("\"\"", "g"), "\"");
