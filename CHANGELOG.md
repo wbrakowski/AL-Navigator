@@ -3,6 +3,9 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.5.6]
+- Fixed create report bug
+- 
 ## [0.5.5]
 - Fixed create variable issue (#112) - thanks dannoe
   

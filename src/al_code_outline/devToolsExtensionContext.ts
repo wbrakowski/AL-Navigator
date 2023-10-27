@@ -106,28 +106,7 @@ export class ALCodeOutlineExtension {
         if (list && list.items) {
             for (let i = 0; i < list.items.length; i++) {
                 let item = list.items[i];
-                switch (objectType) {
-                    case ObjectTypes.enum:
-                        if (item.kind === vscode.CompletionItemKind.Enum) {
-                            out.push(StringFunctions.fromNameText(item.label));
-                        }
-                        break;
-                    case ObjectTypes.controlAddIn:
-                    case ObjectTypes.report:
-                    case ObjectTypes.xmlport:
-                    case ObjectTypes.interface:
-                    case ObjectTypes.query:
-                        if (item.kind === vscode.CompletionItemKind.Reference) {
-                            out.push(StringFunctions.fromNameText(item.label));
-                        }
-                        break;
-                    default:
-                        if (item.kind === vscode.CompletionItemKind.Class) {
-                            out.push(StringFunctions.fromNameText(item.label));
-                        }
-                        break;
-                }
-
+                out.push(StringFunctions.fromNameText(item.label));
             }
         }
         return out;
