@@ -58,58 +58,52 @@ export class ALCodeOutlineExtension {
 
     public static async getObjectList(objectType: string): Promise<string[]> {
         let azALDevTools = (await ALCodeOutlineExtension.getInstance()).getAPI();
-        let fileContent: string = "";
+
+        let tsir = new ToolsSymbolInformationRequest(undefined, false);
+        let response;
+
         switch (objectType) {
             case ObjectTypes.table:
-                //  return azALDevTools.alLangProxy.getTableList(undefined);
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:record ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getTablesList(tsir);
                 break;
             case ObjectTypes.codeunit:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:codeunit ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getCodeunitsList(tsir);
                 break;
             case ObjectTypes.page:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:page ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getPagesList(tsir);
                 break;
             case ObjectTypes.report:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:report ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getReportsList(tsir);
                 break;
             case ObjectTypes.query:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:query ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getQueriesList(tsir);
                 break;
             case ObjectTypes.xmlport:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:xmlport ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getXmlPortsList(tsir);
                 break;
             case ObjectTypes.enum:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:enum ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getEnumsList(tsir);
                 break;
             case ObjectTypes.controlAddIn:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:controladdin ;\nbegin\nend;\n}";
+                // response = await azALDevTools.toolsLangServerClient.getControlAddInsList(tir);
                 break;
             case ObjectTypes.interface:
-                fileContent = "codeunit 0 _symbolcache\n{\nprocedure t()\nvar\nf:interface ;\nbegin\nend;\n}";
+                response = await azALDevTools.toolsLangServerClient.getInterfacesList(tsir);
                 break;
         }
-        if (!fileContent) {
+        if (!response) {
             return [];
         }
-        let list: vscode.CompletionList | undefined;
-        if (objectType === ObjectTypes.table) {
-            list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, "", fileContent, 4, 9, 7, 1);
-        }
-        else {
-            list = await azALDevTools.alLangProxy.getCompletionForSourceCode(undefined, "", fileContent, 4, 7, 7, 1);
-        }
 
-        //process results
-        let out: string[] = [];
-
-        if (list && list.items) {
-            for (let i = 0; i < list.items.length; i++) {
-                let item = list.items[i];
-                out.push(StringFunctions.fromNameText(item.label));
+        let objectList: string[] = [];
+        if ((response) && (response.symbols)) {
+            for (let i = 0; i < response.symbols.length; i++) {
+                let name = response.symbols[i].name;
+                if (name)
+                    objectList.push(name);
             }
         }
-        return out;
+        return objectList;
     }
 
     public static async getReportList(): Promise<string[]> {
