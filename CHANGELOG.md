@@ -3,6 +3,8 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.5.8]
+- Minor bug fix when creating a report
 ## [0.5.7]
 - Fixed create report bug and create variables bug
   

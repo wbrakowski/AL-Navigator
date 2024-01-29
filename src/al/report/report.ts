@@ -120,23 +120,36 @@ export class Report {
           if (objectName !== reportName || objectID !== 0) {
             const alFilePath = path.join(reportFolder, targetAlFileName);
             const document = await vscode.workspace.openTextDocument(alFilePath);
-            const firstLine = document.lineAt(0);
-            const originalText = firstLine.text;
+
+
+
 
             let targetLineIndex = -1;
             let updatedLine: string;
+            let copiedReportId: string | null = null;
+            let objectIdLineIdx;
+            let originalText;
+            let objectIdLine;
+
 
             if (objectID !== 0) {
-              let copiedReportId: string | null = null;
-
-              // Search for a number in the first line
-              const numberMatch = originalText.match(/\d+/);
-              if (numberMatch) {
-                copiedReportId = numberMatch[0];
+              // Search for a number in the first 40 lines
+              for (let i = 0; i < 40; i++) {
+                const line = document.lineAt(i);
+                const originalText = line.text;
+                const numberMatch = originalText.match(/\d+/);
+                if (numberMatch) {
+                  copiedReportId = numberMatch[0];
+                  // Search for a number in the line and replace it with `objectID`.
+                  updatedLine = originalText.replace(/\d+/, objectID.toString());
+                  objectIdLineIdx = i;
+                  break;
+                }
               }
 
-              // Search for a number in the first line and replace it with `objectID`.
-              updatedLine = originalText.replace(/\d+/, objectID.toString());
+              objectIdLine = document.lineAt(objectIdLineIdx);
+              originalText = objectIdLine.text;
+
 
               // Add info from which report this report was copied
               for (let lineIndex = 0; lineIndex < document.lineCount; lineIndex++) {
@@ -149,7 +162,7 @@ export class Report {
 
               if (targetLineIndex !== -1) {
                 const copiedFromReportLine = targetLineIndex + 1;
-                const copiedFromReportText = `// Copied from report ${copiedReportId} - ${reportName}`;
+                const copiedFromReportText = `// Copied from report ${copiedReportId}: "${reportName}"`;
                 const copiedFromReportLineText = copiedFromReportText + `\n`;
 
                 const edit = new vscode.WorkspaceEdit();
@@ -168,7 +181,7 @@ export class Report {
 
             // TextEdit for changes
             const edit = new vscode.WorkspaceEdit();
-            edit.replace(document.uri, firstLine.range, updatedLine);
+            edit.replace(document.uri, objectIdLine.range, updatedLine);
 
             // Apply the change and save the file
             await vscode.workspace.applyEdit(edit);

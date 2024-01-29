@@ -49,7 +49,8 @@ export async function copyReportFileToWorkspace(tempAppFilePath: string, targetF
 
     // Find file in archive
     for (const zipEntry of zipEntries) {
-        if (zipEntry.entryName.endsWith(sourceFileName)) {
+        const fileName = zipEntry.entryName.split('/').pop();
+        if (fileName === sourceFileName) {
             // Copy file to target file path
             const targetFilePath = path.join(targetFolderPath, targetFileName);
             if (fs.existsSync(targetFilePath)) {
