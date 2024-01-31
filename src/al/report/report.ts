@@ -97,6 +97,11 @@ export class Report {
 
     let sourceFileName = StringFunctions.removeSpecialCharsAndSpaces(reportName);
     let targetFileName = StringFunctions.removeSpecialCharsAndSpaces(objectName);
+
+    if (sourceFileName.endsWith('KTG')) {
+      sourceFileName = sourceFileName.slice(0, -3);
+    }
+    
     let sourceAlFileName = sourceFileName + '.Report.al';
     let targetAlFileName = targetFileName + '.Report.al';
     let sourceRdlcFileName = sourceFileName + '.rdlc';
