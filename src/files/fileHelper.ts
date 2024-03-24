@@ -47,10 +47,18 @@ export async function copyReportFileToWorkspace(tempAppFilePath: string, targetF
     const util = require('util');
     const writeFileAsync = util.promisify(fs.writeFile);
 
+    let sourceFileName2;
+    if (sourceFileName.endsWith('.rdlc')) {
+        sourceFileName2 = sourceFileName.replace('.rdlc', '.rdl');
+    } else {
+        sourceFileName2 = sourceFileName;
+    }
+
     // Find file in archive
     for (const zipEntry of zipEntries) {
         const fileName = zipEntry.entryName.split('/').pop();
-        if (fileName === sourceFileName) {
+        // console.log(fileName);
+        if (fileName === sourceFileName || fileName === sourceFileName2) {
             // Copy file to target file path
             const targetFilePath = path.join(targetFolderPath, targetFileName);
             if (fs.existsSync(targetFilePath)) {

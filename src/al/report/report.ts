@@ -324,7 +324,7 @@ export class Report {
 
     // Find the report folder if exists
     let reportFolder = FolderHelper.findReportFolder(activeWorkSpaceFolder);
-    if (reportFolder === '') {
+    if (reportFolder === '' || reportFolder === undefined) {
       reportFolder = activeWorkSpaceFolder;
     }
 
