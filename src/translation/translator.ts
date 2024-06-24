@@ -6,6 +6,8 @@ import { baseAppTranslationFiles } from "../external_resources/BaseAppTranslatio
 export function showMicrosoftTranslation(reverse: boolean) {
   console.log('Running: showMicrosoftTranslationLocal');
   let currentWord = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
+  // Replace two single apostrophes with one
+  currentWord = currentWord.replace(/''/g, "'");
   vscode.window.showInputBox({ value: currentWord, prompt: "Translate String:" }).then(searchString =>
     tsl.showBaseAppTranslation(searchString, reverse, true, false));
 

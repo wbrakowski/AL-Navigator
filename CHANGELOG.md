@@ -3,6 +3,8 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.6.1]
+- Show correct translation for texts that contain single apostrophs
 ## [0.6.0]
 - Minor fixes for copying reports
 ## [0.5.9]
