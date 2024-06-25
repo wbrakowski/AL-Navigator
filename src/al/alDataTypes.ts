@@ -1,5 +1,5 @@
 export enum ALDataTypes {
-    none = "none", array = "Array", Action = "Action",
+    none = "none", array = "array", Action = "Action",
     BigInteger = "BigInteger", BigText = "BigText", Boolean = "Boolean", Byte = "Byte",
     Char = "Char", ClientType = "ClientType", Code = "Code", Codeunit = "Codeunit", ControlAddIn = "ControlAddIn",
     DataClassification = "DataClassification", DataScope = "DataScope", Date = "Date", DateFormula = "DateFormula", DateTime = "DateTime", Decimal = "Decimal", DefaultLayout = "DefaultLayout", Dialog = "Dialog", Dictionary = "Dictionary", DotNet = "DotNet", Duration = "Duration",
