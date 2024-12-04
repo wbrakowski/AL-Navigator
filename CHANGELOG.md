@@ -3,6 +3,10 @@
 All notable changes to the "AL-Navigator" extension will be documented in this file.
 
 ## Release Notes
+## [0.6.2]
+- Create arrays with correct casing
+- Fix importing of report layouts when there are namespaces in the report file
+- New feature: Remove unused variables from reports
 ## [0.6.1]
 - Show correct translation for texts that contain single apostrophs
 ## [0.6.0]
