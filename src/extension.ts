@@ -10,6 +10,7 @@ import * as Translator from './translation/translator';
 import { ALFiles } from './al/alFiles';
 import { ReportCreator } from './al/report/reportCreator';
 import { variableRemover as VariableRemover } from './al/report/variableRemover';
+import * as LaunchJsonUpdater from './json/launchjson_updater';
 import { ALCodeActionsProvider } from './al/codeActions/alCodeActionsProvider';
 const fieldHover = require('./additional/fieldHover');
 
@@ -62,6 +63,10 @@ export function activate(context: vscode.ExtensionContext) {
 		VariableRemover.removeUnusedVariablesFromReportDataset();
 	});
 
+	let selectStartupObjectIdCmd = commands.registerCommand("extension.selectStartupObjectId", () => {
+		LaunchJsonUpdater.selectStartupObjectId();
+	});
+
 	let translateAndCopyToClipboardCmd = commands.registerCommand("extension.TranslateAndCopyToClipboard", () => {
 		Translator.translateAndCopyToClipboard(false);
 	});
@@ -88,6 +93,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(startCreateReportDialogCmd);
 	context.subscriptions.push(translateAndCopyToClipboardCmd);
 	context.subscriptions.push(removeUnusedVarsInReportCmd);
+	context.subscriptions.push(selectStartupObjectIdCmd);
 }
 
 // this method is called when your extension is deactivated
