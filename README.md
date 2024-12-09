@@ -12,6 +12,16 @@ Create variables and parameters like a pro. Automatically select/insert startup 
 
 ## 🚀 Features
 
+### 🔥 New: Insert Translations into XLIFF Files
+Effortlessly insert translations directly into XLIFF files:  
+- Automatically matches translation values with `note` tags.  
+- Updates the `target` element for the corresponding `source` only if the translation exists.  
+- Supports **10 common Business Central languages**.  
+
+This feature helps you maintain consistency across multilingual projects without altering the structure of your XLIFF documents.
+
+---
+
 ### 🔥 New: Select Startup Object ID
 Easily choose a startup object ID for your `launch.json` file using a Quick Pick menu. This feature scans your project for `Page` and `Report` objects (from `.al` files and `.app` packages) and displays:
 
@@ -20,7 +30,6 @@ Easily choose a startup object ID for your `launch.json` file using a Quick Pick
 - **Type**: Whether it’s a Page or Report.  
 
 The selected object is automatically added to `startupObjectId` and `startupObjectType` in your `launch.json`.  
-
 
 ---
 
@@ -82,6 +91,27 @@ Add variables and parameters with a few keystrokes:
 | Use [Microsoft's suggested abbreviations](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviations").                                                        | "GLSetup" is recognized as Record "General Ledger Setup".                                                                               |
 | Replace placeholders like "x" with automatically generated variable names.                                                                                                                                               | Replace "x" with "SalesLine" when "Sales Line" is the selected record.                                                                  |
 | Customize ignored prefixes and suffixes for variable names in settings.                                                                                                                                                  | Set `"alNavigator.ignoreALPrefix": "EX"`. For a table named "EX Test Table," the variable "TestTable" will be automatically recognized. |
+
+---
+
+## 📜 Full Functionality List
+
+| **Command**                                                                           | **Description**                                                                      |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.    |
+| **AL Navigator: Select Startup Object ID in launch.json**                             | Quickly configure the startup object in `launch.json` using a simple selection menu. |
+| **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.       |
+| **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.    |
+| **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                           |
+| **AL Navigator: Next Action**                                                         | Navigate to the next action in your AL page file.                                    |
+| **AL Navigator: End of local variables**                                              | Jump directly to the end of the local variables section in your file.                |
+| **AL Navigator: End of global variables**                                             | Jump directly to the end of the global variables section in your file.               |
+| **AL Navigator: Show Microsoft Translation (English -> Target Language)**             | Display the translation of a field or symbol from English to the target language.    |
+| **AL Navigator: Show Microsoft Translation (Target Language -> English)**             | Display the translation of a field or symbol from the target language to English.    |
+| **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                      |
+| **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.              |
+| **AL Navigator: Remove unused variables from report dataset**                         | Streamline your reports by automatically removing unused variables.                  |
+
 
 ---
 
