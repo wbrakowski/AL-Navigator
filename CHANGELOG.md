@@ -4,6 +4,11 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.6.4]**
+- **New Feature:** Insert translation from comment into xlf
+- Fixed the issue that the .zip file still existed after changing the launch.json
+- Minor improvements for launch.json updating
+
 ### **[0.6.3]**
 - **New Feature:** Select `startupObjectId` in `launch.json` using a dropdown list.
 
