@@ -12,6 +12,19 @@ Create variables and parameters like a pro. Automatically select/insert startup 
 
 ## 🚀 Features
 
+### 🔥 New: Rename Columns (Variables) in AL and RDLC Files
+Effortlessly rename column variables in your AL report files and synchronize changes in associated RDLC files:
+
+- Renames columns (variables) both in the AL file and their corresponding definitions in the RDLC file.
+- Ensures consistency across `Field Name` and `DataField` in RDLC datasets.
+
+Example Workflow:
+1. Place your cursor on a variable inside a `column` definition within a `dataitem` block in a report.
+2. Trigger the rename functionality via the Command Palette (`AL Navigator: Rename report dataitem column`).
+3. Watch as the variable is renamed in both the AL file and the associated RDLC file.
+
+---
+
 ### 🔥 New: Insert Translations into XLIFF Files
 Effortlessly insert translations directly into XLIFF files:  
 - Automatically matches translation values with `note` tags.  
@@ -100,6 +113,7 @@ Add variables and parameters with a few keystrokes:
 | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.    |
 | **AL Navigator: Select Startup Object ID in launch.json**                             | Quickly configure the startup object in `launch.json` using a simple selection menu. |
+| **AL Navigator: Rename AL Navigator Variable**                                        | Rename variables in AL files and their corresponding RDLC files.                     |
 | **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.       |
 | **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.    |
 | **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                           |
@@ -111,7 +125,6 @@ Add variables and parameters with a few keystrokes:
 | **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                      |
 | **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.              |
 | **AL Navigator: Remove unused variables from report dataset**                         | Streamline your reports by automatically removing unused variables.                  |
-
 
 ---
 

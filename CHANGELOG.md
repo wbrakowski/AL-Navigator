@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.6.5]**
+- **New Feature:** AL Navigator: Rename report dataitem column
+
 ### **[0.6.4]**
 - **New Feature:** Insert translation from comment into xlf
 - Fixed the issue that the .zip file still existed after changing the launch.json

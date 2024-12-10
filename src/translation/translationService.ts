@@ -7,7 +7,7 @@ import {
 import { readFileSync } from "fs";
 
 export async function showBaseAppTranslation(searchString: string | undefined, reverse: boolean, showTranslation: boolean, copyToClipboard: boolean): Promise<string[]> {
-    console.log("Running: showBaseAppTranslation");
+    // console.log("Running: showBaseAppTranslation");
     let translations: string[];
     try {
         translations = await getTranslationsFromBaseApp(searchString, reverse);
@@ -16,7 +16,7 @@ export async function showBaseAppTranslation(searchString: string | undefined, r
         vscode.window.showErrorMessage((error as Error).message);
         return;
     }
-    console.log("Done: showBaseAppTranslation");
+    // console.log("Done: showBaseAppTranslation");
 
     if (showTranslation) {
         if (translations.length === 0) {
