@@ -1,5 +1,3 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 'use strict';
 
 import * as vscode from 'vscode';
@@ -9,98 +7,136 @@ import { CustomConsole } from './additional/console';
 import * as Translator from './translation/translator';
 import { ALFiles } from './al/alFiles';
 import { ReportCreator } from './al/report/reportCreator';
-import { variableRemover as VariableRemover } from './al/report/variableRemover';
+import { variableRemover } from './al/report/variableRemover';
 import * as LaunchJsonUpdater from './json/launchjson_updater';
 import * as XlfUpdater from './xlf/xlf_updater';
 import { ALCodeActionsProvider } from './al/codeActions/alCodeActionsProvider';
+import { ReportRenameProvider } from './al/codeActions/reportRenameProvider';
 const fieldHover = require('./additional/fieldHover');
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
-	CustomConsole.customConsole = vscode.window.createOutputChannel("AL Navigator");
-	console.log('Congratulations, AL Navigator is ready to rumble!');
-	const config = vscode.workspace.getConfiguration('alNavigator');
+    // Initialize output console for logging
+    CustomConsole.customConsole = vscode.window.createOutputChannel("AL Navigator");
+    console.log('Congratulations, AL Navigator is ready to rumble!');
 
-	let jumpToNextDataItemCmd = commands.registerCommand("extension.DataItem", () => {
-		FileJumper.jumpToNextDataItem();
-	});
+    const config = vscode.workspace.getConfiguration('alNavigator');
 
-	let jumpToNextDataItemBottomCmd = commands.registerCommand("extension.DataItemBottom", () => {
-		FileJumper.jumpToNextDataItemFromBottom();
-	});
+    // Register all commands
+    const commandsToRegister = [
+        { command: "extension.DataItem", callback: FileJumper.jumpToNextDataItem },
+        { command: "extension.DataItemBottom", callback: FileJumper.jumpToNextDataItemFromBottom },
+        { command: "extension.Keys", callback: FileJumper.jumpToKeys },
+        { command: "extension.LastLocalVarLine", callback: FileJumper.jumpToLastLocalVarLine },
+        { command: "extension.LastGlobalVarLine", callback: FileJumper.jumpToLastGlobalVarLine },
+        { command: "extension.Actions", callback: FileJumper.jumpToNextActions },
+        { command: "extension.ShowMSTranslation", callback: () => Translator.showMicrosoftTranslation(false) },
+        { command: "extension.ShowMSTranslationReverse", callback: () => Translator.showMicrosoftTranslation(true) },
+        {
+            command: "extension.StartCreateReportDialog", callback: () => ReportCreator.startCreateReportDialog(new ALFiles()),
+        },
+        {
+            command: "extension.RemoveUnusedVariablesFromReportDataset", callback: variableRemover.removeUnusedVariablesFromReportDataset,
+        },
+        {
+            command: "extension.selectStartupObjectId",
+            callback: LaunchJsonUpdater.selectStartupObjectId,
+        },
+        { command: "extension.insertTranslationFromComment", callback: XlfUpdater.insertTranslationFromComment },
+        { command: "extension.TranslateAndCopyToClipboard", callback: () => Translator.translateAndCopyToClipboard(false) },
 
-	let jumpToKeysCmd = commands.registerCommand("extension.Keys", () => {
-		FileJumper.jumpToKeys();
-	});
+        // Register new rename command to trigger ReportRenameProvider
+        {
+            command: "extension.renameALNavigator",
+            callback: async () => {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
 
-	let jumpToLastLocalVarLineCmd = commands.registerCommand("extension.LastLocalVarLine", () => {
-		FileJumper.jumpToLastLocalVarLine();
-	});
+                const position = editor.selection.active;
+                const document = editor.document;
 
-	let jumpToLastGlobalVarLineCmd = commands.registerCommand("extension.LastGlobalVarLine", () => {
-		FileJumper.jumpToLastGlobalVarLine();
-	});
+                // Instantiate the ReportRenameProvider
+                const reportRenameProvider = new ReportRenameProvider();
 
-	let jumpToActionsCmd = commands.registerCommand("extension.Actions", () => {
-		FileJumper.jumpToNextActions();
-	});
+                try {
+                    // Trigger the prepareRename functionality
+                    const range = await reportRenameProvider.prepareRename(
+                        document,
+                        position,
+                        new vscode.CancellationTokenSource().token
+                    );
 
+                    if (!range) {
+                        // vscode.window.showErrorMessage('PrepareRename failed. Please make sure that your cursor is inside a column within a dataitem.');
+                        return;
+                    }
 
-	let showMSTranslationCmd = commands.registerCommand("extension.ShowMSTranslation", () => {
-		Translator.showMicrosoftTranslation(false);
-	});
+                    const oldName = document.getText(range);
 
-	let showMSTranslationReverseCmd = commands.registerCommand("extension.ShowMSTranslationReverse", () => {
-		Translator.showMicrosoftTranslation(true);
-	});
+                    // Prompt the user for a new name
+                    const newName = await vscode.window.showInputBox({
+                        prompt: `Rename '${oldName}' to:`,
+                        validateInput: (input) =>
+                            /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(input) ? null : 'Invalid name format.',
+                    });
 
-	let _alFiles: ALFiles = new ALFiles();
-	let startCreateReportDialogCmd = commands.registerCommand("extension.StartCreateReportDialog", () => {
-		ReportCreator.startCreateReportDialog(_alFiles);
-	});
+                    if (!newName) {
+                        // vscode.window.showInformationMessage('Rename canceled.');
+                        return;
+                    }
 
-	let removeUnusedVarsInReportCmd = commands.registerCommand("extension.RemoveUnusedVariablesFromReportDataset", () => {
-		VariableRemover.removeUnusedVariablesFromReportDataset();
-	});
+                    // Trigger the provideRenameEdits functionality
+                    const workspaceEdit = await reportRenameProvider.provideRenameEdits(
+                        document,
+                        position,
+                        newName,
+                        new vscode.CancellationTokenSource().token
+                    );
 
-	let selectStartupObjectIdCmd = commands.registerCommand("extension.selectStartupObjectId", () => {
-		LaunchJsonUpdater.selectStartupObjectId();
-	});
+                    if (workspaceEdit) {
+                        await vscode.workspace.applyEdit(workspaceEdit);
+                        // vscode.window.showInformationMessage(
+                        //     `Renamed '${oldName}' to '${newName}' successfully.`
+                        // );
+                    } else {
+                        vscode.window.showErrorMessage('Failed to apply rename edits.');
+                    }
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Rename failed: ${error.message}`);
+                    console.error(error);
+                }
+            },
+        }
+    ];
 
-	let insertTranslationFromCommentCmd = commands.registerCommand("extension.insertTranslationFromComment", () => {
-		XlfUpdater.insertTranslationFromComment();
-	});
+    // Register commands dynamically
+    commandsToRegister.forEach(({ command, callback }) =>
+        context.subscriptions.push(commands.registerCommand(command, callback))
+    );
 
-	let translateAndCopyToClipboardCmd = commands.registerCommand("extension.TranslateAndCopyToClipboard", () => {
-		Translator.translateAndCopyToClipboard(false);
-	});
+    // Register Report Rename Provider
+    // const selector: vscode.DocumentSelector = [
+    //     { scheme: 'file', language: 'al' }
+    // ];
+    // context.subscriptions.push(
+    //     vscode.languages.registerRenameProvider(selector, new ReportRenameProvider())
+    // );
 
+    // Register Code Actions Provider
+    context.subscriptions.push(
+        vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context, new ALFiles()), {
+            providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds,
+        })
+    );
 
-	context.subscriptions.push(vscode.languages.registerCodeActionsProvider('al', new ALCodeActionsProvider(context, _alFiles), {
-		providedCodeActionKinds: ALCodeActionsProvider.providedCodeActionKinds
-	}));
-
-
-	if (config.get('enableHoverProviders'))
-		context.subscriptions.push(vscode.languages.registerHoverProvider(
-			'al', new fieldHover.FieldHoverProvider()
-		));
-
-	context.subscriptions.push(jumpToNextDataItemCmd);
-	context.subscriptions.push(jumpToNextDataItemBottomCmd);
-	context.subscriptions.push(jumpToKeysCmd);
-	context.subscriptions.push(jumpToLastLocalVarLineCmd);
-	context.subscriptions.push(jumpToLastGlobalVarLineCmd);
-	context.subscriptions.push(jumpToActionsCmd);
-	context.subscriptions.push(showMSTranslationCmd);
-	context.subscriptions.push(showMSTranslationReverseCmd);
-	context.subscriptions.push(startCreateReportDialogCmd);
-	context.subscriptions.push(translateAndCopyToClipboardCmd);
-	context.subscriptions.push(removeUnusedVarsInReportCmd);
-	context.subscriptions.push(selectStartupObjectIdCmd);
-	context.subscriptions.push(insertTranslationFromCommentCmd);
+    // Register Hover Providers if enabled in settings
+    if (config.get('enableHoverProviders')) {
+        context.subscriptions.push(
+            vscode.languages.registerHoverProvider('al', new fieldHover.FieldHoverProvider())
+        );
+    }
 }
 
-// this method is called when your extension is deactivated
 export function deactivate() { }
