@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.6.6]**
+- Minor fixes
+
 ### **[0.6.5]**
 - **New Feature:** AL Navigator: Rename report dataitem column
 

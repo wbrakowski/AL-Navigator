@@ -101,11 +101,18 @@ export async function selectStartupObjectId() {
     }
 }
 
+// function parseLaunchJsonWithComments(launchJsonPath: string): any {
+//     const stripJsonComments = require('strip-json-comments'); // Use require() for CommonJS
+//     const content = fs.readFileSync(launchJsonPath, 'utf-8');
+//     const sanitizedContent = stripJsonComments(content); // Remove comments
+//     return JSON.parse(sanitizedContent);
+// }
+
 function parseLaunchJsonWithComments(launchJsonPath: string): any {
-    const stripJsonComments = require('strip-json-comments'); // Use require() for CommonJS
+    // const stripJsonComments = require('strip-json-comments'); // Use require() for CommonJS
     const content = fs.readFileSync(launchJsonPath, 'utf-8');
-    const sanitizedContent = stripJsonComments(content); // Remove comments
-    return JSON.parse(sanitizedContent);
+    // const sanitizedContent = stripJsonComments(content); // Remove comments
+    return JSON.parse(content);
 }
 
 // Funktion zum Abrufen des App-Namens aus app.json

@@ -11,7 +11,7 @@ import { variableRemover } from './al/report/variableRemover';
 import * as LaunchJsonUpdater from './json/launchjson_updater';
 import * as XlfUpdater from './xlf/xlf_updater';
 import { ALCodeActionsProvider } from './al/codeActions/alCodeActionsProvider';
-import { ReportRenameProvider } from './al/codeActions/reportRenameProvider';
+import { ReportRenameProvider } from './al/report/reportRenameProvider';
 const fieldHover = require('./additional/fieldHover');
 
 export function activate(context: vscode.ExtensionContext) {

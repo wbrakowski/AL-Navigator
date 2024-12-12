@@ -9,60 +9,64 @@ export module variableSync {
         oldName: string,
         newName: string
     ): Promise<void> {
-        // console.log(`Synchronizing variable rename in RDLC file: ${oldName} -> ${newName}`);
-
-        // Parse the AL file to find the associated RDLC file
+        // Parse the AL file to find the associated RDLC layouts
         const alContent = fs.readFileSync(alFilePath, 'utf8');
-        const rdlcFileName = parseALFileForRDLCLayout(alContent);
+        const rdlcFilePaths = parseALFileForRDLCLayouts(alContent, alFilePath);
 
-        if (!rdlcFileName) {
-            throw new Error('No RDLCLayout property found in the AL file.');
+        if (rdlcFilePaths.length === 0) {
+            throw new Error('No RDLCLayout properties or rendering layouts found in the AL file.');
         }
 
-        // Locate the RDLC file
-        const rdlcFilePath = locateRDLFile(alFilePath, rdlcFileName);
-        if (!rdlcFilePath) {
-            throw new Error(`RDLC file not found: ${rdlcFileName}`);
-        }
+        for (const rdlcFilePath of rdlcFilePaths) {
+            const normalizedPath = path.normalize(rdlcFilePath);
 
-        // Read and parse the RDLC file
-        const rdlContent = fs.readFileSync(rdlcFilePath, 'utf8');
-        const parser = new xml2js.Parser({ explicitArray: false });
-        const builder = new xml2js.Builder();
+            if (!fs.existsSync(normalizedPath)) {
+                console.warn(`RDLC file not found: ${normalizedPath}`);
+                continue;
+            }
 
-        const rdlObject = await parser.parseStringPromise(rdlContent);
+            const rdlContent = fs.readFileSync(normalizedPath, 'utf8');
+            const parser = new xml2js.Parser({ explicitArray: false });
+            const builder = new xml2js.Builder();
+            const rdlObject = await parser.parseStringPromise(rdlContent);
 
-        // Update Dataset Fields (Field Name and DataField)
-        const updatedFields = updateDatasetFields(rdlObject, oldName, newName);
+            const updatedFields = updateDatasetFields(rdlObject, oldName, newName);
+            const updatedReferences = updateRDLReferences(rdlObject, oldName, newName);
 
-        // Update References in RDLC (Fields!<name>.Value)
-        const updatedReferences = updateRDLReferences(rdlObject, oldName, newName);
-
-        // Save the updated RDLC file only if changes were made
-        if (updatedFields || updatedReferences) {
-            const updatedRDLContent = builder.buildObject(rdlObject);
-            fs.writeFileSync(rdlcFilePath, updatedRDLContent);
+            if (updatedFields || updatedReferences) {
+                const updatedRDLContent = builder.buildObject(rdlObject);
+                fs.writeFileSync(normalizedPath, updatedRDLContent);
+                console.log(`Updated RDLC file: ${normalizedPath}`);
+            }
         }
     }
 
-    function parseALFileForRDLCLayout(content: string): string | null {
-        const match = content.match(/RDLCLayout\s*=\s*['"](.+?)['"]/);
-        return match ? match[1].trim() : null;
+    function parseALFileForRDLCLayouts(content: string, alFilePath: string): string[] {
+        const layouts: string[] = [];
+
+        // Match the traditional `RDLCLayout` property
+        const rdlcMatch = content.match(/RDLCLayout\s*=\s*['"](.+?)['"]/);
+        if (rdlcMatch) {
+            layouts.push(resolvePathFromWorkspace(rdlcMatch[1].trim()));
+        }
+
+        // Match `rendering` layouts
+        const renderingRegex = /layout\(['"](.+?)['"]\)\s*{[\s\S]*?LayoutFile\s*=\s*['"](.+?)['"]/g;
+        let match;
+        while ((match = renderingRegex.exec(content)) !== null) {
+            layouts.push(resolvePathFromWorkspace(match[2].trim()));
+        }
+
+        return layouts;
     }
 
-    function locateRDLFile(alFilePath: string, rdlcFileName: string): string | null {
+    function resolvePathFromWorkspace(relativePath: string): string {
         const activeWorkspaceFolder = FolderHelper.getActiveWorkspacePath();
         if (!activeWorkspaceFolder) {
             throw new Error('No active workspace folder found.');
         }
 
-        let reportFolder = FolderHelper.findReportFolder(activeWorkspaceFolder);
-        if (!reportFolder) {
-            reportFolder = activeWorkspaceFolder;
-        }
-
-        const rdlcFilePath = path.join(reportFolder, rdlcFileName.trim());
-        return fs.existsSync(rdlcFilePath) ? rdlcFilePath : null;
+        return path.normalize(path.join(activeWorkspaceFolder, relativePath));
     }
 
     function updateDatasetFields(rdlObject: any, oldName: string, newName: string): boolean {
@@ -80,27 +84,19 @@ export module variableSync {
                         : [dataSet.Fields.Field];
 
                     for (const field of fields) {
-                        // Update Field Name
                         if (field.$?.Name === oldName) {
-                            // console.log(`Updating Field Name: ${field.$.Name} -> ${newName}`);
                             field.$.Name = newName;
                             updated = true;
                         }
-                        // Update DataField
                         if (field.DataField === oldName) {
-                            // console.log(`Updating DataField: ${field.DataField} -> ${newName}`);
                             field.DataField = newName;
                             updated = true;
                         }
-
-                        // Handle Format fields
                         if (field.$?.Name === `${oldName}Format`) {
-                            // console.log(`Updating Format Field Name: ${field.$.Name} -> ${newName}Format`);
                             field.$.Name = `${newName}Format`;
                             updated = true;
                         }
                         if (field.DataField === `${oldName}Format`) {
-                            // console.log(`Updating Format DataField: ${field.DataField} -> ${newName}Format`);
                             field.DataField = `${newName}Format`;
                             updated = true;
                         }
@@ -130,7 +126,7 @@ export module variableSync {
                             updated = true;
                         }
                     } else if (typeof value === 'object') {
-                        traverseAndUpdate(value); // Recursively traverse nested objects
+                        traverseAndUpdate(value);
                     }
                 }
             }

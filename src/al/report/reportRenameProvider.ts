@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { variableSync } from './../report/variableSync';
+import { variableSync } from './variableSync';
 
 export class ReportRenameProvider implements vscode.RenameProvider {
     public async provideRenameEdits(
@@ -55,7 +55,7 @@ export class ReportRenameProvider implements vscode.RenameProvider {
 
         if (rdlUpdated) {
             vscode.window.showInformationMessage(
-                `Renamed '${oldName}' to '${newName}' in both the AL file and the RDLC file.`
+                `Renamed '${oldName}' to '${newName}' in both the AL file and the RDL(C) file(s).`
             );
         } else {
             vscode.window.showInformationMessage(
@@ -123,7 +123,7 @@ export class ReportRenameProvider implements vscode.RenameProvider {
                 insideDataset = true;
             }
 
-            if (lineText.startsWith('dataitem(')) {
+            if (lineText.startsWith('dataitem(') || lineText.startsWith('add(')) {
                 insideDataitem = true;
             }
 
