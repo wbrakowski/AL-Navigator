@@ -41,7 +41,7 @@ export async function insertTranslationFromComment() {
     let updateCount = 0;
 
     const modifiedContent = documentText.replace(targetRegex, (match, id, content) => {
-        const noteRegex = new RegExp(`<note[^>]*from="Developer"[^>]*>${languagePrefix}="([^"]+)"</note>`);
+        const noteRegex = new RegExp(`<note[^>]*from="Developer"[^>]*>${languagePrefix}="([^"]+)"<\/note>`);
         const targetRegex = /<target>([\s\S]*?)<\/target>/;
 
         const noteMatch = noteRegex.exec(content);
@@ -51,6 +51,7 @@ export async function insertTranslationFromComment() {
             const translation = noteMatch[1].trim();
             const targetValue = targetMatch ? targetMatch[1].trim() : null;
 
+            // Check if the target already matches the translation
             if (targetValue === translation) {
                 return match;
             }
