@@ -37,17 +37,26 @@ export module variableSync {
 
     function processRDLCLines(lines: string[], oldName: string, newName: string): string[] | null {
         let updated = false;
+
         const updatedLines = lines.map((line) => {
             // Update fields in <Field Name="..."> or <DataField>...</DataField>
-            if (line.includes(`Name="${oldName}"`) || line.includes(`<DataField>${oldName}</DataField>`)) {
+            if (
+                line.includes(`Name="${oldName}"`) ||
+                line.includes(`<DataField>${oldName}</DataField>`) ||
+                line.includes(`Name="${oldName}Format"`) || // Check for Format fields
+                line.includes(`<DataField>${oldName}Format</DataField>`) // Check for Format fields
+            ) {
                 updated = true;
-                return line.replace(new RegExp(oldName, 'g'), newName); // Replace all occurrences of oldName with newName
+                return line.replace(new RegExp(`${oldName}(Format)?`, 'g'), `${newName}$1`); // Replace oldName and Format
             }
 
-            // Update references to Fields!oldName in the RDLC content
-            if (line.includes(`Fields!${oldName}`)) {
+            // Update references to Fields!oldName and Fields!oldNameFormat
+            if (line.includes(`Fields!${oldName}`) || line.includes(`Fields!${oldName}Format`)) {
                 updated = true;
-                return line.replace(new RegExp(`Fields!${oldName}(\\.Value|Format)?`, 'g'), `Fields!${newName}$1`);
+                return line.replace(
+                    new RegExp(`Fields!${oldName}(\\.Value|Format)?`, 'g'),
+                    `Fields!${newName}$1`
+                );
             }
 
             return line; // Return the line unchanged if no matches are found
