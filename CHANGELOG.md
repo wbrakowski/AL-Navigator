@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.6.9]**
+- Improved XLF updating for comments that contain description AND translation
+
 ### **[0.6.8]**
 - Minor fixes for xlf updater
 - Improved finding of rdlc files for variable renaming/removing

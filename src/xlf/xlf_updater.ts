@@ -41,15 +41,17 @@ export async function insertTranslationFromComment() {
     let updateCount = 0;
 
     const modifiedContent = documentText.replace(transUnitRegex, (match, id, content) => {
-        const noteRegex = new RegExp(`<note[^>]*from="Developer"[^>]*>${languagePrefix}="([^"]+)"<\/note>`);
+        const noteRegex = new RegExp(`<note[^>]*from="Developer"[^>]*>[\\s\\S]*?${languagePrefix}="([^"]+)"`, 'i');
         const targetRegex = /<target[^>]*>([\s\S]*?)<\/target>/;
 
         const noteMatch = noteRegex.exec(content);
         const targetMatch = targetRegex.exec(content);
 
-        // Treat any <target> tag with content as translated
-        if (targetMatch && targetMatch[1].trim()) {
-            return match; // Skip this unit, already translated
+        const targetContent = targetMatch ? targetMatch[1].trim() : '';
+
+        // Skip if already translated, except for specific placeholders
+        if (targetContent && targetContent !== '[NAB: NOT TRANSLATED]' && targetContent !== '[NAB: REVIEW]') {
+            return match;
         }
 
         if (noteMatch) {
