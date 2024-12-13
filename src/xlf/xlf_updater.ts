@@ -37,35 +37,32 @@ export async function insertTranslationFromComment() {
     const languagePrefix = languageMap[languageCode];
 
     const documentText = editor.document.getText();
-    const targetRegex = /<trans-unit id="([^"]+)"[^>]*>([\s\S]*?)<\/trans-unit>/g;
+    const transUnitRegex = /<trans-unit id="([^"]+)"[^>]*>([\s\S]*?)<\/trans-unit>/g;
     let updateCount = 0;
 
-    const modifiedContent = documentText.replace(targetRegex, (match, id, content) => {
+    const modifiedContent = documentText.replace(transUnitRegex, (match, id, content) => {
         const noteRegex = new RegExp(`<note[^>]*from="Developer"[^>]*>${languagePrefix}="([^"]+)"<\/note>`);
-        const targetRegex = /<target>([\s\S]*?)<\/target>/;
+        const targetRegex = /<target[^>]*>([\s\S]*?)<\/target>/;
 
         const noteMatch = noteRegex.exec(content);
         const targetMatch = targetRegex.exec(content);
 
+        // Treat any <target> tag with content as translated
+        if (targetMatch && targetMatch[1].trim()) {
+            return match; // Skip this unit, already translated
+        }
+
         if (noteMatch) {
             const translation = noteMatch[1].trim();
-            const targetValue = targetMatch ? targetMatch[1].trim() : null;
-
-            // Check if the target already matches the translation
-            if (targetValue === translation) {
-                return match;
-            }
-
-            const indentationMatch = content.match(/^(\s*)<source>/m);
+            const indentationMatch = content.match(/^([ \t]*)<source>/m);
             const indentation = indentationMatch ? indentationMatch[1] : '    ';
-            const targetTag = targetMatch
-                ? `<target>${translation}</target>`
-                : `${indentation}<target>${translation}</target>`;
+
+            const targetTag = `${indentation}<target>${translation}</target>`;
 
             updateCount++;
             return targetMatch
-                ? match.replace(targetRegex, targetTag)
-                : match.replace(/<\/source>/, `</source>${targetTag}`);
+                ? match.replace(targetRegex, `<target>${translation}</target>`)
+                : match.replace(/<\/source>/, `</source>\n${targetTag}`);
         }
 
         return match;

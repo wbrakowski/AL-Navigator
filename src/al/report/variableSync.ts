@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as xml2js from 'xml2js';
-import * as FolderHelper from '../../files/folderHelper';
+import { RdlcFileLocator } from './rdlcFileLocator';
 
 export module variableSync {
     export async function syncVariableRename(
@@ -9,9 +8,8 @@ export module variableSync {
         oldName: string,
         newName: string
     ): Promise<void> {
-        // Parse the AL file to find the associated RDLC layouts
         const alContent = fs.readFileSync(alFilePath, 'utf8');
-        const rdlcFilePaths = parseALFileForRDLCLayouts(alContent, alFilePath);
+        const rdlcFilePaths = RdlcFileLocator.parseALFileForRDLCLayouts(alContent, alFilePath);
 
         if (rdlcFilePaths.length === 0) {
             throw new Error('No RDLCLayout properties or rendering layouts found in the AL file.');
@@ -25,117 +23,36 @@ export module variableSync {
                 continue;
             }
 
-            const rdlContent = fs.readFileSync(normalizedPath, 'utf8');
-            const parser = new xml2js.Parser({ explicitArray: false });
-            const builder = new xml2js.Builder();
-            const rdlObject = await parser.parseStringPromise(rdlContent);
+            const rdlLines = fs.readFileSync(normalizedPath, 'utf8').split('\n'); // Read file line by line
+            const updatedLines = processRDLCLines(rdlLines, oldName, newName);
 
-            const updatedFields = updateDatasetFields(rdlObject, oldName, newName);
-            const updatedReferences = updateRDLReferences(rdlObject, oldName, newName);
-
-            if (updatedFields || updatedReferences) {
-                const updatedRDLContent = builder.buildObject(rdlObject);
-                fs.writeFileSync(normalizedPath, updatedRDLContent);
+            if (updatedLines) {
+                fs.writeFileSync(normalizedPath, updatedLines.join('\n'), 'utf8'); // Write back only modified content
                 console.log(`Updated RDLC file: ${normalizedPath}`);
+            } else {
+                console.log(`No changes required for RDLC file: ${normalizedPath}`);
             }
         }
     }
 
-    function parseALFileForRDLCLayouts(content: string, alFilePath: string): string[] {
-        const layouts: string[] = [];
-
-        // Match the traditional `RDLCLayout` property
-        const rdlcMatch = content.match(/RDLCLayout\s*=\s*['"](.+?)['"]/);
-        if (rdlcMatch) {
-            layouts.push(resolvePathFromWorkspace(rdlcMatch[1].trim()));
-        }
-
-        // Match `rendering` layouts
-        const renderingRegex = /layout\(['"](.+?)['"]\)\s*{[\s\S]*?LayoutFile\s*=\s*['"](.+?)['"]/g;
-        let match;
-        while ((match = renderingRegex.exec(content)) !== null) {
-            layouts.push(resolvePathFromWorkspace(match[2].trim()));
-        }
-
-        return layouts;
-    }
-
-    function resolvePathFromWorkspace(relativePath: string): string {
-        const activeWorkspaceFolder = FolderHelper.getActiveWorkspacePath();
-        if (!activeWorkspaceFolder) {
-            throw new Error('No active workspace folder found.');
-        }
-
-        return path.normalize(path.join(activeWorkspaceFolder, relativePath));
-    }
-
-    function updateDatasetFields(rdlObject: any, oldName: string, newName: string): boolean {
+    function processRDLCLines(lines: string[], oldName: string, newName: string): string[] | null {
         let updated = false;
-
-        if (rdlObject.Report?.DataSets?.DataSet) {
-            const dataSets = Array.isArray(rdlObject.Report.DataSets.DataSet)
-                ? rdlObject.Report.DataSets.DataSet
-                : [rdlObject.Report.DataSets.DataSet];
-
-            for (const dataSet of dataSets) {
-                if (dataSet.Fields?.Field) {
-                    const fields = Array.isArray(dataSet.Fields.Field)
-                        ? dataSet.Fields.Field
-                        : [dataSet.Fields.Field];
-
-                    for (const field of fields) {
-                        if (field.$?.Name === oldName) {
-                            field.$.Name = newName;
-                            updated = true;
-                        }
-                        if (field.DataField === oldName) {
-                            field.DataField = newName;
-                            updated = true;
-                        }
-                        if (field.$?.Name === `${oldName}Format`) {
-                            field.$.Name = `${newName}Format`;
-                            updated = true;
-                        }
-                        if (field.DataField === `${oldName}Format`) {
-                            field.DataField = `${newName}Format`;
-                            updated = true;
-                        }
-                    }
-                }
+        const updatedLines = lines.map((line) => {
+            // Update fields in <Field Name="..."> or <DataField>...</DataField>
+            if (line.includes(`Name="${oldName}"`) || line.includes(`<DataField>${oldName}</DataField>`)) {
+                updated = true;
+                return line.replace(new RegExp(oldName, 'g'), newName); // Replace all occurrences of oldName with newName
             }
-        }
 
-        return updated;
-    }
-
-    function updateRDLReferences(rdlObject: any, oldName: string, newName: string): boolean {
-        let updated = false;
-
-        function traverseAndUpdate(obj: any): void {
-            if (typeof obj === 'object') {
-                for (const key in obj) {
-                    const value = obj[key];
-                    if (typeof value === 'string') {
-                        const updatedValue = value.replace(
-                            new RegExp(`Fields!${oldName}(\\.Value)?`, 'g'),
-                            `Fields!${newName}$1`
-                        );
-
-                        if (updatedValue !== value) {
-                            obj[key] = updatedValue;
-                            updated = true;
-                        }
-                    } else if (typeof value === 'object') {
-                        traverseAndUpdate(value);
-                    }
-                }
+            // Update references to Fields!oldName in the RDLC content
+            if (line.includes(`Fields!${oldName}`)) {
+                updated = true;
+                return line.replace(new RegExp(`Fields!${oldName}(\\.Value|Format)?`, 'g'), `Fields!${newName}$1`);
             }
-        }
 
-        if (rdlObject.Report) {
-            traverseAndUpdate(rdlObject.Report);
-        }
+            return line; // Return the line unchanged if no matches are found
+        });
 
-        return updated;
+        return updated ? updatedLines : null; // Return updated lines only if changes were made
     }
 }

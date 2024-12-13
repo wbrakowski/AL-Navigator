@@ -4,6 +4,11 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.6.8]**
+- Minor fixes for xlf updater
+- Improved finding of rdlc files for variable renaming/removing
+- Do not update rdl(c) files when removing variables, just remove the variable and let user rebuild
+
 ### **[0.6.7]**
 - Minor fixes for xlf updater
 

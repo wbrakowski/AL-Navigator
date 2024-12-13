@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as xml2js from 'xml2js';
 import * as path from 'path';
 import * as FolderHelper from '../../files/folderHelper';
+import { RdlcFileLocator } from './rdlcFileLocator';
 
 export module variableRemover {
     export function removeUnusedVariablesFromReportDataset() {
@@ -18,80 +19,67 @@ export module variableRemover {
 
     async function processALAndRDLFiles(alFilePath: string) {
         const alContent = fs.readFileSync(alFilePath, 'utf8');
-        const { rdlcFileName, variables } = parseALFile(alContent);
-    
-        if (!rdlcFileName) {
-            vscode.window.showErrorMessage('No RDLCLayout property found in the AL file.');
+        const rdlcFilePaths = RdlcFileLocator.parseALFileForRDLCLayouts(alContent, alFilePath);
+
+        if (rdlcFilePaths.length === 0) {
+            vscode.window.showErrorMessage('No RDLCLayout properties or rendering layouts found in the AL file.');
             return;
         }
-    
-        const rdlFilePath = locateRDLFile(alFilePath, rdlcFileName);
-        if (!rdlFilePath) {
-            return;
-        }
-    
-        const rdlContent = fs.readFileSync(rdlFilePath, 'utf8');
-        const parser = new xml2js.Parser({ explicitArray: false });
-        const builder = new xml2js.Builder();
-    
-        try {
-            const rdlObject = await parser.parseStringPromise(rdlContent);
-            const usedFields = extractUsedFields(rdlObject);
-    
-            console.log('Used fields in RDLC:', Array.from(usedFields)); // Debugging log
-            console.log('Variables in AL file:', variables); // Debugging log
-    
-            const { updatedALContent, removedVariables } = updateALFile(alContent, usedFields, variables);
-    
-            // Check if AL file was actually updated
-            if (updatedALContent !== alContent) {
-                fs.writeFileSync(alFilePath, updatedALContent);
-    
-                let removalMessage = `Updated AL file: ${path.basename(alFilePath)}`;
-                if (removedVariables.length > 0) {
-                    removalMessage += '\nRemoved variables:\n' + removedVariables.map((variable) => `- ${variable}`).join('\n');
+
+        for (const rdlFilePath of rdlcFilePaths) {
+            if (!fs.existsSync(rdlFilePath)) {
+                vscode.window.showErrorMessage(`RDL file not found: ${rdlFilePath}`);
+                continue;
+            }
+
+            const rdlContent = fs.readFileSync(rdlFilePath, 'utf8');
+            const parser = new xml2js.Parser({ explicitArray: false });
+            const builder = new xml2js.Builder();
+
+            try {
+                const rdlObject = await parser.parseStringPromise(rdlContent);
+                const usedFields = extractUsedFields(rdlObject);
+
+                // console.log('Used fields in RDLC:', Array.from(usedFields));
+
+                const { updatedALContent, removedVariables } = updateALFile(alContent, usedFields);
+
+                if (updatedALContent !== alContent) {
+                    fs.writeFileSync(alFilePath, updatedALContent);
+
+                    let removalMessage = `Updated AL file: ${path.basename(alFilePath)}`;
+                    if (removedVariables.length > 0) {
+                        removalMessage += '\nRemoved variables:\n' + removedVariables.map((variable) => `- ${variable}`).join('\n');
+                        removalMessage += '\nThe RDLC file will be updated once the build task is run.';
+                    }
+                    vscode.window.showInformationMessage(removalMessage);
+                } else {
+                    // console.log('No changes made to AL file.');
+                    vscode.window.showInformationMessage('No changes made to AL file because there are no unused variables.');
                 }
-                vscode.window.showInformationMessage(removalMessage);
-            } else {
-                console.log('No changes made to AL file.');
-                vscode.window.showInformationMessage('No changes made to AL file because there are no unused variables.');
+
+                const updatedRdlObject = cleanUnusedFields(rdlObject, usedFields);
+                if (JSON.stringify(updatedRdlObject) !== JSON.stringify(rdlObject)) {
+                    const updatedRdlContent = builder.buildObject(updatedRdlObject);
+                    fs.writeFileSync(rdlFilePath, updatedRdlContent);
+                    vscode.window.showInformationMessage(`Updated RDL file: ${path.basename(rdlFilePath)}`);
+                } else {
+                    console.log('No changes made to RDL file.');
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage('Error processing RDLC file: ' + error.message);
             }
-    
-            // Process RDLC file
-            const updatedRdlContent = builder.buildObject(rdlObject);
-    
-            // Check if RDLC file was actually updated
-            if (updatedRdlContent !== rdlContent) {
-                fs.writeFileSync(rdlFilePath, updatedRdlContent);
-                vscode.window.showInformationMessage(`Updated RDL file: ${rdlcFileName}`);
-            } else {
-                console.log('No changes made to RDL file.');
-            }
-        } catch (error) {
-            vscode.window.showErrorMessage('Error processing RDLC file: ' + error.message);
         }
     }
-    
 
-
-
-    function parseALFile(content: string) {
-        const rdlcMatch = content.match(/RDLCLayout\s*=\s*['"](.+?)['"]/);
-        const rdlcFileName = rdlcMatch ? rdlcMatch[1].trim() : null;
-
-        const variablesMatch = [...content.matchAll(/column\(\s*([^;]+?)\s*;/g)];
-        const variables = variablesMatch.map((match) => match[1].trim().toLowerCase()); // Normalize to lowercase
-
-        return { rdlcFileName, variables };
-    }
-
-    function updateALFile(content: string, usedFields: Set<string>, variables: string[]): { updatedALContent: string; removedVariables: string[] } {
+    function updateALFile(content: string, usedFields: Set<string>): { updatedALContent: string; removedVariables: string[] } {
         const removedVariables: string[] = [];
-        const updatedALContent = content.replace(/column\(\s*([^;]+?)\s*;.+?\)\s*{.+?}/gs, (match, variable) => {
-            const normalizedVariable = variable.trim().toLowerCase();
+        const updatedALContent = content.replace(/column\(([\s\S]*?);[\s\S]*?\)\s*{[\s\S]*?}/g, (match, variable) => {
+            // Ensure variable is treated as a string
+            const normalizedVariable = String(variable).trim().toLowerCase();
             if (!usedFields.has(normalizedVariable)) {
-                removedVariables.push(variable); // Track removed variable
-                console.log(`Removing unused AL variable: ${variable}`); // Debugging log
+                removedVariables.push(variable);
+                console.log(`Removing unused AL variable: ${variable}`);
                 return ''; // Remove the column
             }
             return match; // Keep the column
@@ -100,26 +88,6 @@ export module variableRemover {
         return { updatedALContent, removedVariables };
     }
 
-    function locateRDLFile(alFilePath: string, rdlcFileName: string): string | null {
-        const activeWorkspaceFolder = FolderHelper.getActiveWorkspacePath();
-        if (!activeWorkspaceFolder) {
-            vscode.window.showErrorMessage('No active workspace folder found.');
-            return null;
-        }
-
-        let reportFolder = FolderHelper.findReportFolder(activeWorkspaceFolder);
-        if (!reportFolder) {
-            reportFolder = activeWorkspaceFolder;
-        }
-
-        const rdlFilePath = path.join(reportFolder, rdlcFileName.trim());
-        if (!fs.existsSync(rdlFilePath)) {
-            vscode.window.showErrorMessage(`RDL file not found: ${rdlcFileName} in ${reportFolder}`);
-            return null;
-        }
-
-        return rdlFilePath;
-    }
 
     function extractUsedFields(rdlObject: any): Set<string> {
         const usedFields = new Set<string>();
@@ -129,15 +97,15 @@ export module variableRemover {
                 for (const key in obj) {
                     const value = obj[key];
                     if (typeof value === 'string') {
-                        const matches = value.match(/Fields!([a-zA-Z0-9_]+)\.Value/g);
+                        const matches = value.match(/Fields!([a-zA-Z0-9_]+)(?:\.Value|Format)?/g);
                         if (matches) {
                             matches.forEach((match) => {
-                                const fieldName = match.replace(/Fields!|\.Value/g, '').trim().toLowerCase();
+                                const fieldName = match.replace(/Fields!|\.Value|Format/g, '').trim().toLowerCase();
                                 usedFields.add(fieldName);
                             });
                         }
                     } else if (typeof value === 'object') {
-                        traverseObject(value); // Recursively traverse nested objects
+                        traverseObject(value);
                     }
                 }
             }
@@ -177,5 +145,7 @@ export module variableRemover {
                 }
             }
         }
+
+        return rdlObject;
     }
 }
