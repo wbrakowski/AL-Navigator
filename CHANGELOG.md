@@ -4,6 +4,10 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.7.0]**
+- Optimized translation on hover functionality by better recognizing words that belong together
+- Optimized finding of rdl(c) layout files in reports in the rendering section
+
 ### **[0.6.9]**
 - Improved XLF updating for comments that contain description AND translation
 
