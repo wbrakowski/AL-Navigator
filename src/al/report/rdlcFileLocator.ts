@@ -13,7 +13,7 @@ export module RdlcFileLocator {
         }
 
         // Match `rendering` layouts and extract LayoutFile paths
-        const renderingRegex = /layout\(['"].+?['"]\)\s*{\s*LayoutFile\s*=\s*['"](.+?)['"]/g;
+        const renderingRegex = /layout\s*\(\s*['"].+?['"]\s*\)\s*{[^}]*LayoutFile\s*=\s*['"](.+?)['"]/g;
         let match;
         while ((match = renderingRegex.exec(content)) !== null) {
             layouts.push(resolvePathFromWorkspace(match[1].trim()));
