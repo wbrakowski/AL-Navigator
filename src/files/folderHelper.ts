@@ -58,11 +58,26 @@ export function findReportFolder(workspacePath: string): string | undefined {
 }
 
 export function getAlPackagesFolder(workspacePath: string): string | undefined {
-    let alPackagesFolder = path.join(workspacePath, '.alpackages');
-    if (fs.existsSync(alPackagesFolder)) {
-        return alPackagesFolder;
+    // First check the workspace settings for custom package cache paths
+    const config = vscode.workspace.getConfiguration('al');
+    const packageCachePaths = config.get<string[]>('packageCachePath');
+
+    if (packageCachePaths && packageCachePaths.length > 0) {
+        // Try each configured path
+        for (const configPath of packageCachePaths) {
+            // Resolve the path relative to workspace
+            const resolvedPath = path.resolve(workspacePath, configPath);
+            if (fs.existsSync(resolvedPath)) {
+                return resolvedPath;
+            }
+        }
     }
-    else {
-        return undefined;
+
+    // Fall back to default .alpackages in workspace root if no custom path works
+    const defaultPath = path.join(workspacePath, '.alpackages');
+    if (fs.existsSync(defaultPath)) {
+        return defaultPath;
     }
+
+    return undefined;
 }
