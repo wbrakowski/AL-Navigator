@@ -41,7 +41,7 @@ export async function insertTranslationFromComment() {
     let updateCount = 0;
 
     const modifiedContent = documentText.replace(transUnitRegex, (match, id, content) => {
-        const noteRegex = new RegExp(`<note[^>]*from="Developer"[^>]*>[\\s\\S]*?${languagePrefix}="([^"]+)"`, 'i');
+        const noteRegex = new RegExp(`<note[^>]*from="Developer"[^>]*>[\\s\\S]*?${languagePrefix}=(?:"([^"]+)"|([^<]+))(?:"|</note>)`, 'i');
         const targetRegex = /<target[^>]*>([\s\S]*?)<\/target>/;
 
         const noteMatch = noteRegex.exec(content);
@@ -49,22 +49,38 @@ export async function insertTranslationFromComment() {
 
         const targetContent = targetMatch ? targetMatch[1].trim() : '';
 
-        // Skip if already translated, except for specific placeholders
-        if (targetContent && targetContent !== '[NAB: NOT TRANSLATED]' && targetContent !== '[NAB: REVIEW]') {
-            return match;
+        // Only skip if target already has a valid translation (not empty, not NAB placeholders)
+        if (targetContent &&
+            targetContent !== '[NAB: NOT TRANSLATED]' &&
+            targetContent !== '[NAB: REVIEW]' &&
+            targetContent !== '') {
+            return match; // Skip if target already has a valid translation
         }
 
         if (noteMatch) {
-            const translation = noteMatch[1].trim();
-            const indentationMatch = content.match(/^([ \t]*)<source>/m);
-            const indentation = indentationMatch ? indentationMatch[1] : '    ';
+            const translation = (noteMatch[1] || noteMatch[2]).trim();
 
-            const targetTag = `${indentation}<target>${translation}</target>`;
-
-            updateCount++;
-            return targetMatch
-                ? match.replace(targetRegex, `<target>${translation}</target>`)
-                : match.replace(/<\/source>/, `</source>\n${targetTag}`);
+            if (targetMatch) {
+                // Replace existing target with same indentation
+                const lines = content.split('\n');
+                const targetLineIndex = lines.findIndex(line => /<target>/.test(line));
+                if (targetLineIndex !== -1) {
+                    const targetIndentation = lines[targetLineIndex].match(/^(\s*)/)[1];
+                    const newTargetTag = `${targetIndentation}<target>${translation}</target>`;
+                    lines[targetLineIndex] = newTargetTag;
+                    updateCount++;
+                    return match.replace(content, lines.join('\n'));
+                }
+            } else {
+                // Insert new target after source with same indentation
+                const sourceLine = content.split('\n').find(line => /<source>/.test(line));
+                if (sourceLine) {
+                    const sourceIndentation = sourceLine.match(/^(\s*)/)[1];
+                    const targetTag = `${sourceIndentation}<target>${translation}</target>`;
+                    updateCount++;
+                    return match.replace(/<\/source>/, `</source>\n${targetTag}`);
+                }
+            }
         }
 
         return match;
