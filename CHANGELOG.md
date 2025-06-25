@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.7.2]**
+- Fixed issue with xlf updater
+
 ### **[0.7.1]**
 - Added support for custom .alpackages folder paths
 
