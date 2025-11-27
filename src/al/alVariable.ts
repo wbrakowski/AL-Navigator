@@ -27,7 +27,8 @@ export class ALVariable {
         if (this.alDataType) {
             declarationString += this.alDataType.getStringForDataType();
         }
-        if (this.isTemporary) {
+        // Only add 'temporary' keyword for Record types
+        if (this.isTemporary && this.alDataType && this.alDataType.type === ALDataTypes.Record) {
             declarationString += ' temporary';
         }
         if (this.cmdType !== CommandType.Parameter) {

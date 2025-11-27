@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.7.3]**
+- Fixed Temp recognition not working correctly, fixes issue 156
+
 ### **[0.7.2]**
 - Fixed issue with xlf updater
 

@@ -124,11 +124,14 @@ export class ALFiles {
         let varNameSearchString = varName;
         let alVariable = new ALVariable(varName);
 
-        // Check if string starts with temp
-        let indexTemp = varName.toUpperCase().indexOf('TEMP');
-        if (indexTemp === 0) {
-            varNameSearchString = varName.substr(4);
-            alVariable.isTemporary = true;
+        // Check if string starts with Temp followed by an uppercase letter (e.g., TempCustomer but not Template)
+        if (varName.length > 4 && varName.substring(0, 4) === 'Temp') {
+            let charAfterTemp = varName.charAt(4);
+            // Check if the character after 'Temp' is uppercase
+            if (charAfterTemp === charAfterTemp.toUpperCase() && charAfterTemp !== charAfterTemp.toLowerCase()) {
+                varNameSearchString = varName.substr(4);
+                alVariable.isTemporary = true;
+            }
         }
         // Check if string has a trailing number
         let lastChar = varNameSearchString.charAt(varNameSearchString.length - 1);
