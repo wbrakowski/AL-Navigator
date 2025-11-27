@@ -32,13 +32,29 @@ export class ALFile {
     }
 
     private getObjectInfoFromText() {
-        let firstLineFileText = this.fileText.split('\n', 1)[0];
+        // Check if file starts with namespace declaration
+        // If so, we need to find the object declaration in subsequent lines
+        const lines = this.fileText.split('\n');
+        let objectDeclarationLine = lines[0];
+
+        // Check if first line is a namespace declaration
+        const namespacePattern = /^\s*namespace\s+[\w.]+\s*;/i;
+        if (namespacePattern.test(lines[0])) {
+            // Find the first line that contains an object type after the namespace
+            for (let i = 1; i < Math.min(lines.length, 10); i++) {
+                if (lines[i].match(/^\s*(codeunit|page|pagecustomization|pageextension|report|table|tableextension|xmlport)\s+/i)) {
+                    objectDeclarationLine = lines[i];
+                    break;
+                }
+            }
+        }
+
         var patternObjectType = new RegExp('(codeunit |page |pagecustomization |pageextension |report |table |tableextension |xmlport)', "i");
         let procedureNamePattern = '[\\w]*';
         var objectNamePattern = '"[^"]*"'; // All characters except "
         var objectNameNoQuotesPattern = '[\\w]*';
         var patternProcedure = new RegExp(`(procedure) +(${procedureNamePattern})`, "gi");
-        let objectTypeArr = firstLineFileText.match(patternObjectType);
+        let objectTypeArr = objectDeclarationLine.match(patternObjectType);
         let procedureArr = this.fileText.match(patternProcedure);
 
         if (!objectTypeArr) {
@@ -57,7 +73,7 @@ export class ALFile {
                 case 'xmlport':
                     {
                         var patternObject = new RegExp(`(${objectTypeArr[0].trim().toLowerCase()}) +([0-9]+) +(${objectNamePattern}|${objectNameNoQuotesPattern})([^"\n]*"[^"\n]*)?`, "i");
-                        let currObject = firstLineFileText.match(patternObject);
+                        let currObject = objectDeclarationLine.match(patternObject);
                         if (currObject === null) {
                             return;
                         }
