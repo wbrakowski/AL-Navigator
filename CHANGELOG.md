@@ -6,6 +6,8 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ### **[0.7.3]**
 - Fixed Temp recognition not working correctly, fixes issue 156
+- Prefilter `startupObjectId` with current object, implements enhancement from issue 152
+- Sets startupObjectId in all launch.json configurations, not just the first one
 
 ### **[0.7.2]**
 - Fixed issue with xlf updater

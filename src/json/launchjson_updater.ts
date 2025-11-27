@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ALFile } from '../al/alFile';
 const AdmZip = require('adm-zip'); // For handling .app files
 
 export async function selectStartupObjectId() {
@@ -11,6 +12,23 @@ export async function selectStartupObjectId() {
     }
 
     const workspaceFolder = workspaceFolders[0].uri.fsPath;
+
+    // Try to get the current object from active editor
+    let currentObjectId: number | undefined;
+    let currentObjectType: string | undefined;
+    const activeEditor = vscode.window.activeTextEditor;
+    if (activeEditor && activeEditor.document.languageId === 'al') {
+        try {
+            const alFile = new ALFile(activeEditor.document.uri);
+            if (alFile.alObject.objectID &&
+                (alFile.alObject.objectType === 'Page' || alFile.alObject.objectType === 'Report')) {
+                currentObjectId = alFile.alObject.objectNo;
+                currentObjectType = alFile.alObject.objectType;
+            }
+        } catch (error) {
+            // Ignore errors, just won't prefilter
+        }
+    }
 
     // Lade den App-Namen aus app.json
     const appName = getAppNameFromAppJson(workspaceFolder);
@@ -32,6 +50,14 @@ export async function selectStartupObjectId() {
 
                 progress.report({ message: 'Combining and sorting objects...' });
                 const combinedObjects = [...alObjects, ...appObjects].sort((a, b) => {
+                    // If we have a current object, sort it to the top
+                    if (currentObjectId) {
+                        const aIsCurrent = a.id === currentObjectId && a.type === currentObjectType;
+                        const bIsCurrent = b.id === currentObjectId && b.type === currentObjectType;
+                        if (aIsCurrent && !bIsCurrent) return -1;
+                        if (!aIsCurrent && bIsCurrent) return 1;
+                    }
+
                     if (a.type !== b.type) {
                         return a.type === 'Page' ? -1 : 1; // Pages zuerst
                     }
@@ -65,7 +91,11 @@ export async function selectStartupObjectId() {
             id: obj.id,
             type: obj.type,
         })),
-        { placeHolder: 'Select an object to set as the startup object (Type | ID | Name | App)' }
+        {
+            placeHolder: currentObjectId
+                ? `Select an object (Current: ${currentObjectType} ${currentObjectId})`
+                : 'Select an object to set as the startup object (Type | ID | Name | App)'
+        }
     );
 
     if (!selectedObject) {
@@ -88,13 +118,17 @@ export async function selectStartupObjectId() {
             return;
         }
 
-        const config = launchJson.configurations[0];
-        config.startupObjectId = selectedObject.id;
-        config.startupObjectType = selectedObject.type;
+        // Update all configurations, not just the first one
+        let updatedCount = 0;
+        for (const config of launchJson.configurations) {
+            config.startupObjectId = selectedObject.id;
+            config.startupObjectType = selectedObject.type;
+            updatedCount++;
+        }
 
         fs.writeFileSync(launchJsonPath, JSON.stringify(launchJson, null, 4), 'utf-8');
         vscode.window.showInformationMessage(
-            `Updated startupObjectId to ${selectedObject.label} in launch.json.`
+            `Updated startupObjectId to ${selectedObject.label} in ${updatedCount} configuration(s) in launch.json.`
         );
     } catch (error) {
         vscode.window.showErrorMessage(`Error updating launch.json: ${error.message}`);
