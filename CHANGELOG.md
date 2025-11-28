@@ -4,6 +4,13 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.7.5]**
+- **New Feature:** Replace irregular RDL expressions (fixes common errors like `Code.GetData` without parameters, incomplete function calls, missing field names)
+
+### **[0.7.4]**
+- **New Feature:** Replace report font families with Segoe UI (automatically fixes non-Segoe UI fonts in RDL/RDLC files while preserving barcode fonts)
+- **Enhancement:** Also adds Segoe UI to textboxes without explicit FontFamily definition (which default to Arial)
+
 ### **[0.7.3]**
 - Fixed Temp recognition not working correctly, fixes issue 156
 - Prefilter `startupObjectId` with current object, implements enhancement from issue 152

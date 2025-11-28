@@ -12,6 +12,44 @@ Create variables and parameters like a pro. Automatically select/insert startup 
 
 ## 🚀 Features
 
+### 🔥 New: Replace Irregular RDL Expressions
+Automatically detect and fix common errors in RDL/RDLC report expressions:
+
+- Fixes incomplete function calls (e.g., `Code.GetData` → `Code.GetData(1,1)`, `Code.SetData` → `Code.SetData(1,1,value)`)
+- Corrects missing parameters in standard functions (`BlankZero()`, `IIF()`, `Format()`, etc.)
+- Repairs broken field references (`Fields!.Value` → `Fields!FieldName.Value`)
+- Handles incomplete aggregation functions and collection references
+- Supports both `.rdl` and `.rdlc` files
+
+**Common errors fixed:**
+- `Code.GetData` and `Code.SetData` without or with incomplete parameters
+- `Fields!`, `Parameters!`, `ReportItems!` without names
+- Incomplete `IIF`, `Choose`, `Format` statements
+- Missing parameters in custom functions like `GetGroupPageNumber`, `IsNewPage`
+- Incomplete `Sum`, `Count`, and other aggregations
+
+Example Workflow:
+1. Open an RDL or RDLC report layout file.
+2. Run the command via Command Palette: `AL Navigator: Replace irregular RDL expressions`
+3. Review found errors grouped by type and replace them automatically.
+
+---
+
+### 🔥 New: Replace Report Font Families with Segoe UI
+Automatically fix font inconsistencies in your RDL/RDLC report layouts:
+
+- Scans report files for non-Segoe UI font families
+- Automatically replaces them with "Segoe UI" for consistency
+- **Intelligently preserves barcode fonts** (e.g., idAutomation, Code128, Code39, EAN, UPC, QR, DataMatrix)
+- Works with both `.rdl` and `.rdlc` files
+
+Example Workflow:
+1. Open an RDL or RDLC report layout file.
+2. Run the command via Command Palette: `AL Navigator: Replace report font families with Segoe UI`
+3. Review the found fonts and choose to replace them automatically.
+
+---
+
 ### 🔥 New: Rename Columns (Variables) in AL and RDLC Files
 Effortlessly rename column variables in your AL report files and synchronize changes in associated RDLC files:
 
@@ -109,22 +147,24 @@ Add variables and parameters with a few keystrokes:
 
 ## 📜 Full Functionality List
 
-| **Command**                                                                           | **Description**                                                                      |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.    |
-| **AL Navigator: Select Startup Object ID in launch.json**                             | Quickly configure the startup object in `launch.json` using a simple selection menu. |
-| **AL Navigator: Rename AL Navigator Variable**                                        | Rename variables in AL files and their corresponding RDLC files.                     |
-| **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.       |
-| **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.    |
-| **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                           |
-| **AL Navigator: Next Action**                                                         | Navigate to the next action in your AL page file.                                    |
-| **AL Navigator: End of local variables**                                              | Jump directly to the end of the local variables section in your file.                |
-| **AL Navigator: End of global variables**                                             | Jump directly to the end of the global variables section in your file.               |
-| **AL Navigator: Show Microsoft Translation (English -> Target Language)**             | Display the translation of a field or symbol from English to the target language.    |
-| **AL Navigator: Show Microsoft Translation (Target Language -> English)**             | Display the translation of a field or symbol from the target language to English.    |
-| **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                      |
-| **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.              |
-| **AL Navigator: Remove unused variables from report dataset**                         | Streamline your reports by automatically removing unused variables.                  |
+| **Command**                                                                           | **Description**                                                                            |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| **AL Navigator: Replace irregular RDL expressions**                                   | Automatically fix common RDL expression errors (incomplete functions, missing parameters). |
+| **AL Navigator: Replace report font families with Segoe UI**                          | Automatically replace non-Segoe UI fonts in RDL/RDLC files (protects barcode fonts).       |
+| **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.          |
+| **AL Navigator: Select Startup Object ID in launch.json**                             | Quickly configure the startup object in `launch.json` using a simple selection menu.       |
+| **AL Navigator: Rename report dataitem column**                                       | Rename variables in AL files and their corresponding RDLC files.                           |
+| **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.             |
+| **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.          |
+| **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                                 |
+| **AL Navigator: Next Action**                                                         | Navigate to the next action in your AL page file.                                          |
+| **AL Navigator: End of local variables**                                              | Jump directly to the end of the local variables section in your file.                      |
+| **AL Navigator: End of global variables**                                             | Jump directly to the end of the global variables section in your file.                     |
+| **AL Navigator: Show Microsoft Translation (English -> Target Language)**             | Display the translation of a field or symbol from English to the target language.          |
+| **AL Navigator: Show Microsoft Translation (Target Language -> English)**             | Display the translation of a field or symbol from the target language to English.          |
+| **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                            |
+| **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.                    |
+| **AL Navigator: Remove unused variables from report dataset**                         | Streamline your reports by automatically removing unused variables.                        |
 
 ---
 

@@ -12,6 +12,8 @@ import * as LaunchJsonUpdater from './json/launchjson_updater';
 import * as XlfUpdater from './xlf/xlf_updater';
 import { ALCodeActionsProvider } from './al/codeActions/alCodeActionsProvider';
 import { ReportRenameProvider } from './al/report/reportRenameProvider';
+import { ReportFontFixer } from './report/reportFontFixer';
+import { RdlExpressionFixer } from './report/rdlExpressionFixer';
 const fieldHover = require('./additional/fieldHover');
 
 export function activate(context: vscode.ExtensionContext) {
@@ -43,6 +45,48 @@ export function activate(context: vscode.ExtensionContext) {
         },
         { command: "extension.insertTranslationFromComment", callback: XlfUpdater.insertTranslationFromComment },
         { command: "extension.TranslateAndCopyToClipboard", callback: () => Translator.translateAndCopyToClipboard(false) },
+        {
+            command: "extension.replaceReportFontFamiliesWithSegoeUI",
+            callback: () => {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+
+                const document = editor.document;
+                const fileExtension = document.fileName.toLowerCase();
+
+                // Check if the file is an RDL or RDLC file
+                if (!fileExtension.endsWith('.rdl') && !fileExtension.endsWith('.rdlc')) {
+                    vscode.window.showWarningMessage('This command only works with .rdl or .rdlc files.');
+                    return;
+                }
+
+                ReportFontFixer.findAndReplaceFonts(document);
+            }
+        },
+        {
+            command: "extension.replaceIrregularRdlExpressions",
+            callback: () => {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+
+                const document = editor.document;
+                const fileExtension = document.fileName.toLowerCase();
+
+                // Check if the file is an RDL or RDLC file
+                if (!fileExtension.endsWith('.rdl') && !fileExtension.endsWith('.rdlc')) {
+                    vscode.window.showWarningMessage('This command only works with .rdl or .rdlc files.');
+                    return;
+                }
+
+                RdlExpressionFixer.findAndReplaceExpressions(document);
+            }
+        },
 
         // Register new rename command to trigger ReportRenameProvider
         {
