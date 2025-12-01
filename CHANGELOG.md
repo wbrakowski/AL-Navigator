@@ -4,6 +4,15 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.7.8]**
+- **Enhancement:** Optimized report creation workflow - automatically detects which app package contains the report without requiring user selection
+- **Enhancement:** Faster report copying with improved user experience and clearer feedback messages
+- **New Feature:** Full support for multiple report layouts - automatically copies ALL layout files from rendering section (RDLC, Word, Excel, etc.)
+- **Enhancement:** Intelligent layout file naming - preserves meaningful suffixes like "Themable", "Email", "Blue" when copying multiple layouts
+- **Enhancement:** Smart folder selection - separate prompts for AL files and layout files when multiple folders are detected
+- **Enhancement:** Complete layout reference updates - all RDLCLayout, WordLayout, and LayoutFile properties are updated with correct paths
+- **Enhancement:** Backward compatibility maintained - legacy reports without rendering section continue to work as before
+
 ### **[0.7.7]**
 - **New Feature:** Quick Access to Popular Business Central Objects - Choose from 35 commonly used pages when setting startup object
 - **Enhancement:** Quick selection menu with "Popular Objects" and "All Objects" options
