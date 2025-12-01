@@ -57,7 +57,6 @@ export async function copyReportFileToWorkspace(tempAppFilePath: string, targetF
     // Find file in archive
     for (const zipEntry of zipEntries) {
         const fileName = zipEntry.entryName.split('/').pop();
-        // console.log(fileName);
         if (fileName === sourceFileName || fileName === sourceFileName2) {
             // Copy file to target file path
             const targetFilePath = path.join(targetFolderPath, targetFileName);
@@ -71,6 +70,175 @@ export async function copyReportFileToWorkspace(tempAppFilePath: string, targetF
             return true;
         }
     }
+
     return false;
+}/**
+ * Represents a report found in an app package
+ */
+export interface ReportInfo {
+    id: number;
+    name: string;
+    appName: string;
+    appFilePath: string;
+}
+
+/**
+ * Extracts all reports from .app files in the .alpackages folder
+ * @param alpackagesFolderPath Path to the .alpackages folder
+ * @returns Array of ReportInfo objects containing report details
+ */
+export async function getAllReportsFromAppFiles(alpackagesFolderPath: string): Promise<ReportInfo[]> {
+    const reports: ReportInfo[] = [];
+    const files = fs.readdirSync(alpackagesFolderPath);
+    const appFiles = files.filter(file => file.endsWith('.app'));
+
+    if (appFiles.length === 0) {
+        return reports;
+    }
+
+    // Create a temporary folder for processing app files
+    const tempFolderPath = path.join(path.dirname(alpackagesFolderPath), 'temp_app_search');
+    ensureDirSync(tempFolderPath);
+
+    try {
+        // Search through each app file
+        for (const appFile of appFiles) {
+            const appFilePath = path.join(alpackagesFolderPath, appFile);
+            const tempAppFilePath = path.join(tempFolderPath, appFile);
+
+            try {
+                // Remove header from app file to make it a valid ZIP
+                await removeHeaderFromAppFile(appFilePath, tempAppFilePath);
+
+                // Extract reports from this app
+                const zip = new AdmZip(tempAppFilePath);
+                const zipEntries = zip.getEntries();
+
+                for (const zipEntry of zipEntries) {
+                    if (zipEntry.entryName.endsWith('.al')) {
+                        const content = zipEntry.getData().toString('utf-8');
+                        // Match report declarations: report <id> "<name>"
+                        const reportMatches = content.matchAll(/report\s+(\d+)\s+"([^"]+)"/gi);
+
+                        for (const match of reportMatches) {
+                            const id = parseInt(match[1], 10);
+                            const name = match[2];
+
+                            if (!isNaN(id)) {
+                                reports.push({
+                                    id,
+                                    name,
+                                    appName: appFile,
+                                    appFilePath
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // Clean up this temp file before checking the next app
+                await fs.promises.unlink(tempAppFilePath);
+            } catch (appError) {
+                // Skip this app file if it's corrupted or has issues
+                console.log(`Skipping ${appFile} due to error: ${appError}`);
+                try {
+                    await fs.promises.unlink(tempAppFilePath);
+                } catch { }
+                // Continue to the next app file
+                continue;
+            }
+        }
+
+        // Clean up temp folder
+        await fs.promises.rm(tempFolderPath, { recursive: true, force: true });
+
+        // Sort reports by ID
+        reports.sort((a, b) => a.id - b.id);
+
+        return reports;
+    } catch (error) {
+        // Clean up on error
+        try {
+            await fs.promises.rm(tempFolderPath, { recursive: true, force: true });
+        } catch { }
+        throw error;
+    }
+}
+
+/**
+ * Finds the .app file that contains the specified report
+ * @param alpackagesFolderPath Path to the .alpackages folder
+ * @param reportName Name of the report to find
+ * @returns Path to the app file containing the report, or undefined if not found
+ */
+export async function findAppFileContainingReport(alpackagesFolderPath: string, reportName: string): Promise<string | undefined> {
+    const files = fs.readdirSync(alpackagesFolderPath);
+    const appFiles = files.filter(file => file.endsWith('.app'));
+
+    if (appFiles.length === 0) {
+        return undefined;
+    }
+
+    // Import StringFunctions to remove special chars and spaces
+    const { StringFunctions } = require('../additional/stringFunctions');
+    let sourceFileName = StringFunctions.removeSpecialCharsAndSpaces(reportName);
+
+    // Remove 'KTG' suffix if present (common in some AL projects)
+    if (sourceFileName.endsWith('KTG')) {
+        sourceFileName = sourceFileName.slice(0, -3);
+    }
+
+    const sourceAlFileName = sourceFileName + '.Report.al';
+
+    // Create a temporary folder for processing app files
+    const tempFolderPath = path.join(path.dirname(alpackagesFolderPath), 'temp_app_search');
+    ensureDirSync(tempFolderPath);
+
+    try {
+        // Search through each app file
+        for (const appFile of appFiles) {
+            const appFilePath = path.join(alpackagesFolderPath, appFile);
+            const tempAppFilePath = path.join(tempFolderPath, appFile);
+
+            try {
+                // Remove header from app file to make it a valid ZIP
+                await removeHeaderFromAppFile(appFilePath, tempAppFilePath);
+
+                // Check if this app contains the report
+                const zip = new AdmZip(tempAppFilePath);
+                const zipEntries = zip.getEntries();
+
+                for (const zipEntry of zipEntries) {
+                    const fileName = zipEntry.entryName.split('/').pop();
+                    if (fileName === sourceAlFileName) {
+                        // Found the report! Clean up and return
+                        await fs.promises.rm(tempFolderPath, { recursive: true, force: true });
+                        return appFilePath;
+                    }
+                }
+
+                // Clean up this temp file before checking the next app
+                await fs.promises.unlink(tempAppFilePath);
+            } catch (appError) {
+                // Skip this app file if it's corrupted or has issues
+                console.log(`Skipping ${appFile} due to error: ${appError}`);
+                try {
+                    await fs.promises.unlink(tempAppFilePath);
+                } catch { }
+                // Continue to the next app file
+                continue;
+            }
+        }
+
+        // Clean up temp folder if we didn't find anything
+        await fs.promises.rm(tempFolderPath, { recursive: true, force: true });
+        return undefined;
+    } catch (error) {
+        // Clean up on error
+        try {
+            await fs.promises.rm(tempFolderPath, { recursive: true, force: true });
+        } catch { }
+        throw error;
+    }
 }
 

@@ -27,11 +27,12 @@ export class ReportCreator {
   }
 
   static async copyReport(alFiles: ALFiles, createExtension: boolean) {
-    const reportName = await Report.selectReport(alFiles);
+    const reportSelection = await Report.selectReport(alFiles);
 
-    if (reportName) {
+    if (reportSelection) {
       const report = new Report(alFiles);
-      await report.copyReportToWorkspace(reportName, createExtension);
+      // Call copyReportToWorkspace with report name, app file path, and extension flag
+      await report.copyReportToWorkspace(reportSelection.name, reportSelection.appFilePath, createExtension);
     }
   }
 }
