@@ -148,6 +148,12 @@ When making ANY changes to the extension:
 - Objects: Use `ALCodeOutlineExtension` API for symbol information
 - Naming conventions: Follow Microsoft's AL guidelines (TempPrefix for temporary records)
 
+### Code Comments
+- **ALWAYS write code comments in English**
+- Use clear, concise language
+- Document complex logic and business rules
+- Avoid obvious comments that just repeat the code
+
 ## Common Tasks
 
 ### Adding a Report Feature

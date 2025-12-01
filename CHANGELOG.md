@@ -4,6 +4,17 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.7.7]**
+- **New Feature:** Quick Access to Popular Business Central Objects - Choose from 35 commonly used pages when setting startup object
+- **Enhancement:** Quick selection menu with "Popular Objects" and "All Objects" options
+- **Enhancement:** Popular objects include Sales (Quotes, Orders, Invoices, Credit Memos), Purchase (Quotes, Orders, Invoices, Credit Memos), Inventory, Finance, and Administration pages
+
+### **[0.7.6]**
+- **Enhancement:** Improved launch.json detection - now finds launch.json files in nested folder structures (e.g., AL-Go/Betzold App/.vscode/launch.json)
+- **New Feature:** Option to update all launch.json files at once when multiple are found in workspace
+- **Enhancement:** User can now select which launch.json file(s) to update when multiple exist
+- **Enhancement:** Better feedback messages showing how many files and configurations were updated
+
 ### **[0.7.5]**
 - **New Feature:** Replace irregular RDL expressions (fixes common errors like `Code.GetData` without parameters, incomplete function calls, missing field names)
 
