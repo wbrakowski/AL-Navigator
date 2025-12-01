@@ -4,6 +4,98 @@ import * as fs from 'fs';
 import { ALFile } from '../al/alFile';
 const AdmZip = require('adm-zip'); // For handling .app files
 
+// Popular Business Central objects that are frequently used as startup objects
+interface PopularObject {
+    id: number;
+    name: string;
+    type: 'Page' | 'Report';
+    category: string;
+}
+
+const POPULAR_OBJECTS: PopularObject[] = [
+    // Sales & Marketing
+    { id: 9305, name: 'Sales Order List', type: 'Page', category: 'Sales' },
+    { id: 42, name: 'Sales Order', type: 'Page', category: 'Sales' },
+    { id: 9300, name: 'Sales Quote List', type: 'Page', category: 'Sales' },
+    { id: 41, name: 'Sales Quote', type: 'Page', category: 'Sales' },
+    { id: 9301, name: 'Sales Invoice List', type: 'Page', category: 'Sales' },
+    { id: 43, name: 'Sales Invoice', type: 'Page', category: 'Sales' },
+    { id: 9304, name: 'Sales Credit Memo List', type: 'Page', category: 'Sales' },
+    { id: 44, name: 'Sales Credit Memo', type: 'Page', category: 'Sales' },
+    { id: 22, name: 'Customer List', type: 'Page', category: 'Sales' },
+    { id: 21, name: 'Customer Card', type: 'Page', category: 'Sales' },
+
+    // Purchase
+    { id: 9307, name: 'Purchase Order List', type: 'Page', category: 'Purchase' },
+    { id: 50, name: 'Purchase Order', type: 'Page', category: 'Purchase' },
+    { id: 9306, name: 'Purchase Quote List', type: 'Page', category: 'Purchase' },
+    { id: 49, name: 'Purchase Quote', type: 'Page', category: 'Purchase' },
+    { id: 9308, name: 'Purchase Invoice List', type: 'Page', category: 'Purchase' },
+    { id: 51, name: 'Purchase Invoice', type: 'Page', category: 'Purchase' },
+    { id: 9303, name: 'Purchase Credit Memo List', type: 'Page', category: 'Purchase' },
+    { id: 52, name: 'Purchase Credit Memo', type: 'Page', category: 'Purchase' },
+    { id: 27, name: 'Vendor List', type: 'Page', category: 'Purchase' },
+    { id: 26, name: 'Vendor Card', type: 'Page', category: 'Purchase' },
+
+    // Inventory
+    { id: 31, name: 'Item List', type: 'Page', category: 'Inventory' },
+    { id: 30, name: 'Item Card', type: 'Page', category: 'Inventory' },
+
+    // Finance
+    { id: 9027, name: 'General Ledger Entries', type: 'Page', category: 'Finance' },
+    { id: 39, name: 'General Journal', type: 'Page', category: 'Finance' },
+    { id: 16, name: 'Chart of Accounts', type: 'Page', category: 'Finance' },
+    { id: 18, name: 'G/L Account Card', type: 'Page', category: 'Finance' },
+
+    // Setup & Administration
+    { id: 1, name: 'Company Information', type: 'Page', category: 'Setup' },
+    { id: 9175, name: 'User Setup', type: 'Page', category: 'Setup' },
+    { id: 672, name: 'Job Queue Entries', type: 'Page', category: 'Setup' },
+    { id: 9800, name: 'Role Center (Blank)', type: 'Page', category: 'Setup' }
+];
+
+// Function to find all launch.json files in workspace
+async function findAllLaunchJsonFiles(): Promise<vscode.Uri[]> {
+    const launchJsonFiles = await vscode.workspace.findFiles('**/.vscode/launch.json', '**/node_modules/**');
+    return launchJsonFiles;
+}
+
+// Function to select the right launch.json when multiple are found
+async function selectLaunchJsonFile(launchJsonFiles: vscode.Uri[]): Promise<vscode.Uri[] | undefined> {
+    if (launchJsonFiles.length === 0) {
+        vscode.window.showErrorMessage('No launch.json file found in the workspace.');
+        return undefined;
+    }
+
+    if (launchJsonFiles.length === 1) {
+        return launchJsonFiles;
+    }
+
+    // Multiple launch.json files found, let user choose
+    const options = [
+        {
+            label: '$(check-all) Update All launch.json Files',
+            description: `Update all ${launchJsonFiles.length} launch.json files`,
+            detail: 'This will update the startupObjectId in all found launch.json files',
+            isAll: true,
+            uris: launchJsonFiles
+        },
+        ...launchJsonFiles.map(file => ({
+            label: `$(file) ${path.basename(path.dirname(path.dirname(file.fsPath)))}`,
+            description: path.dirname(path.dirname(file.fsPath)),
+            detail: file.fsPath,
+            isAll: false,
+            uris: [file]
+        }))
+    ];
+
+    const selectedOption = await vscode.window.showQuickPick(options, {
+        placeHolder: 'Multiple launch.json files found. Please select which one(s) to update:'
+    });
+
+    return selectedOption?.uris;
+}
+
 export async function selectStartupObjectId() {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
@@ -11,7 +103,16 @@ export async function selectStartupObjectId() {
         return;
     }
 
-    const workspaceFolder = workspaceFolders[0].uri.fsPath;
+    // Find all launch.json files in the workspace
+    const launchJsonFiles = await findAllLaunchJsonFiles();
+    const selectedLaunchJsons = await selectLaunchJsonFile(launchJsonFiles);
+
+    if (!selectedLaunchJsons || selectedLaunchJsons.length === 0) {
+        return;
+    }
+
+    // Determine the workspace folder for the first selected launch.json (for loading objects)
+    const workspaceFolder = path.dirname(path.dirname(selectedLaunchJsons[0].fsPath));
 
     // Try to get the current object from active editor
     let currentObjectId: number | undefined;
@@ -30,10 +131,78 @@ export async function selectStartupObjectId() {
         }
     }
 
-    // Lade den App-Namen aus app.json
+    // Load app name from app.json
     const appName = getAppNameFromAppJson(workspaceFolder);
 
-    // Zeige eine Fortschrittsanzeige
+    // Show Quick Access menu: Popular Objects vs All Objects
+    const quickAccessChoice = await vscode.window.showQuickPick([
+        {
+            label: '$(star-full) Popular Objects',
+            description: 'Select from commonly used Business Central pages',
+            detail: 'Quickly access frequently used pages like Sales Order List, Customer List, etc.',
+            action: 'popular'
+        },
+        {
+            label: '$(list-unordered) All Objects',
+            description: 'Browse all pages and reports in your workspace',
+            detail: 'Search through all available AL objects from workspace and .app files',
+            action: 'all'
+        }
+    ], {
+        placeHolder: 'How would you like to select the startup object?'
+    });
+
+    if (!quickAccessChoice) {
+        return;
+    }
+
+    let selectedObject: { label: string; id: number; type: string } | undefined;
+
+    if (quickAccessChoice.action === 'popular') {
+        // Show popular objects list
+        selectedObject = await showPopularObjects(currentObjectId, currentObjectType);
+    } else {
+        // Show all objects (existing logic)
+        selectedObject = await showAllObjects(workspaceFolder, appName, currentObjectId, currentObjectType);
+    }
+
+    if (!selectedObject) {
+        vscode.window.showInformationMessage('No object selected.');
+        return;
+    }
+
+    // Update the selected launch.json file(s)
+    await updateLaunchJsonFiles(selectedLaunchJsons, selectedObject);
+}
+
+// Show popular Business Central objects for quick selection
+async function showPopularObjects(
+    currentObjectId?: number,
+    currentObjectType?: string
+): Promise<{ label: string; id: number; type: string } | undefined> {
+    const popularItems = POPULAR_OBJECTS.map(obj => ({
+        label: `${obj.type} | ID: ${obj.id} | ${obj.name}`,
+        description: obj.category,
+        detail: currentObjectId === obj.id && currentObjectType === obj.type ? '⭐ Current' : undefined,
+        id: obj.id,
+        type: obj.type
+    }));
+
+    return await vscode.window.showQuickPick(popularItems, {
+        placeHolder: currentObjectId
+            ? `Select a popular object (Current: ${currentObjectType} ${currentObjectId})`
+            : 'Select a popular Business Central object to set as startup object'
+    });
+}
+
+// Show all objects from workspace and .app files
+async function showAllObjects(
+    workspaceFolder: string,
+    appName: string,
+    currentObjectId?: number,
+    currentObjectType?: string
+): Promise<{ label: string; id: number; type: string } | undefined> {
+    // Show progress indicator
     const progressMessage = vscode.window.withProgress(
         {
             location: vscode.ProgressLocation.Notification,
@@ -59,9 +228,9 @@ export async function selectStartupObjectId() {
                     }
 
                     if (a.type !== b.type) {
-                        return a.type === 'Page' ? -1 : 1; // Pages zuerst
+                        return a.type === 'Page' ? -1 : 1; // Pages first
                     }
-                    return a.id - b.id; // Sortiere nach ID
+                    return a.id - b.id; // Sort by ID
                 });
 
                 if (combinedObjects.length === 0) {
@@ -80,11 +249,11 @@ export async function selectStartupObjectId() {
     const combinedObjects = await progressMessage;
 
     if (combinedObjects.length === 0) {
-        return;
+        return undefined;
     }
 
-    // Zeige das Quick Pick-Menü
-    const selectedObject = await vscode.window.showQuickPick(
+    // Show the Quick Pick menu
+    return await vscode.window.showQuickPick(
         combinedObjects.map((obj) => ({
             label: `${obj.type} | ID: ${obj.id} | ${obj.name}`,
             detail: `App: ${obj.appName || 'Unknown'}`,
@@ -97,41 +266,55 @@ export async function selectStartupObjectId() {
                 : 'Select an object to set as the startup object (Type | ID | Name | App)'
         }
     );
+}
 
-    if (!selectedObject) {
-        vscode.window.showInformationMessage('No object selected.');
-        return;
-    }
+// Update all selected launch.json files with the chosen startup object
+async function updateLaunchJsonFiles(
+    selectedLaunchJsons: vscode.Uri[],
+    selectedObject: { label: string; id: number; type: string }
+): Promise<void> {
+    let totalUpdated = 0;
+    let totalConfigs = 0;
 
-    // Aktualisiere die launch.json
-    const launchJsonPath = path.join(workspaceFolder, '.vscode', 'launch.json');
-    if (!fs.existsSync(launchJsonPath)) {
-        vscode.window.showErrorMessage('launch.json file not found in the .vscode folder.');
-        return;
-    }
-
-    try {
-        const launchJson = await parseLaunchJsonWithComments(launchJsonPath);
-
-        if (!launchJson.configurations || launchJson.configurations.length === 0) {
-            vscode.window.showErrorMessage('No configurations found in launch.json.');
-            return;
+    for (const launchJsonUri of selectedLaunchJsons) {
+        const launchJsonPath = launchJsonUri.fsPath;
+        if (!fs.existsSync(launchJsonPath)) {
+            vscode.window.showWarningMessage(`Launch.json file not found: ${launchJsonPath}`);
+            continue;
         }
 
-        // Update all configurations, not just the first one
-        let updatedCount = 0;
-        for (const config of launchJson.configurations) {
-            config.startupObjectId = selectedObject.id;
-            config.startupObjectType = selectedObject.type;
-            updatedCount++;
-        }
+        try {
+            const launchJson = await parseLaunchJsonWithComments(launchJsonPath);
 
-        fs.writeFileSync(launchJsonPath, JSON.stringify(launchJson, null, 4), 'utf-8');
+            if (!launchJson.configurations || launchJson.configurations.length === 0) {
+                vscode.window.showWarningMessage(`No configurations found in ${launchJsonPath}`);
+                continue;
+            }
+
+            // Update all configurations in this file
+            let updatedCount = 0;
+            for (const config of launchJson.configurations) {
+                config.startupObjectId = selectedObject.id;
+                config.startupObjectType = selectedObject.type;
+                updatedCount++;
+            }
+
+            fs.writeFileSync(launchJsonPath, JSON.stringify(launchJson, null, 4), 'utf-8');
+            totalUpdated++;
+            totalConfigs += updatedCount;
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error updating ${launchJsonPath}: ${error.message}`);
+        }
+    }
+
+    if (totalUpdated > 0) {
+        const fileText = totalUpdated === 1 ? 'file' : 'files';
+        const configText = totalConfigs === 1 ? 'configuration' : 'configurations';
         vscode.window.showInformationMessage(
-            `Updated startupObjectId to ${selectedObject.label} in ${updatedCount} configuration(s) in launch.json.`
+            `Updated startupObjectId to ${selectedObject.label} in ${totalConfigs} ${configText} across ${totalUpdated} launch.json ${fileText}.`
         );
-    } catch (error) {
-        vscode.window.showErrorMessage(`Error updating launch.json: ${error.message}`);
+    } else {
+        vscode.window.showErrorMessage('Failed to update any launch.json files.');
     }
 }
 
@@ -149,7 +332,7 @@ function parseLaunchJsonWithComments(launchJsonPath: string): any {
     return JSON.parse(content);
 }
 
-// Funktion zum Abrufen des App-Namens aus app.json
+// Function to get the app name from app.json
 function getAppNameFromAppJson(workspaceFolder: string): string {
     const appJsonPath = path.join(workspaceFolder, 'app.json');
     if (!fs.existsSync(appJsonPath)) {
@@ -165,7 +348,7 @@ function getAppNameFromAppJson(workspaceFolder: string): string {
     }
 }
 
-// Extrahiert Objekte aus .app Dateien
+// Extracts objects from .app files
 async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: number; name: string; type: string; appName: string }[]> {
     const objects: { id: number; name: string; type: string; appName: string }[] = [];
     const appFiles = fs.readdirSync(path.join(folderPath, '.alpackages')).filter(file => file.endsWith('.app'));
@@ -199,7 +382,7 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
         } catch (error) {
             vscode.window.showErrorMessage(`Error processing .app file ${file}: ${error.message}`);
         } finally {
-            // Lösche die temporäre ZIP-Datei
+            // Delete the temporary ZIP file
             if (fs.existsSync(cleanedAppFilePath)) {
                 try {
                     fs.unlinkSync(cleanedAppFilePath);
@@ -214,14 +397,17 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
 }
 
 
-// Extrahiert Objekte aus .al Dateien
+// Extracts objects from .al files
 async function extractObjectsFromAlFiles(
     folderPath: string,
     allowedTypes: string[],
     appName: string
 ): Promise<{ id: number; name: string; type: string; appName: string }[]> {
     const objects: { id: number; name: string; type: string; appName: string }[] = [];
-    const alFiles = await vscode.workspace.findFiles('**/*.al', '**/node_modules/**');
+
+    // Search only in the specific folder (relative to workspace folder)
+    const pattern = new vscode.RelativePattern(folderPath, '**/*.al');
+    const alFiles = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
 
     for (const file of alFiles) {
         const content = fs.readFileSync(file.fsPath, 'utf-8');
@@ -243,7 +429,7 @@ async function extractObjectsFromAlFiles(
     return objects;
 }
 
-// Entfernt den Header aus einer .app Datei
+// Removes the header from a .app file
 async function removeHeaderFromAppFile(sourceFilePath: string, targetFilePath: string): Promise<any> {
     const headerSize = 40; // Custom header size
     const util = require('util');

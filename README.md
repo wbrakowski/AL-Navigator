@@ -12,6 +12,31 @@ Create variables and parameters like a pro. Automatically select/insert startup 
 
 ## 🚀 Features
 
+### 🔥 New: Startup Object ID Selection - Popular Objects & Full Search
+When setting a startup object ID, you can now choose between:
+
+- **⭐ Popular Objects**: Quick access to 35 commonly used Business Central pages including:
+  - **Sales**: Quote, Order, Invoice, Credit Memo (Lists & Cards), Customer List/Card
+  - **Purchase**: Quote, Order, Invoice, Credit Memo (Lists & Cards), Vendor List/Card  
+  - **Inventory**: Item List/Card
+  - **Finance**: G/L Entries, General Journal, Chart of Accounts
+  - **Administration**: Company Information, User Setup, Job Queue Entries
+
+- **📋 All Objects**: Browse all pages and reports from your workspace and .app files
+
+**Additional Features:**
+- Select multiple launch.json files to update at once
+- Automatically finds launch.json in nested folder structures
+- Shows current object with ⭐ marker
+
+Example Workflow:
+1. Run command: `AL Navigator: Select Startup Object ID`
+2. Choose "Popular Objects" for quick access or "All Objects" to browse everything
+3. Select your desired page/report
+4. The startup object is automatically set in your launch.json file(s)
+
+---
+
 ### 🔥 New: Replace Irregular RDL Expressions
 Automatically detect and fix common errors in RDL/RDLC report expressions:
 
@@ -50,7 +75,19 @@ Example Workflow:
 
 ---
 
-### 🔥 New: Rename Columns (Variables) in AL and RDLC Files
+### ⚡ Shortcuts for Quick Navigation
+Save time with keyboard shortcuts for essential navigation commands:
+
+| Shortcut        | Command Name                                       | Description                                              |
+| --------------- | -------------------------------------------------- | -------------------------------------------------------- |
+| **Ctrl+Alt+g**  | AL Navigator: End of global variables              | Moves cursor to the end of your global variables.        |
+| **Ctrl+Alt+l**  | AL Navigator: End of local variables               | Moves cursor to the end of your local variables.         |
+| **Ctrl+Alt+k**  | AL Navigator: Keys                                 | Moves cursor to the keys in your .al table file.         |
+| **Ctrl+Alt+a**  | AL Navigator: Next Action                          | Moves cursor to next action in a page .al file.          |
+| **Ctrl+Alt+d**  | AL Navigator: Next DataItem (starting from top)    | Moves cursor through data items in your .al report file. |
+| **Shift+Alt+d** | AL Navigator: Next DataItem (starting from bottom) | Moves cursor through data items in your .al report file. |
+
+### Rename Columns (Variables) in AL and RDLC Files
 Effortlessly rename column variables in your AL report files and synchronize changes in associated RDLC files:
 
 - Renames columns (variables) both in the AL file and their corresponding definitions in the RDLC file.
@@ -63,38 +100,13 @@ Example Workflow:
 
 ---
 
-### 🔥 New: Insert Translations into XLIFF Files
+### Insert Translations into XLIFF Files
 Effortlessly insert translations directly into XLIFF files:  
 - Automatically matches translation values with `note` tags.  
 - Updates the `target` element for the corresponding `source` only if the translation exists.  
 - Supports **10 common Business Central languages**.  
 
 This feature helps you maintain consistency across multilingual projects without altering the structure of your XLIFF documents.
-
----
-
-### 🔥 New: Select Startup Object ID
-Easily choose a startup object ID for your `launch.json` file using a Quick Pick menu. This feature scans your project for `Page` and `Report` objects (from `.al` files and `.app` packages) and displays:
-
-- **Name**: The name of the object.  
-- **ID**: The object ID.  
-- **Type**: Whether it’s a Page or Report.  
-
-The selected object is automatically added to `startupObjectId` and `startupObjectType` in your `launch.json`.  
-
----
-
-### ⚡ Shortcuts for Quick Navigation
-Save time with keyboard shortcuts for essential navigation commands:
-
-| Shortcut        | Command Name                                       | Description                                              |
-| --------------- | -------------------------------------------------- | -------------------------------------------------------- |
-| **Ctrl+Alt+g**  | AL Navigator: End of global variables              | Moves cursor to the end of your global variables.        |
-| **Ctrl+Alt+l**  | AL Navigator: End of local variables               | Moves cursor to the end of your local variables.         |
-| **Ctrl+Alt+k**  | AL Navigator: Keys                                 | Moves cursor to the keys in your .al table file.         |
-| **Ctrl+Alt+a**  | AL Navigator: Next Action                          | Moves cursor to next action in a page .al file.          |
-| **Ctrl+Alt+d**  | AL Navigator: Next DataItem (starting from top)    | Moves cursor through data items in your .al report file. |
-| **Shift+Alt+d** | AL Navigator: Next DataItem (starting from bottom) | Moves cursor through data items in your .al report file. |
 
 ---
 
