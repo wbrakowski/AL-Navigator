@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ALFile } from '../al/alFile';
+import { RecentlyUsedObjectsManager } from './recentlyUsedObjects';
 const AdmZip = require('adm-zip'); // For handling .app files
 
 // Popular Business Central objects that are frequently used as startup objects
@@ -96,6 +97,12 @@ async function selectLaunchJsonFile(launchJsonFiles: vscode.Uri[]): Promise<vsco
     return selectedOption?.uris;
 }
 
+let recentlyUsedManager: RecentlyUsedObjectsManager | undefined;
+
+export function initializeRecentlyUsedManager(context: vscode.ExtensionContext) {
+    recentlyUsedManager = new RecentlyUsedObjectsManager(context);
+}
+
 export async function selectStartupObjectId() {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
@@ -134,8 +141,39 @@ export async function selectStartupObjectId() {
     // Load app name from app.json
     const appName = getAppNameFromAppJson(workspaceFolder);
 
-    // Show Quick Access menu: Popular Objects vs All Objects
-    const quickAccessChoice = await vscode.window.showQuickPick([
+    // Build Quick Access menu options
+    const quickAccessOptions: Array<{
+        label: string;
+        description: string;
+        detail: string;
+        action: 'current' | 'recent' | 'popular' | 'all';
+    }> = [];
+
+    // Add "Current Object" option if a Page or Report is currently open
+    if (currentObjectId && currentObjectType) {
+        quickAccessOptions.push({
+            label: `$(file) Current Object`,
+            description: `${currentObjectType} ${currentObjectId}`,
+            detail: 'Use the currently open Page or Report as startup object',
+            action: 'current'
+        });
+    }
+
+    // Add "Recently Used" option if there are recent objects
+    if (recentlyUsedManager) {
+        const recentObjects = recentlyUsedManager.getRecentlyUsedObjects();
+        if (recentObjects.length > 0) {
+            quickAccessOptions.push({
+                label: `$(history) Recently Used Objects`,
+                description: `${recentObjects.length} recent object${recentObjects.length > 1 ? 's' : ''}`,
+                detail: 'Quick access to your recently used startup objects',
+                action: 'recent'
+            });
+        }
+    }
+
+    // Add Popular and All options
+    quickAccessOptions.push(
         {
             label: '$(star-full) Popular Objects',
             description: 'Select from commonly used Business Central pages',
@@ -148,7 +186,10 @@ export async function selectStartupObjectId() {
             detail: 'Search through all available AL objects from workspace and .app files',
             action: 'all'
         }
-    ], {
+    );
+
+    // Show Quick Access menu
+    const quickAccessChoice = await vscode.window.showQuickPick(quickAccessOptions, {
         placeHolder: 'How would you like to select the startup object?'
     });
 
@@ -158,7 +199,19 @@ export async function selectStartupObjectId() {
 
     let selectedObject: { label: string; id: number; type: string } | undefined;
 
-    if (quickAccessChoice.action === 'popular') {
+    if (quickAccessChoice.action === 'current') {
+        // Use the current object directly
+        if (currentObjectId && currentObjectType) {
+            selectedObject = {
+                label: `${currentObjectType} | ID: ${currentObjectId}`,
+                id: currentObjectId,
+                type: currentObjectType
+            };
+        }
+    } else if (quickAccessChoice.action === 'recent') {
+        // Show recently used objects
+        selectedObject = await showRecentlyUsedObjects();
+    } else if (quickAccessChoice.action === 'popular') {
         // Show popular objects list
         selectedObject = await showPopularObjects(currentObjectId, currentObjectType);
     } else {
@@ -173,6 +226,31 @@ export async function selectStartupObjectId() {
 
     // Update the selected launch.json file(s)
     await updateLaunchJsonFiles(selectedLaunchJsons, selectedObject);
+}
+
+// Show recently used objects for quick selection
+async function showRecentlyUsedObjects(): Promise<{ label: string; id: number; type: string } | undefined> {
+    if (!recentlyUsedManager) {
+        return undefined;
+    }
+
+    const recentObjects = recentlyUsedManager.getRecentlyUsedObjects();
+    if (recentObjects.length === 0) {
+        vscode.window.showInformationMessage('No recently used objects found.');
+        return undefined;
+    }
+
+    const recentItems = recentObjects.map(obj => ({
+        label: `${obj.type} | ID: ${obj.id} | ${obj.name}`,
+        description: recentlyUsedManager.formatRecentlyUsedObject(obj).split(' - ')[1], // Get the time ago part
+        detail: undefined,
+        id: obj.id,
+        type: obj.type
+    }));
+
+    return await vscode.window.showQuickPick(recentItems, {
+        placeHolder: 'Select a recently used object to set as startup object'
+    });
 }
 
 // Show popular Business Central objects for quick selection
@@ -296,6 +374,14 @@ async function updateLaunchJsonFiles(
             for (const config of launchJson.configurations) {
                 config.startupObjectId = selectedObject.id;
                 config.startupObjectType = selectedObject.type;
+
+                // Extract and save object name
+                const nameParts = selectedObject.label.split('|');
+                const objectName = nameParts.length > 2 ? nameParts[2].trim() : '';
+                if (objectName) {
+                    config.startupObjectName = objectName;
+                }
+
                 updatedCount++;
             }
 
@@ -313,6 +399,18 @@ async function updateLaunchJsonFiles(
         vscode.window.showInformationMessage(
             `Updated startupObjectId to ${selectedObject.label} in ${totalConfigs} ${configText} across ${totalUpdated} launch.json ${fileText}.`
         );
+
+        // Add to recently used objects
+        if (recentlyUsedManager) {
+            // Extract name from label if available
+            const nameParts = selectedObject.label.split('|');
+            const name = nameParts.length > 2 ? nameParts[2].trim() : '';
+            await recentlyUsedManager.addRecentlyUsedObject(
+                selectedObject.id,
+                name,
+                selectedObject.type
+            );
+        }
     } else {
         vscode.window.showErrorMessage('Failed to update any launch.json files.');
     }

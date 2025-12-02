@@ -325,12 +325,12 @@ export class Report {
 
       if (!alFileExists && copiedLayoutFiles.length === 0) {
         vscode.window.showInformationMessage(`No report file found in ${appFilePath}.`);
-      } if (createExtension) {
+      } else if (createExtension) {
         // Find the first RDLC and Word layout for the extension file
         const firstRdlcLayout = copiedLayoutFiles.find(f => f.type === 'rdlc');
         const firstWordLayout = copiedLayoutFiles.find(f => f.type === 'word');
 
-        await Report.createReportExtensionFile(
+        const extensionFilePath = await Report.createReportExtensionFile(
           reportName,
           objectID,
           objectName,
@@ -339,6 +339,17 @@ export class Report {
           reportAlFolder,
           reportLayoutFolder
         );
+
+        // Open the created extension file
+        if (extensionFilePath) {
+          const document = await vscode.workspace.openTextDocument(extensionFilePath);
+          await vscode.window.showTextDocument(document);
+        }
+      } else if (alFileExists) {
+        // Open the copied AL file
+        const alFilePath = path.join(reportAlFolder, targetAlFileName);
+        const document = await vscode.workspace.openTextDocument(alFilePath);
+        await vscode.window.showTextDocument(document);
       }
 
       // Delete the temp folder
@@ -617,14 +628,14 @@ export class Report {
     wordFileName: string,
     reportAlFolder?: string,
     reportLayoutFolder?: string
-  ) {
+  ): Promise<string | undefined> {
     if (reportName === '') {
-      return;
+      return undefined;
     }
 
     let activeWorkSpaceFolder = getActiveWorkspacePath();
     if (activeWorkSpaceFolder === '') {
-      return;
+      return undefined;
     }
 
     // Use provided folder or find the report folder
@@ -648,9 +659,11 @@ export class Report {
     try {
       await fs.promises.writeFile(filePath, fileContent);
       vscode.window.showInformationMessage(`File ${fileName}${fileExtension} created in folder ${reportFolder}.`);
+      return filePath;
     } catch (error) {
       console.error('Error creating file:', error);
       vscode.window.showErrorMessage('Failed to create file.');
+      return undefined;
     }
   }
 }

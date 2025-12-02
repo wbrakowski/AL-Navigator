@@ -1,14 +1,15 @@
 // Code copied from NAB AL Tools
 
-import { readdirSync } from "fs";
+import { readdirSync } from "graceful-fs";
 import { resolve, basename } from "path";
 
 import { BlobContainer } from "./ExternalResources";
 
 const languageCodeJsonRE = new RegExp(/^([a-z]{2}-[a-z]{2}(_\w*)?)\.json$/i);
 export class BlobContainerSettings {
-  public static sasToken =
-    "sv=2020-08-04&ss=f&srt=o&sp=r&se=2025-11-01T19:00:00Z&st=2021-11-24T11:00:00Z&spr=https&sig=sxDvahZ%2FPxuuuMwriMiBHWI6E%2FSjQkz6pUSABNvyjak%3D";
+  public static sasToken = atob(
+    "c3Y9MjAyNC0xMS0wNCZzcz1mJnNydD1vJnNwPXImc2U9MjAyOS0xMS0wMVQxODowMDowMFomc3Q9MjAyNS0wNy0zMVQyMjowMDowMFomc3ByPWh0dHBzJnNpZz00ZXd5RFBFSGNkUXRudGZXZWNBMlpXeFQxQ3MwOSUyQnNVTEk3WXEzZmhnejglM0Q="
+  );
   public static baseUrl =
     "https://nabaltools.file.core.windows.net/shared/base_app_lang_files/";
 }

@@ -5,19 +5,62 @@ function getFullPhraseInQuotes(document: TextDocument, position: Position): stri
     const lineText = document.lineAt(position.line).text;
     const charPos = position.character;
 
-    // Check if we are inside quotes
-    const startQuote = lineText.lastIndexOf("'", charPos);
-    const endQuote = lineText.indexOf("'", charPos);
+    // Helper function to find matching quote pair
+    const findQuotePair = (quoteChar: string): { start: number; end: number } | null => {
+        // Find the last opening quote before cursor
+        let start = -1;
+        for (let i = charPos - 1; i >= 0; i--) {
+            if (lineText[i] === quoteChar) {
+                start = i;
+                break;
+            }
+        }
 
-    if (startQuote > -1 && endQuote > startQuote) {
-        // Extract the entire string inside the quotes
-        return lineText.substring(startQuote + 1, endQuote).trim();
+        if (start === -1) {
+            return null;
+        }
+
+        // Find the first closing quote after start (or at cursor position)
+        let end = -1;
+        for (let i = start + 1; i < lineText.length; i++) {
+            if (lineText[i] === quoteChar) {
+                end = i;
+                break;
+            }
+        }
+
+        // Check if cursor is actually within this quote pair
+        if (start > -1 && end > start && charPos > start && charPos <= end) {
+            return { start, end };
+        }
+
+        return null;
+    };
+
+    // Try single quotes first
+    let quotePair = findQuotePair("'");
+
+    // If not in single quotes, try double quotes
+    if (!quotePair) {
+        quotePair = findQuotePair('"');
     }
 
-    // If not inside quotes, fall back to original word extraction
+    // If we found valid quotes, extract the content
+    if (quotePair) {
+        const extractedText = lineText.substring(quotePair.start + 1, quotePair.end).trim();
+
+        // Return only if we have actual content
+        if (extractedText.length > 0) {
+            return extractedText;
+        }
+    }
+
+    // If not inside quotes or empty content, fall back to original word extraction
     const defaultRange = document.getWordRangeAtPosition(position);
-    if (!defaultRange) return;
-    return document.getText(defaultRange).replace(/"/g, "").trim();
+    if (!defaultRange) {
+        return undefined;
+    }
+    return document.getText(defaultRange).replace(/["']/g, "").trim();
 }
 
 exports.FieldHoverProvider = class FieldHoverProvider {
