@@ -7,13 +7,12 @@ import { CustomConsole } from './additional/console';
 import * as Translator from './translation/translator';
 import { ALFiles } from './al/alFiles';
 import { ReportCreator } from './al/report/reportCreator';
-import { variableRemover } from './al/report/variableRemover';
 import * as LaunchJsonUpdater from './json/launchjson_updater';
 import * as XlfUpdater from './xlf/xlf_updater';
 import { ALCodeActionsProvider } from './al/codeActions/alCodeActionsProvider';
 import { ReportRenameProvider } from './al/report/reportRenameProvider';
-import { ReportFontFixer } from './report/reportFontFixer';
-import { RdlExpressionFixer } from './report/rdlExpressionFixer';
+import { ReportAnalyzer } from './report/reportAnalyzer';
+import { QuickLaunchStatusBar } from './json/quickLaunchStatusBar';
 const fieldHover = require('./additional/fieldHover');
 
 export function activate(context: vscode.ExtensionContext) {
@@ -22,6 +21,13 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('Congratulations, AL Navigator is ready to rumble!');
 
     const config = vscode.workspace.getConfiguration('alNavigator');
+
+    // Initialize Recently Used Objects Manager
+    LaunchJsonUpdater.initializeRecentlyUsedManager(context);
+
+    // Create and show Quick Launch Status Bar
+    const quickLaunchStatusBar = new QuickLaunchStatusBar();
+    context.subscriptions.push(quickLaunchStatusBar);
 
     // Register all commands
     const commandsToRegister = [
@@ -37,56 +43,19 @@ export function activate(context: vscode.ExtensionContext) {
             command: "extension.StartCreateReportDialog", callback: () => ReportCreator.startCreateReportDialog(new ALFiles()),
         },
         {
-            command: "extension.RemoveUnusedVariablesFromReportDataset", callback: variableRemover.removeUnusedVariablesFromReportDataset,
+            command: "extension.analyzeReport",
+            callback: () => ReportAnalyzer.analyzeReport(),
         },
         {
             command: "extension.selectStartupObjectId",
-            callback: LaunchJsonUpdater.selectStartupObjectId,
+            callback: async () => {
+                await LaunchJsonUpdater.selectStartupObjectId();
+                // Update status bar after switching
+                quickLaunchStatusBar.updateStatusBarText();
+            },
         },
         { command: "extension.insertTranslationFromComment", callback: XlfUpdater.insertTranslationFromComment },
         { command: "extension.TranslateAndCopyToClipboard", callback: () => Translator.translateAndCopyToClipboard(false) },
-        {
-            command: "extension.replaceReportFontFamiliesWithSegoeUI",
-            callback: () => {
-                const editor = vscode.window.activeTextEditor;
-                if (!editor) {
-                    vscode.window.showErrorMessage('No active editor found.');
-                    return;
-                }
-
-                const document = editor.document;
-                const fileExtension = document.fileName.toLowerCase();
-
-                // Check if the file is an RDL or RDLC file
-                if (!fileExtension.endsWith('.rdl') && !fileExtension.endsWith('.rdlc')) {
-                    vscode.window.showWarningMessage('This command only works with .rdl or .rdlc files.');
-                    return;
-                }
-
-                ReportFontFixer.findAndReplaceFonts(document);
-            }
-        },
-        {
-            command: "extension.replaceIrregularRdlExpressions",
-            callback: () => {
-                const editor = vscode.window.activeTextEditor;
-                if (!editor) {
-                    vscode.window.showErrorMessage('No active editor found.');
-                    return;
-                }
-
-                const document = editor.document;
-                const fileExtension = document.fileName.toLowerCase();
-
-                // Check if the file is an RDL or RDLC file
-                if (!fileExtension.endsWith('.rdl') && !fileExtension.endsWith('.rdlc')) {
-                    vscode.window.showWarningMessage('This command only works with .rdl or .rdlc files.');
-                    return;
-                }
-
-                RdlExpressionFixer.findAndReplaceExpressions(document);
-            }
-        },
 
         // Register new rename command to trigger ReportRenameProvider
         {

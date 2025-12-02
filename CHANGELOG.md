@@ -4,6 +4,30 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.7.9]**
+- **New Feature:** Analyze and Optimize Report - Unified analyzer that combines font checking, expression validation, and dataset variable analysis
+- **New Feature:** Quick Launch Status Bar - Status bar button (🚀) for quick access to startup object switching
+- **New Feature:** Recently Used Objects - Track and quickly select from your 10 most recently used startup objects
+- **Enhancement:** Single command "Analyze and Optimize Report" works from both AL report files and RDL/RDLC layout files
+- **Enhancement:** Smart file detection - automatically finds corresponding AL or RDL files depending on where the command is run
+- **Enhancement:** Multi-analysis selection - choose to analyze fonts, expressions, dataset, or all at once
+- **Enhancement:** Detailed analysis results shown in dedicated output panel with categorized issues
+- **Enhancement:** Auto-fix capabilities with multi-select option - fix fonts, expressions, and/or unused variables in one go
+- **Enhancement:** Dataset analysis now shows both unused fields (defined but not used) and missing fields (referenced but not defined)
+- **Enhancement:** Launch.json Updater - Added "Current Object" option to directly use the currently open Page or Report as startup object
+- **Enhancement:** Quick selection menu now shows up to 4 options: Current Object (if applicable), Recently Used, Popular Objects, and All Objects
+- **Enhancement:** Improved user experience for setting startup object with context-aware menu
+- **Enhancement:** Report Creator - Automatically opens the created AL file after copying a report or creating a report extension
+- **Enhancement:** Better workflow - immediately start editing the new report without manual navigation
+- **Enhancement:** Status bar shows current startup object with type, ID, and name (e.g., "🚀 Page 9305: Sales Order List")
+- **Enhancement:** Object name is now cached in launch.json for better performance
+- **Enhancement:** Recently used objects display time ago (e.g., "5m ago", "2h ago", "3d ago")
+- **Enhancement:** Hover translation feature now supports both single quotes (') and double quotes (") for accurate text selection
+- **Enhancement:** Improved RDL/RDLC file locator with multi-strategy path resolution for better reliability
+- **Enhancement:** Updated Base App Translation SAS token and switched to graceful-fs for better file handling
+- **Breaking Change:** Removed individual commands: "Replace report font families with Segoe UI", "Replace irregular RDL expressions", and "Remove unused variables from report dataset" - all functionality now available through the unified "Analyze and Optimize Report" command
+- **Breaking Change:** Removed duplicate "Quick Launch Switcher" command - functionality consolidated into "Select Startup Object ID"
+
 ### **[0.7.8]**
 - **Enhancement:** Optimized report creation workflow - automatically detects which app package contains the report without requiring user selection
 - **Enhancement:** Faster report copying with improved user experience and clearer feedback messages
