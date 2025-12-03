@@ -4,6 +4,12 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.1]**
+- **Fixed:** Launch.json updater now only modifies `startupObjectId` and `startupObjectType` properties (removed invalid `startupObjectName` property)
+- **Enhancement:** Object names are now stored in extension global state instead of launch.json for better compatibility
+- **Enhancement:** Status bar still displays the object name by retrieving it from extension storage
+- **Enhancement:** Cleaner launch.json files that adhere to Business Central's official configuration schema
+
 ### **[0.8.0]**
 - **New Feature:** Report extension folder support - when creating report extensions, the extension now intelligently detects and offers reportextension/reportextensions folders
 - **Enhancement:** Improved folder selection for report extensions - prioritizes folders named "reportextension" or "reportextensions" when available

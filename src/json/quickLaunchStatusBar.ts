@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ALFile } from '../al/alFile';
+import { getCurrentStartupObjectName } from './launchjson_updater';
 
 // Class to manage the Quick Launch Status Bar button
 export class QuickLaunchStatusBar {
@@ -65,13 +66,11 @@ export class QuickLaunchStatusBar {
                         const id = config.startupObjectId;
                         const type = config.startupObjectType || 'Page'; // Default to Page if not specified
 
-                        // First try to get name from launch.json (faster and more reliable)
-                        let name = config.startupObjectName;
-
-                        // Fallback: Try to find the object name from AL files if not in launch.json
-                        if (!name) {
-                            name = await this.findObjectName(id, type);
-                        }
+                        // Get the saved object name from extension state
+                        const savedObject = getCurrentStartupObjectName();
+                        const name = (savedObject && savedObject.id === id && savedObject.type === type)
+                            ? savedObject.name
+                            : undefined;
 
                         return { id, type, name };
                     }
@@ -85,40 +84,6 @@ export class QuickLaunchStatusBar {
         }
     }
 
-    // Find the object name from AL files in the workspace
-    private async findObjectName(objectId: number, objectType: string): Promise<string | undefined> {
-        try {
-            const workspaceFolders = vscode.workspace.workspaceFolders;
-            if (!workspaceFolders || workspaceFolders.length === 0) {
-                return undefined;
-            }
-
-            // Search for AL files matching the object type
-            const alFiles = await vscode.workspace.findFiles(`**/*.al`, '**/node_modules/**');
-
-            for (const alFile of alFiles) {
-                try {
-                    const content = await fs.promises.readFile(alFile.fsPath, 'utf8');
-
-                    // Match patterns like: page 9305 "Sales Order List"
-                    const regex = new RegExp(`${objectType.toLowerCase()}\\s+${objectId}\\s+"([^"]+)"`, 'i');
-                    const match = content.match(regex);
-
-                    if (match && match[1]) {
-                        return match[1];
-                    }
-                } catch (error) {
-                    // Skip files that can't be read
-                    continue;
-                }
-            }
-
-            return undefined;
-        } catch (error) {
-            console.error('Error finding object name:', error);
-            return undefined;
-        }
-    }
 
     // Show the status bar item
     show(): void {
