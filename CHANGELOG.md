@@ -4,6 +4,12 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.2]**
+- **Enhancement:** Report Analyzer now supports report extensions in addition to regular reports
+- **Enhancement:** Processing-only report detection - automatically detects when a report or its base report (for extensions) is processing-only
+- **Enhancement:** Informative message shown when attempting to analyze processing-only reports or their extensions, explaining that layout analysis is not available
+- **Fixed:** Report extensions are now properly recognized by the analyzer
+
 ### **[0.8.1]**
 - **Fixed:** Launch.json updater now only modifies `startupObjectId` and `startupObjectType` properties (removed invalid `startupObjectName` property)
 - **Enhancement:** Object names are now stored in extension global state instead of launch.json for better compatibility

@@ -68,8 +68,68 @@ export class ReportAnalyzer {
 
         // Check if this is a report file
         if (!this.isReportFile(alContent)) {
-            vscode.window.showWarningMessage('This AL file does not appear to be a report.');
+            vscode.window.showWarningMessage('This AL file does not appear to be a report or report extension.');
             return;
+        }
+
+        // Check if this is a report extension
+        const baseReportName = this.getBaseReportName(alContent);
+        let baseReportContent: string | undefined;
+
+        if (baseReportName) {
+            // This is a report extension - try to find the base report
+            // First try workspace search, then use "Go to Definition" for dependencies
+            let baseReportPath = await this.findBaseReportFile(baseReportName);
+            let baseReportUri: vscode.Uri | undefined;
+
+            if (baseReportPath) {
+                baseReportUri = vscode.Uri.file(baseReportPath);
+            } else {
+                // Try "Go to Definition" for dependencies
+                const baseReportInfo = await this.findBaseReportUsingDefinition(alFilePath, baseReportName);
+                if (baseReportInfo) {
+                    baseReportUri = baseReportInfo.uri;
+                }
+            }
+
+            if (baseReportUri) {
+                try {
+                    const baseReportDoc = await vscode.workspace.openTextDocument(baseReportUri);
+                    baseReportContent = baseReportDoc.getText();
+                } catch (error) {
+                    console.log(`Could not read base report "${baseReportName}": ${error.message}`);
+                }
+            }
+        }
+
+        // For processing-only check:
+        // 1. If it's a report extension WITH its own layout, it's NOT processing-only
+        // 2. If it's a report extension WITHOUT layout, check the base report
+        // 3. If it's a regular report, check itself
+        const extensionHasLayout = !this.isProcessingOnlyReport(alContent);
+
+        if (baseReportName) {
+            // This is a report extension
+            if (!extensionHasLayout) {
+                // Extension has no layout, check base report
+                const baseIsProcessingOnly = baseReportContent ? this.isProcessingOnlyReport(baseReportContent) : false;
+
+                if (baseIsProcessingOnly) {
+                    vscode.window.showInformationMessage(
+                        `This report extension extends "${baseReportName}" which is a processing-only report. The analyze report functionality is not available for processing-only reports and their extensions.`
+                    );
+                    return;
+                }
+            }
+            // If extension has layout, continue with analysis
+        } else {
+            // Regular report - check if it's processing-only
+            if (this.isProcessingOnlyReport(alContent)) {
+                vscode.window.showInformationMessage(
+                    'This is a processing-only report. The analyze report functionality is not available for processing-only reports.'
+                );
+                return;
+            }
         }
 
         // Find all RDL/RDLC files referenced in the AL file
@@ -275,7 +335,50 @@ export class ReportAnalyzer {
             const usedFields = this.extractUsedFieldsFromRdl(rdlObject);
 
             // Extract defined fields from AL
-            const definedFields = this.extractDefinedFieldsFromAl(alContent);
+            // If this is a report extension, also include fields from the base report
+            let definedFields = this.extractDefinedFieldsFromAl(alContent);
+
+            const baseReportName = this.getBaseReportName(alContent);
+
+            if (baseReportName) {
+                // This is a report extension - also get fields from base report
+                // First try workspace search, then use "Go to Definition" for dependencies
+                let baseReportPath = await this.findBaseReportFile(baseReportName);
+                let baseReportUri: vscode.Uri | undefined;
+
+                if (baseReportPath) {
+                    baseReportUri = vscode.Uri.file(baseReportPath);
+                } else {
+                    const baseReportInfo = await this.findBaseReportUsingDefinition(alFilePath, baseReportName);
+                    if (baseReportInfo) {
+                        baseReportUri = baseReportInfo.uri;
+                        baseReportPath = baseReportInfo.displayPath;
+                    }
+                }
+
+                if (!baseReportUri) {
+                    // Cannot analyze report extension without base report
+                    throw new Error(`Cannot analyze report extension: Base report "${baseReportName}" not found. The dataset analysis requires access to the base report to provide accurate results.`);
+                }
+
+                // Read the base report content
+                // Use VS Code's document API to handle both .al and .dal files
+                let baseReportContent: string;
+                try {
+                    const baseReportDoc = await vscode.workspace.openTextDocument(baseReportUri);
+                    baseReportContent = baseReportDoc.getText();
+                } catch (error) {
+                    throw new Error(`Cannot read base report "${baseReportName}" at ${baseReportPath}. Error: ${error.message}`);
+                }
+
+                if (baseReportContent) {
+                    const baseFields = this.extractDefinedFieldsFromAl(baseReportContent);
+
+                    // Merge fields from base report and extension (remove duplicates)
+                    const allFields = new Set([...definedFields, ...baseFields]);
+                    definedFields = Array.from(allFields);
+                }
+            }
 
             // Find unused fields (defined in AL but not used in RDL)
             const unusedFields: string[] = [];
@@ -716,10 +819,116 @@ export class ReportAnalyzer {
     }
 
     /**
-     * Helper: Check if AL content is a report
+     * Helper: Check if AL content is a report or report extension file
      */
     private static isReportFile(alContent: string): boolean {
-        return /^\s*report\s+\d+/mi.test(alContent);
+        return /^\s*(report|reportextension)\s+\d+/mi.test(alContent);
+    }
+
+    /**
+     * Helper: Check if report is processing-only (no visual layout)
+     * Processing-only reports have ProcessingOnly = true or no RenderingSection/RDLCLayout
+     */
+    private static isProcessingOnlyReport(alContent: string): boolean {
+        // Check for explicit ProcessingOnly = true
+        if (/ProcessingOnly\s*=\s*true/mi.test(alContent)) {
+            return true;
+        }
+
+        // Check if there's no rendering section and no RDLCLayout
+        const hasRenderingSection = /rendering\s*\{/mi.test(alContent);
+        const hasRDLCLayout = /RDLCLayout\s*=/mi.test(alContent);
+        const hasWordLayout = /WordLayout\s*=/mi.test(alContent);
+        const hasExcelLayout = /ExcelLayout\s*=/mi.test(alContent);
+
+        // If none of these layout properties exist, it's processing-only
+        return !hasRenderingSection && !hasRDLCLayout && !hasWordLayout && !hasExcelLayout;
+    }
+
+    /**
+     * Helper: Extract base report name from report extension
+     * Parses: reportextension 50100 "MyExt" extends "BaseReport"
+     * Returns: "BaseReport" or undefined if not a report extension
+     */
+    private static getBaseReportName(alContent: string): string | undefined {
+        const match = /reportextension\s+\d+\s+"[^"]*"\s+extends\s+"([^"]*)"/mi.exec(alContent);
+        return match ? match[1] : undefined;
+    }
+
+    /**
+     * Helper: Find base report AL file in workspace by report name
+     */
+    private static async findBaseReportFile(reportName: string): Promise<string | undefined> {
+        const workspaceFolders = vscode.workspace.workspaceFolders;
+        if (!workspaceFolders || workspaceFolders.length === 0) {
+            return undefined;
+        }
+
+        // Search for all AL files in workspace
+        const alFiles = await vscode.workspace.findFiles('**/*.al', '**/node_modules/**');
+
+        for (const file of alFiles) {
+            try {
+                const content = fs.readFileSync(file.fsPath, 'utf8');
+                // Match: report 50100 "ReportName"
+                const reportMatch = new RegExp(`^\\s*report\\s+\\d+\\s+"${reportName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'mi');
+                if (reportMatch.test(content)) {
+                    return file.fsPath;
+                }
+            } catch (error) {
+                // Skip files that can't be read
+                continue;
+            }
+        }
+
+        return undefined;
+    }
+
+    /**
+     * Helper: Find base report using VS Code's "Go to Definition" functionality
+     * This works for reports in dependencies/symbol files, not just the workspace
+     * Returns an object with both the Uri (for opening) and a display path
+     */
+    private static async findBaseReportUsingDefinition(alFilePath: string, baseReportName: string): Promise<{ uri: vscode.Uri, displayPath: string } | undefined> {
+        try {
+            // Open the report extension file
+            const document = await vscode.workspace.openTextDocument(alFilePath);
+            const content = document.getText();
+
+            // Find the position of the base report name in the "extends" clause
+            // Pattern: reportextension 60004 "MyExt" extends "BaseReportName"
+            const extendsPattern = new RegExp(`extends\\s+"${baseReportName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}"`, 'i');
+            const match = extendsPattern.exec(content);
+
+            if (!match) {
+                return undefined;
+            }
+
+            // Find the position of the report name within the extends clause
+            const matchPosition = match.index + match[0].indexOf('"') + 1; // Position after the opening quote
+            const position = document.positionAt(matchPosition);
+
+            // Execute "Go to Definition" command
+            const definitions = await vscode.commands.executeCommand<vscode.Location[]>(
+                'vscode.executeDefinitionProvider',
+                document.uri,
+                position
+            );
+
+            if (definitions && definitions.length > 0) {
+                const definitionUri = definitions[0].uri;
+                // Return both the Uri (for opening documents) and a display path
+                return {
+                    uri: definitionUri,
+                    displayPath: definitionUri.fsPath || definitionUri.toString()
+                };
+            }
+
+            return undefined;
+        } catch (error) {
+            console.error(`Error finding base report using definition: ${error}`);
+            return undefined;
+        }
     }
 
     /**

@@ -13,7 +13,7 @@ Create variables and parameters like a pro. Automatically select/insert startup 
 ## 🚀 Features
 
 ### 🔥 New: Analyze and Optimize Reports
-Analyze and optimize your reports from both AL and RDL/RDLC files with a unified, intelligent analyzer:
+Analyze and optimize your reports and report extensions from both AL and RDL/RDLC files with a unified, intelligent analyzer:
 
 **One command, multiple analyses:**
 - **📊 Analyze All**: Run all checks at once for a comprehensive report health check
@@ -25,9 +25,10 @@ Analyze and optimize your reports from both AL and RDL/RDLC files with a unified
   - View complete usage statistics
 
 **Smart File Detection:**
-- Run from **AL report files**: Automatically finds and analyzes associated layout files
+- Run from **AL report files and report extensions**: Automatically finds and analyzes associated layout files
 - Run from **RDL/RDLC files**: Automatically locates corresponding AL file for dataset analysis
 - Handles reports with multiple layout files
+- For **report extensions**: Checks the base report to determine if it's processing-only
 
 **Auto-Fix Capabilities:**
 - Fix fonts with one click (replace with Segoe UI)
@@ -35,8 +36,13 @@ Analyze and optimize your reports from both AL and RDL/RDLC files with a unified
 - Remove unused variables from AL dataset
 - Multi-select which fixes to apply
 
+**Processing-Only Report Detection:**
+- Automatically detects processing-only reports (reports without visual layouts)
+- For report extensions, checks the base report to determine processing-only status
+- Shows informative message when layout analysis is not available
+
 Example Workflow:
-1. Open an AL report file or RDL/RDLC layout file
+1. Open an AL report file, report extension, or RDL/RDLC layout file
 2. Run command: `AL Navigator: Analyze and Optimize Report`
 3. Select analysis type (All, Fonts, Expressions, or Dataset)
 4. Review detailed results in the output panel
@@ -174,22 +180,22 @@ Add variables and parameters with a few keystrokes:
 
 ## 📜 Full Functionality List
 
-| **Command**                                                                           | **Description**                                                                                                              |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **AL Navigator: Analyze and Optimize Report**                                         | Comprehensive report analysis: fonts, expressions, and dataset variables (works from both AL and RDL/RDLC files).            |
-| **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.                                            |
-| **AL Navigator: Select Startup Object ID in launch.json** *(Enhanced!)*               | 🚀 Status bar button + unified selection: Current Object, Recently Used, Popular Objects & All Objects. Tracks usage history. |
-| **AL Navigator: Rename report dataitem column**                                       | Rename variables in AL files and their corresponding RDLC files.                                                             |
-| **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.                                               |
-| **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.                                            |
-| **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                                                                   |
-| **AL Navigator: Next Action**                                                         | Navigate to the next action in your AL page file.                                                                            |
-| **AL Navigator: End of local variables**                                              | Jump directly to the end of the local variables section in your file.                                                        |
-| **AL Navigator: End of global variables**                                             | Jump directly to the end of the global variables section in your file.                                                       |
-| **AL Navigator: Show Microsoft Translation (English -> Target Language)**             | Display the translation of a field or symbol from English to the target language.                                            |
-| **AL Navigator: Show Microsoft Translation (Target Language -> English)**             | Display the translation of a field or symbol from the target language to English.                                            |
-| **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                                                              |
-| **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.                                                      |
+| **Command**                                                                           | **Description**                                                                                                                                                               |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AL Navigator: Analyze and Optimize Report**                                         | Comprehensive report and report extension analysis: fonts, expressions, and dataset variables (works from both AL and RDL/RDLC files, with processing-only report detection). |
+| **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.                                                                                             |
+| **AL Navigator: Select Startup Object ID in launch.json** *(Enhanced!)*               | 🚀 Status bar button + unified selection: Current Object, Recently Used, Popular Objects & All Objects. Tracks usage history.                                                  |
+| **AL Navigator: Rename report dataitem column**                                       | Rename variables in AL files and their corresponding RDLC files.                                                                                                              |
+| **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.                                                                                                |
+| **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.                                                                                             |
+| **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                                                                                                                    |
+| **AL Navigator: Next Action**                                                         | Navigate to the next action in your AL page file.                                                                                                                             |
+| **AL Navigator: End of local variables**                                              | Jump directly to the end of the local variables section in your file.                                                                                                         |
+| **AL Navigator: End of global variables**                                             | Jump directly to the end of the global variables section in your file.                                                                                                        |
+| **AL Navigator: Show Microsoft Translation (English -> Target Language)**             | Display the translation of a field or symbol from English to the target language.                                                                                             |
+| **AL Navigator: Show Microsoft Translation (Target Language -> English)**             | Display the translation of a field or symbol from the target language to English.                                                                                             |
+| **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                                                                                                               |
+| **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.                                                                                                       |
 
 ---
 
