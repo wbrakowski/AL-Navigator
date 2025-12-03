@@ -111,17 +111,48 @@ export class Report {
     let reportAlFolder: string | undefined;
     let reportLayoutFolder: string | undefined;
 
-    // Find folders with existing report AL files
-    const foldersWithReportAl = FolderHelper.findFoldersWithReportAlFiles(activeWorkspaceFolder);
-    if (foldersWithReportAl.length > 0) {
-      reportAlFolder = await FolderHelper.promptForFolderSelection(foldersWithReportAl, 'AL');
-      if (!reportAlFolder) {
-        // User cancelled
-        return;
+    if (createExtension) {
+      // For report extensions, prioritize reportextension folders
+      const foldersWithReportAl = FolderHelper.findFoldersWithReportAlFiles(activeWorkspaceFolder);
+
+      // Try to find a reportextension-specific folder first
+      const reportExtensionFolder = FolderHelper.findReportExtensionFolder(activeWorkspaceFolder);
+      const reportExtensionFolders = foldersWithReportAl.filter(folder =>
+        folder.toLowerCase().includes('reportextension')
+      );
+
+      if (reportExtensionFolders.length > 0) {
+        reportAlFolder = await FolderHelper.promptForFolderSelection(reportExtensionFolders, 'AL');
+        if (!reportAlFolder) {
+          // User cancelled
+          return;
+        }
+      } else if (reportExtensionFolder) {
+        // Use the found reportextension folder
+        reportAlFolder = reportExtensionFolder;
+      } else if (foldersWithReportAl.length > 0) {
+        // Fallback to any folder with report AL files
+        reportAlFolder = await FolderHelper.promptForFolderSelection(foldersWithReportAl, 'AL');
+        if (!reportAlFolder) {
+          return;
+        }
+      } else {
+        // Last resort: use default report folder or workspace root
+        reportAlFolder = FolderHelper.findReportFolder(activeWorkspaceFolder) || activeWorkspaceFolder;
       }
     } else {
-      // Fallback to default report folder or workspace root
-      reportAlFolder = FolderHelper.findReportFolder(activeWorkspaceFolder) || activeWorkspaceFolder;
+      // For regular report copies, use existing logic
+      const foldersWithReportAl = FolderHelper.findFoldersWithReportAlFiles(activeWorkspaceFolder);
+      if (foldersWithReportAl.length > 0) {
+        reportAlFolder = await FolderHelper.promptForFolderSelection(foldersWithReportAl, 'AL');
+        if (!reportAlFolder) {
+          // User cancelled
+          return;
+        }
+      } else {
+        // Fallback to default report folder or workspace root
+        reportAlFolder = FolderHelper.findReportFolder(activeWorkspaceFolder) || activeWorkspaceFolder;
+      }
     }
 
     // Find folders with existing report layout files (.rdl/.rdlc)
@@ -323,8 +354,9 @@ export class Report {
         }
       }
 
-      if (!alFileExists && copiedLayoutFiles.length === 0) {
-        vscode.window.showInformationMessage(`No report file found in ${appFilePath}.`);
+      // Show error only if we're not creating an extension and found no files
+      if (!createExtension && !alFileExists && copiedLayoutFiles.length === 0) {
+        vscode.window.showInformationMessage(`No report AL file or layout files found for '${reportName}' in ${path.basename(appFilePath)}.`);
       } else if (createExtension) {
         // Find the first RDLC and Word layout for the extension file
         const firstRdlcLayout = copiedLayoutFiles.find(f => f.type === 'rdlc');

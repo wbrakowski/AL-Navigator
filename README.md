@@ -137,6 +137,9 @@ Translate field names and table names effortlessly:
 Duplicate reports and layouts in seconds:  
 - Copy an entire report, including its layout.  
 - Create report extensions with layouts pre-integrated.  
+- **🔥 New:** Intelligent folder detection - automatically finds and offers `reportextension` folders when creating report extensions
+- **🔥 New:** Support for processing-only reports - successfully copy reports without layout files (e.g., batch processing reports)
+- Works with both layout-based reports and processing-only reports
 
 ![Copy reports including layout](resources/createNewReport.gif)  
 ![Create report extension including layout](resources/createNewReportExtension.gif)  

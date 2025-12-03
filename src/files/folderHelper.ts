@@ -58,6 +58,29 @@ export function findReportFolder(workspacePath: string): string | undefined {
 }
 
 /**
+ * Finds the reportextension folder in the workspace for report extensions
+ * @param workspacePath Path to the workspace folder
+ * @returns Path to reportextension folder or undefined if not found
+ */
+export function findReportExtensionFolder(workspacePath: string): string | undefined {
+    const alFolders = ['src', 'app'];
+
+    for (const folder of alFolders) {
+        const reportExtFolder = path.join(workspacePath, folder, 'reportextension');
+        const reportExtensionsFolder = path.join(workspacePath, folder, 'reportextensions');
+        if (fs.existsSync(reportExtFolder)) {
+            return reportExtFolder;
+        }
+        else {
+            if (fs.existsSync(reportExtensionsFolder)) {
+                return reportExtensionsFolder;
+            }
+        }
+    }
+    return undefined;
+}
+
+/**
  * Finds all folders containing .rdl or .rdlc files in the workspace
  * @param workspacePath Path to the workspace folder
  * @returns Array of folder paths containing report layout files
@@ -121,10 +144,10 @@ export function findFoldersWithReportAlFiles(workspacePath: string): string[] {
                 if (entry.isDirectory()) {
                     searchFolders(fullPath, depth + 1);
                 } else if (entry.isFile() && entry.name.endsWith('.al')) {
-                    // Check if this AL file contains a report
+                    // Check if this AL file contains a report or report extension
                     try {
                         const content = fs.readFileSync(fullPath, 'utf-8');
-                        if (/^\s*report\s+\d+/mi.test(content)) {
+                        if (/^\s*report\s+\d+/mi.test(content) || /^\s*reportextension\s+\d+/mi.test(content)) {
                             folders.add(dir);
                         }
                     } catch {
