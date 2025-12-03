@@ -98,9 +98,29 @@ async function selectLaunchJsonFile(launchJsonFiles: vscode.Uri[]): Promise<vsco
 }
 
 let recentlyUsedManager: RecentlyUsedObjectsManager | undefined;
+let extensionContext: vscode.ExtensionContext | undefined;
 
 export function initializeRecentlyUsedManager(context: vscode.ExtensionContext) {
+    extensionContext = context;
     recentlyUsedManager = new RecentlyUsedObjectsManager(context);
+}
+
+// Function to save the current startup object name for status bar display
+function saveCurrentStartupObjectName(id: number, type: string, name: string) {
+    if (extensionContext) {
+        const key = `startupObject_${id}_${type}`;
+        extensionContext.globalState.update(key, name);
+        // Also save the current startup object info
+        extensionContext.globalState.update('currentStartupObject', { id, type, name });
+    }
+}
+
+// Function to get the current startup object name for status bar display
+export function getCurrentStartupObjectName(): { id: number; type: string; name: string } | undefined {
+    if (extensionContext) {
+        return extensionContext.globalState.get('currentStartupObject');
+    }
+    return undefined;
 }
 
 export async function selectStartupObjectId() {
@@ -374,14 +394,6 @@ async function updateLaunchJsonFiles(
             for (const config of launchJson.configurations) {
                 config.startupObjectId = selectedObject.id;
                 config.startupObjectType = selectedObject.type;
-
-                // Extract and save object name
-                const nameParts = selectedObject.label.split('|');
-                const objectName = nameParts.length > 2 ? nameParts[2].trim() : '';
-                if (objectName) {
-                    config.startupObjectName = objectName;
-                }
-
                 updatedCount++;
             }
 
@@ -400,11 +412,15 @@ async function updateLaunchJsonFiles(
             `Updated startupObjectId to ${selectedObject.label} in ${totalConfigs} ${configText} across ${totalUpdated} launch.json ${fileText}.`
         );
 
+        // Extract name from label
+        const nameParts = selectedObject.label.split('|');
+        const name = nameParts.length > 2 ? nameParts[2].trim() : '';
+
+        // Save current startup object name for status bar
+        saveCurrentStartupObjectName(selectedObject.id, selectedObject.type, name);
+
         // Add to recently used objects
         if (recentlyUsedManager) {
-            // Extract name from label if available
-            const nameParts = selectedObject.label.split('|');
-            const name = nameParts.length > 2 ? nameParts[2].trim() : '';
             await recentlyUsedManager.addRecentlyUsedObject(
                 selectedObject.id,
                 name,
