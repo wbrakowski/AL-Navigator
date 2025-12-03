@@ -4,6 +4,14 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.0]**
+- **New Feature:** Report extension folder support - when creating report extensions, the extension now intelligently detects and offers reportextension/reportextensions folders
+- **Enhancement:** Improved folder selection for report extensions - prioritizes folders named "reportextension" or "reportextensions" when available
+- **Enhancement:** Better support for processing-only reports - reports without layout files (like "Copy Sales Document" report 292) can now be copied successfully
+- **Fixed:** Processing-only reports no longer show false "No .AL file found" error message when creating report extensions
+- **Enhancement:** Report extension detection - folders with .reportext.al files are now included in folder selection
+- **Enhancement:** More accurate error messaging - clearly indicates when neither AL file nor layout files are found
+
 ### **[0.7.9]**
 - **New Feature:** Analyze and Optimize Report - Unified analyzer that combines font checking, expression validation, and dataset variable analysis
 - **New Feature:** Quick Launch Status Bar - Status bar button (🚀) for quick access to startup object switching
