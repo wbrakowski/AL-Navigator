@@ -140,9 +140,11 @@ export class ALFiles {
         }
 
         let alObjects = this.alObjects.filter(i => varNameSearchString.toUpperCase() === i.longVarName.toUpperCase());
-        if (!alObjects) {
+
+        if (alObjects.length === 0) {
             alObjects = this.alObjects.filter(f => varNameSearchString.toUpperCase() === f.shortVarName.toUpperCase());
         }
+
         // TODO Split words in title case and check if name can then be found
         if (alObjects.length > 0) {
             alVariable.name = varName;
@@ -162,7 +164,12 @@ export class ALFiles {
             }
 
             if (objTypes.length === 1) {
-                alVariable.setDataType(alObjects[0].objectType, 1, alObjects[0].objectName);
+                // Convert ObjectTypes to the appropriate AL data type string
+                let dataTypeString = objTypes[0]; // "Table", "Page", "Codeunit", or "Report"
+                if (dataTypeString === "Table") {
+                    dataTypeString = "Record"; // AL uses "Record" for table variables
+                }
+                alVariable.setDataType(dataTypeString, 1, alObjects[0].objectName);
             }
             else {
                 let selectedType = await vscode.window.showQuickPick(objTypes, {

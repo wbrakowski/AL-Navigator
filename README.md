@@ -12,6 +12,26 @@ Create variables and parameters like a pro. Automatically select/insert startup 
 
 ## 🚀 Features
 
+### 🔥 New: Smart Variable Ordering
+Variables are now automatically inserted in the correct position according to **Microsoft's AL Language specification**:
+
+**Automatic Type-Based Sorting:**
+- Complex object types are listed first: Record, Report, Codeunit, XmlPort, Page, Query
+- System types follow: Notification, BigText, DateFormula, RecordId, RecordRef, FieldRef, FilterPageBuilder
+- Simple types (Integer, Text, Boolean, etc.) appear after sorted types
+- Maintains clean, standards-compliant code structure
+
+**Key Benefits:**
+- 📋 **Standards Compliance**: Follows Microsoft's official AL coding guidelines
+- 🎯 **Better Readability**: Variables grouped by type are easier to scan and understand
+- ✨ **Zero Effort**: Automatic sorting - no manual reorganization needed
+- 🔧 **Works Everywhere**: Applies to both global and local variable sections
+
+**Example:**
+When you add an `Integer` variable to a section that already contains a `Record`, the Integer is correctly placed after the Record, not at the end of all variables. This ensures your code always follows AL best practices.
+
+---
+
 ### 🔥 New: Analyze and Optimize Reports
 Analyze and optimize your reports and report extensions from both AL and RDL/RDLC files with a unified, intelligent analyzer:
 
@@ -170,6 +190,7 @@ Add variables and parameters with a few keystrokes:
 #### 💡 Tips for Using This Feature
 | Tip                                                                                                                                                                                                                      | Example                                                                                                                                 |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Variables are **automatically sorted** by type according to AL Language specification (Record, Report, Codeunit, etc. first, then simple types).                                                                         | A new Integer variable is placed after Records but before the end of the var section.                                                   |
 | Use Microsoft’s [naming conventions](https://docs.microsoft.com/en-us/dynamics365/business-central/dev-itpro/compliance/apptest-bestpracticesforalcode#variable-and-field-naming "naming conventions") for object names. | "Vendor" is recognized as Record "Vendor".                                                                                              |
 | Use the **Temp** prefix to create temporary record variables.                                                                                                                                                            | "TempItem" is recognized as a temporary Record "Item".                                                                                  |
 | Use [Microsoft's suggested abbreviations](https://community.dynamics.com/nav/w/designpatterns/162/suggested-abbreviations "Microsoft's suggested abbreviations").                                                        | "GLSetup" is recognized as Record "General Ledger Setup".                                                                               |

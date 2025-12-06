@@ -4,6 +4,13 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.3]**
+- **Enhancement:** Variable creation now respects AL's official type ordering - variables are automatically inserted in the correct position according to AL Language specification: Record, Report, Codeunit, XmlPort, Page, Query, Notification, BigText, DateFormula, RecordId, RecordRef, FieldRef, FilterPageBuilder (complex types), followed by simple types
+- **Enhancement:** Variables of the same type are now sorted alphabetically by name for better readability
+- **Enhancement:** Improved code organization for variable insertion - new variables are no longer always added at the end of var sections, but instead placed at the appropriate position based on their type
+- **Enhancement:** Better code readability - properly sorted variable declarations make AL code more maintainable and compliant with Microsoft's AL coding standards
+- **Fixed:** Automatic variable type detection now works correctly again - fixes regression where simple object names (e.g., "Item", "Customer") were not automatically recognized as their corresponding AL types
+
 ### **[0.8.2]**
 - **Enhancement:** Report Analyzer now supports report extensions in addition to regular reports
 - **Enhancement:** Processing-only report detection - automatically detects when a report or its base report (for extensions) is processing-only
