@@ -54,7 +54,6 @@ export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
         if (!this.document) {
             return;
         }
-        let lineNo: number = ALFileCrawler.findVariableInsertLine(this.cmdType);
 
         await this._alFiles.fillObjects();
         let alVariable = await this.createALVariable(this.varName);
@@ -80,6 +79,20 @@ export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
         else {
             alVariable.typeAutomaticallyDetected = true;
         }
+
+        // Determine insertion line AFTER we know the variable type and name (for proper sorting)
+        let variableType = alVariable.alDataType ? alVariable.alDataType.type : "";
+        let variableName = alVariable.name;
+
+        // Safety check: If no type was determined, default to appropriate type
+        if (!variableType || variableType === "" || variableType === "none") {
+            // This should not happen, but if it does, we need a sensible default
+            // to prevent "undefined" from being used in sorting
+            variableType = "Integer"; // Safe default
+            vscode.window.showWarningMessage(`Variable type could not be determined for "${variableName}". Using Integer as default.`);
+        }
+
+        let lineNo: number = ALFileCrawler.findVariableInsertLineWithSorting(this.cmdType, variableType, variableName);
 
         let varDeclaration = VarTextBuilder.buildVarDeclaration(range, alVariable);
         let content: string = varDeclaration.declaration;
