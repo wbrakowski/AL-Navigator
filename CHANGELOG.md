@@ -4,6 +4,11 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.4]**
+- **Fixed:** Launch.json parser now supports JSON files with comments - the extension can now properly read and modify launch.json files that contain single-line (//) or multi-line (/* */) comments
+- **Enhancement:** Improved compatibility with Visual Studio Code's default launch.json format which often includes commented-out configurations
+- **Enhancement:** Launch.json files are now modified in-place, preserving original formatting and comments when updating startupObjectId values
+
 ### **[0.8.3]**
 - **Enhancement:** Variable creation now respects AL's official type ordering - variables are automatically inserted in the correct position according to AL Language specification: Record, Report, Codeunit, XmlPort, Page, Query, Notification, BigText, DateFormula, RecordId, RecordRef, FieldRef, FilterPageBuilder (complex types), followed by simple types
 - **Enhancement:** Variables of the same type are now sorted alphabetically by name for better readability
