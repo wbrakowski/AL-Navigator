@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { ALFile } from '../al/alFile';
 import { getCurrentStartupObjectName } from './launchjson_updater';
+import * as jsonc from 'jsonc-parser';
 
 // Class to manage the Quick Launch Status Bar button
 export class QuickLaunchStatusBar {
@@ -54,10 +55,16 @@ export class QuickLaunchStatusBar {
                 return null;
             }
 
-            // Read the first launch.json file
+            // Read the first launch.json file and parse with comment support
             const launchJsonPath = launchJsonFiles[0].fsPath;
             const launchJsonContent = await fs.promises.readFile(launchJsonPath, 'utf8');
-            const launchJson = JSON.parse(launchJsonContent);
+            const parseErrors: jsonc.ParseError[] = [];
+            const launchJson = jsonc.parse(launchJsonContent, parseErrors);
+
+            if (parseErrors.length > 0) {
+                console.error('Error parsing launch.json:', parseErrors);
+                return null;
+            }
 
             // Find the first configuration with a startupObjectId
             if (launchJson.configurations && Array.isArray(launchJson.configurations)) {

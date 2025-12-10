@@ -2,7 +2,7 @@
 	"name": "al-navigator",
 	"displayName": "AL Navigator",
 	"description": "Create variables and parameters like a pro. Automatically select/insert startup object IDs in your launch.json file. Effortlessly navigate through AL files with intuitive shortcuts. Translate fields on hover and streamline report copying – all in one powerful extension.",
-	"version": "0.8.3",
+	"version": "0.8.4",
 	"publisher": "wbrakowski",
 	"license": "MIT",
 	"url": "https://github.com/wbrakowski/al-navigator",
@@ -222,6 +222,7 @@
 		"entities": "^3.0.1",
 		"fs-extra": "^11.1.1",
 		"html": "^1.0.0",
+		"jsonc-parser": "^3.3.1",
 		"open": "^8.2.0",
 		"typescript": "^4.5.2",
 		"vsce": "^2.15.0"

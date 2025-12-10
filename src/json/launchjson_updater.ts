@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { ALFile } from '../al/alFile';
 import { RecentlyUsedObjectsManager } from './recentlyUsedObjects';
+import * as jsonc from 'jsonc-parser';
 const AdmZip = require('adm-zip'); // For handling .app files
 
 // Popular Business Central objects that are frequently used as startup objects
@@ -382,7 +383,7 @@ async function updateLaunchJsonFiles(
         }
 
         try {
-            const launchJson = await parseLaunchJsonWithComments(launchJsonPath);
+            const launchJson = parseLaunchJsonWithComments(launchJsonPath);
 
             if (!launchJson.configurations || launchJson.configurations.length === 0) {
                 vscode.window.showWarningMessage(`No configurations found in ${launchJsonPath}`);
@@ -397,7 +398,8 @@ async function updateLaunchJsonFiles(
                 updatedCount++;
             }
 
-            fs.writeFileSync(launchJsonPath, JSON.stringify(launchJson, null, 4), 'utf-8');
+            // Write file with preserved formatting and comments
+            writeLaunchJsonWithFormatting(launchJsonPath, launchJson);
             totalUpdated++;
             totalConfigs += updatedCount;
         } catch (error) {
@@ -432,18 +434,96 @@ async function updateLaunchJsonFiles(
     }
 }
 
-// function parseLaunchJsonWithComments(launchJsonPath: string): any {
-//     const stripJsonComments = require('strip-json-comments'); // Use require() for CommonJS
-//     const content = fs.readFileSync(launchJsonPath, 'utf-8');
-//     const sanitizedContent = stripJsonComments(content); // Remove comments
-//     return JSON.parse(sanitizedContent);
-// }
-
+/**
+ * Parse a launch.json file that may contain comments.
+ * Uses jsonc-parser to properly handle JSON with comments while preserving formatting.
+ * Allows trailing commas and other common JSON issues.
+ */
 function parseLaunchJsonWithComments(launchJsonPath: string): any {
-    // const stripJsonComments = require('strip-json-comments'); // Use require() for CommonJS
+    let content = fs.readFileSync(launchJsonPath, 'utf-8');
+    const parseErrors: jsonc.ParseError[] = [];
+
+    // Parse with allowTrailingComma option for more flexibility
+    let result = jsonc.parse(content, parseErrors, { allowTrailingComma: true });
+
+    // If we got a valid result with configurations, use it even if there are minor errors
+    if (result && result.configurations && Array.isArray(result.configurations) && result.configurations.length > 0) {
+        if (parseErrors.length > 0) {
+            console.warn(`launch.json has ${parseErrors.length} parsing issue(s), but continuing with valid result`);
+        }
+        return result;
+    }
+
+    if (parseErrors.length > 0) {
+        // Create a more helpful error message
+        const errorMessages = parseErrors.map(err => {
+            const errorCode = jsonc.printParseErrorCode(err.error);
+            const offset = err.offset;
+
+            // Get context around the error (40 chars before and after)
+            const start = Math.max(0, offset - 40);
+            const end = Math.min(content.length, offset + 40);
+            const beforeError = content.substring(start, offset);
+            const atError = content.substring(offset, offset + 1);
+            const afterError = content.substring(offset + 1, end);
+            const context = `${beforeError}>>>${atError}<<<${afterError}`;
+            const lines = content.substring(0, offset).split('\n');
+            const line = lines.length;
+            const column = lines[lines.length - 1].length + 1;
+
+            return `Line ${line}, Column ${column}: ${errorCode}\nContext: "${context.replace(/\n/g, '\\n').replace(/\r/g, '')}"`;
+        }).join('\n\n');
+
+        throw new Error(`Failed to parse launch.json:\n${errorMessages}\n\nPlease check your launch.json file for syntax errors (missing values, trailing commas in wrong places, etc.).`);
+    }
+
+    return result;
+}/**
+ * Write launch.json file while preserving formatting and comments where possible.
+ * Uses jsonc-parser's edit capabilities to modify the file in place.
+ */
+function writeLaunchJsonWithFormatting(
+    launchJsonPath: string,
+    launchJson: any
+): void {
     const content = fs.readFileSync(launchJsonPath, 'utf-8');
-    // const sanitizedContent = stripJsonComments(content); // Remove comments
-    return JSON.parse(content);
+
+    // Apply edits to update configurations
+    let edits: jsonc.Edit[] = [];
+
+    if (launchJson.configurations && Array.isArray(launchJson.configurations)) {
+        for (let i = 0; i < launchJson.configurations.length; i++) {
+            const config = launchJson.configurations[i];
+
+            // Update startupObjectId
+            if (config.startupObjectId !== undefined) {
+                edits.push(
+                    ...jsonc.modify(
+                        content,
+                        ['configurations', i, 'startupObjectId'],
+                        config.startupObjectId,
+                        { formattingOptions: { tabSize: 4, insertSpaces: true } }
+                    )
+                );
+            }
+
+            // Update startupObjectType
+            if (config.startupObjectType !== undefined) {
+                edits.push(
+                    ...jsonc.modify(
+                        content,
+                        ['configurations', i, 'startupObjectType'],
+                        config.startupObjectType,
+                        { formattingOptions: { tabSize: 4, insertSpaces: true } }
+                    )
+                );
+            }
+        }
+    }
+
+    // Apply all edits
+    const updatedContent = jsonc.applyEdits(content, edits);
+    fs.writeFileSync(launchJsonPath, updatedContent, 'utf-8');
 }
 
 // Function to get the app name from app.json
