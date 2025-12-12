@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { CustomConsole } from '../additional/console';
 
 export function getActiveWorkspacePath(): string {
     const activeTextEditor = vscode.window.activeTextEditor;
@@ -195,26 +196,47 @@ export async function promptForFolderSelection(folders: string[], fileType: 'lay
 }
 
 export function getAlPackagesFolder(workspacePath: string): string | undefined {
+    // Helper function for logging (only if CustomConsole is initialized)
+    const log = (message: string) => {
+        if (CustomConsole.customConsole) {
+            CustomConsole.customConsole.appendLine(message);
+        }
+    };
+
+    log(`[AL Navigator] getAlPackagesFolder called with workspace: ${workspacePath}`);
+
     // First check the workspace settings for custom package cache paths
     const config = vscode.workspace.getConfiguration('al');
     const packageCachePaths = config.get<string[]>('packageCachePath');
+
+    log(`[AL Navigator] al.packageCachePath config: ${packageCachePaths ? JSON.stringify(packageCachePaths) : 'not set'}`);
 
     if (packageCachePaths && packageCachePaths.length > 0) {
         // Try each configured path
         for (const configPath of packageCachePaths) {
             // Resolve the path relative to workspace
             const resolvedPath = path.resolve(workspacePath, configPath);
+            log(`[AL Navigator] Checking configured path: ${configPath} -> resolved to: ${resolvedPath}`);
+            log(`[AL Navigator] Path exists: ${fs.existsSync(resolvedPath)}`);
+
             if (fs.existsSync(resolvedPath)) {
+                log(`[AL Navigator] ✓ Using custom package cache path: ${resolvedPath}`);
                 return resolvedPath;
             }
         }
+        log(`[AL Navigator] ⚠ None of the configured paths exist`);
     }
 
     // Fall back to default .alpackages in workspace root if no custom path works
     const defaultPath = path.join(workspacePath, '.alpackages');
+    log(`[AL Navigator] Checking default path: ${defaultPath}`);
+    log(`[AL Navigator] Default path exists: ${fs.existsSync(defaultPath)}`);
+
     if (fs.existsSync(defaultPath)) {
+        log(`[AL Navigator] ✓ Using default .alpackages path: ${defaultPath}`);
         return defaultPath;
     }
 
+    log(`[AL Navigator] ✗ No .alpackages folder found`);
     return undefined;
 }

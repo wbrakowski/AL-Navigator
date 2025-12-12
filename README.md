@@ -242,6 +242,8 @@ Add variables and parameters with a few keystrokes:
 ---
 
 ## ⚙️ Settings
+
+### AL Navigator Settings
 | Setting                                     | Description                                                                                                                      |
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `alNavigator.ignoreALPrefix`                | Removes prefixes from suggested variable names.                                                                                  |
@@ -250,6 +252,30 @@ Add variables and parameters with a few keystrokes:
 | `alNavigator.maxNoOfShownTranslations`      | Sets the maximum number of translations displayed.                                                                               |
 | `alNavigator.enableHoverProviders`          | Enables hover translations for target languages on symbols (field names, etc.). Requires a reload.                               |
 | `alNavigator.updateAllLaunchConfigurations` | When enabled, updates all configurations in launch.json without prompting. When disabled (default), select which ones to update. |
+| `alNavigator.updateAllLaunchJsons`          | When enabled, automatically updates all launch.json files in the workspace. When disabled (default), prompts for file selection. |
+
+### AL Language Settings (for custom .alpackages folder)
+AL Navigator fully supports the AL Language extension's custom package cache path configuration:
+
+| Setting               | Description                                                                                                        | Example                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `al.packageCachePath` | Specifies custom paths for .alpackages folder(s). Supports absolute paths, relative paths, and multiple locations. | `["./.alternativePackages"]` or `["C:\\SharedPackages\\BC"]` |
+
+**Usage Example:**
+```json
+{
+  "al.packageCachePath": [
+    "./.alternativePackages",
+    "C:\\SharedPackages\\BC",
+    "../../../CommonPackages/.alpackages"
+  ]
+}
+```
+
+The extension will use the first path that exists. This is particularly useful for:
+- Shared network locations for .app files
+- Centralized package repositories
+- Multi-workspace setups with shared dependencies
 
 ---
 

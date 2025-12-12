@@ -4,6 +4,12 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.6]**
+- **Fixed:** Custom .alpackages folder path support - the startup object selection now properly respects the `al.packageCachePath` setting in settings.json, allowing you to use .app files from custom locations (e.g., shared network folders or alternative local paths)
+- **Enhancement:** Comprehensive logging for .alpackages folder detection - added detailed debug messages to the AL Navigator output channel showing which paths are checked and why a path is used or skipped
+- **Enhancement:** Better error messages when .alpackages folder is not found - the extension now provides helpful hints about checking your `al.packageCachePath` configuration
+- **Enhancement:** Improved error handling when accessing .alpackages folders - errors are now caught and logged with detailed information including the attempted path
+
 ### **[0.8.5]**
 - **New Feature:** Multi-launch.json file selection - when multiple launch.json files exist in your workspace, you can now select which files to update
 - **New Feature:** Added setting `alNavigator.updateAllLaunchJsons` (default: false) - when enabled, automatically updates all launch.json files in the workspace without prompting for selection
