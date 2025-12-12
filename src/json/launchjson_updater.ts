@@ -311,7 +311,7 @@ async function showAllObjects(
         async (progress) => {
             try {
                 progress.report({ message: 'Extracting objects from .app files...' });
-                const appObjects = await extractObjectsFromAppFiles(workspaceFolder);
+                const appObjects = await extractObjectsFromAppFiles(workspaceFolder, appName);
 
                 progress.report({ message: 'Extracting objects from .al files...' });
                 const alObjects = await extractObjectsFromAlFiles(workspaceFolder, ['page', 'report'], appName);
@@ -486,44 +486,39 @@ function writeLaunchJsonWithFormatting(
     launchJsonPath: string,
     launchJson: any
 ): void {
-    const content = fs.readFileSync(launchJsonPath, 'utf-8');
+    let content = fs.readFileSync(launchJsonPath, 'utf-8');
 
-    // Apply edits to update configurations
-    let edits: jsonc.Edit[] = [];
-
+    // Apply edits incrementally to avoid overlapping edits
     if (launchJson.configurations && Array.isArray(launchJson.configurations)) {
         for (let i = 0; i < launchJson.configurations.length; i++) {
             const config = launchJson.configurations[i];
 
             // Update startupObjectId
             if (config.startupObjectId !== undefined) {
-                edits.push(
-                    ...jsonc.modify(
-                        content,
-                        ['configurations', i, 'startupObjectId'],
-                        config.startupObjectId,
-                        { formattingOptions: { tabSize: 4, insertSpaces: true } }
-                    )
+                const edits = jsonc.modify(
+                    content,
+                    ['configurations', i, 'startupObjectId'],
+                    config.startupObjectId,
+                    { formattingOptions: { tabSize: 4, insertSpaces: true } }
                 );
+                content = jsonc.applyEdits(content, edits);
             }
 
             // Update startupObjectType
             if (config.startupObjectType !== undefined) {
-                edits.push(
-                    ...jsonc.modify(
-                        content,
-                        ['configurations', i, 'startupObjectType'],
-                        config.startupObjectType,
-                        { formattingOptions: { tabSize: 4, insertSpaces: true } }
-                    )
+                const edits = jsonc.modify(
+                    content,
+                    ['configurations', i, 'startupObjectType'],
+                    config.startupObjectType,
+                    { formattingOptions: { tabSize: 4, insertSpaces: true } }
                 );
+                content = jsonc.applyEdits(content, edits);
             }
         }
     }
 
-    // Apply all edits
-    const updatedContent = jsonc.applyEdits(content, edits);
-    fs.writeFileSync(launchJsonPath, updatedContent, 'utf-8');
+    // Write the final content
+    fs.writeFileSync(launchJsonPath, content, 'utf-8');
 }
 
 // Function to get the app name from app.json
@@ -542,10 +537,145 @@ function getAppNameFromAppJson(workspaceFolder: string): string {
     }
 }
 
+// Interface for parsed app file information
+interface AppFileInfo {
+    fileName: string;
+    appName: string;
+    version: string;
+    versionParts: number[];
+}
+
+/**
+ * Parse an app filename to extract app name and version.
+ * Expected format: Publisher_AppName_Version.app
+ * Example: Microsoft_Base Application_24.0.0.0.app
+ * Returns null if the filename doesn't match the expected pattern.
+ */
+function parseAppFileName(fileName: string): AppFileInfo | null {
+    // Remove .app extension
+    const nameWithoutExt = fileName.replace(/\.app$/i, '');
+    
+    // Split by underscore to get parts
+    const parts = nameWithoutExt.split('_');
+    
+    if (parts.length < 2) {
+        // If we can't parse it properly, return a basic structure
+        return {
+            fileName: fileName,
+            appName: nameWithoutExt,
+            version: '0.0.0.0',
+            versionParts: [0, 0, 0, 0]
+        };
+    }
+    
+    // Last part should be the version
+    const lastPart = parts[parts.length - 1];
+    const versionMatch = lastPart.match(/^(\d+\.)*\d+$/);
+    
+    if (versionMatch) {
+        // Last part is a version number
+        const version = lastPart;
+        const versionParts = version.split('.').map(v => parseInt(v, 10) || 0);
+        
+        // Everything except the last part is the app name (including publisher)
+        const appName = parts.slice(0, -1).join('_');
+        
+        return {
+            fileName: fileName,
+            appName: appName,
+            version: version,
+            versionParts: versionParts
+        };
+    } else {
+        // Couldn't identify version, treat entire name as app name
+        return {
+            fileName: fileName,
+            appName: nameWithoutExt,
+            version: '0.0.0.0',
+            versionParts: [0, 0, 0, 0]
+        };
+    }
+}
+
+/**
+ * Compare two version arrays.
+ * Returns: 1 if version1 > version2, -1 if version1 < version2, 0 if equal
+ */
+function compareVersions(version1: number[], version2: number[]): number {
+    const maxLength = Math.max(version1.length, version2.length);
+    
+    for (let i = 0; i < maxLength; i++) {
+        const v1 = version1[i] || 0;
+        const v2 = version2[i] || 0;
+        
+        if (v1 > v2) return 1;
+        if (v1 < v2) return -1;
+    }
+    
+    return 0;
+}
+
+/**
+ * Filter app files based on the configured version filter setting.
+ * Returns the list of app files to process.
+ * @param appFiles - Array of app file names
+ * @param workspaceAppName - Name of the workspace app to exclude from .alpackages
+ */
+function filterAppFilesByVersion(appFiles: string[], workspaceAppName: string): string[] {
+    // Get the configuration setting
+    const config = vscode.workspace.getConfiguration('alNavigator');
+    const versionFilter = config.get<string>('appVersionFilter', 'latest');
+    
+    // Parse all app files
+    const parsedApps = appFiles
+        .map(file => parseAppFileName(file))
+        .filter(info => info !== null) as AppFileInfo[];
+    
+    // Filter out workspace app from .alpackages (developer's own app)
+    const filteredParsedApps = parsedApps.filter(appInfo => {
+        // Check if this app matches the workspace app name
+        // The app name in the file includes publisher, but app.json might only have the app name
+        // So we check if the workspace app name is contained in the parsed app name
+        return !appInfo.appName.includes(workspaceAppName) && !workspaceAppName.includes(appInfo.appName);
+    });
+    
+    if (versionFilter === 'all') {
+        // Return all app files (except workspace app)
+        return filteredParsedApps.map(info => info.fileName);
+    }
+    
+    // Group by app name
+    const appGroups = new Map<string, AppFileInfo[]>();
+    
+    for (const appInfo of filteredParsedApps) {
+        const existing = appGroups.get(appInfo.appName) || [];
+        existing.push(appInfo);
+        appGroups.set(appInfo.appName, existing);
+    }
+    
+    // For each app, keep only the latest version
+    const filteredFiles: string[] = [];
+    
+    for (const [appName, versions] of appGroups) {
+        if (versions.length === 1) {
+            filteredFiles.push(versions[0].fileName);
+        } else {
+            // Sort by version (descending) and take the first one
+            versions.sort((a, b) => compareVersions(b.versionParts, a.versionParts));
+            filteredFiles.push(versions[0].fileName);
+        }
+    }
+    
+    return filteredFiles;
+}
+
 // Extracts objects from .app files
-async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: number; name: string; type: string; appName: string }[]> {
+async function extractObjectsFromAppFiles(folderPath: string, workspaceAppName: string): Promise<{ id: number; name: string; type: string; appName: string }[]> {
     const objects: { id: number; name: string; type: string; appName: string }[] = [];
-    const appFiles = fs.readdirSync(path.join(folderPath, '.alpackages')).filter(file => file.endsWith('.app'));
+    const allAppFiles = fs.readdirSync(path.join(folderPath, '.alpackages')).filter(file => file.endsWith('.app'));
+    
+    // Filter app files based on version setting and exclude workspace app
+    const appFiles = filterAppFilesByVersion(allAppFiles, workspaceAppName);
 
     for (const file of appFiles) {
         const appFilePath = path.join(folderPath, '.alpackages', file);

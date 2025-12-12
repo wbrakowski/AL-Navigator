@@ -190,6 +190,15 @@
 						"default": false,
 						"description": "Enable Hover Providers (requires reload). AL Navigator shows the translations for the target language on hover for symbols (field names etc.)",
 						"scope": "application"
+					},
+					"alNavigator.appVersionFilter": {
+						"enum": [
+							"all",
+							"latest"
+						],
+						"type": "string",
+						"default": "latest",
+						"description": "When loading objects from .app files: 'all' shows all versions, 'latest' shows only the newest version of each app"
 					}
 				}
 			}
