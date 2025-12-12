@@ -4,6 +4,21 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.5]**
+- **New Feature:** Multi-launch.json file selection - when multiple launch.json files exist in your workspace, you can now select which files to update
+- **New Feature:** Added setting `alNavigator.updateAllLaunchJsons` (default: false) - when enabled, automatically updates all launch.json files in the workspace without prompting for selection
+- **New Feature:** Multi-configuration selection - when multiple launch configurations exist in launch.json, you can now select which specific configurations to update with the startup object
+- **New Feature:** Added setting `alNavigator.updateAllLaunchConfigurations` (default: false) - when enabled, all configurations in a launch.json are updated without prompting; when disabled, you can select which configurations to update
+- **Enhancement:** Improved workflow - reordered selection process: first select object, then choose launch.json files, then select configurations (if needed)
+- **Enhancement:** Unified configuration selection dialog - all configurations from all selected launch.json files are now shown in a single multi-select dialog with clear file path indicators
+- **Enhancement:** Smart .app file filtering - the extension now excludes previous versions of your own app from the object list when browsing "All Objects"
+- **Enhancement:** Duplicate app version handling - when multiple versions of the same dependency app exist in .alpackages, only the latest version is shown in the object list
+- **Enhancement:** Improved object list readability - significantly cleaner object selection with fewer duplicates when working with multi-app workspaces
+- **Enhancement:** Comprehensive logging to AL Navigator output channel - detailed debug information for troubleshooting launch.json updates
+- **Fixed:** Overlapping edit error - resolved the issue that occurred when updating launch.json files with multiple configurations by applying edits sequentially instead of batching them
+- **Fixed:** Launch.json configuration selection now properly handles files with multiple AL configurations (e.g., for different containers)
+- **Fixed:** Better error handling with detailed error messages and stack traces in the AL Navigator console
+
 ### **[0.8.4]**
 - **Fixed:** Launch.json parser now supports JSON files with comments - the extension can now properly read and modify launch.json files that contain single-line (//) or multi-line (/* */) comments
 - **Enhancement:** Improved compatibility with Visual Studio Code's default launch.json format which often includes commented-out configurations

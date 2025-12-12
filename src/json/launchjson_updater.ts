@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import { ALFile } from '../al/alFile';
 import { RecentlyUsedObjectsManager } from './recentlyUsedObjects';
 import * as jsonc from 'jsonc-parser';
+import { CustomConsole } from '../additional/console';
 const AdmZip = require('adm-zip'); // For handling .app files
 
 // Popular Business Central objects that are frequently used as startup objects
@@ -131,16 +132,8 @@ export async function selectStartupObjectId() {
         return;
     }
 
-    // Find all launch.json files in the workspace
-    const launchJsonFiles = await findAllLaunchJsonFiles();
-    const selectedLaunchJsons = await selectLaunchJsonFile(launchJsonFiles);
-
-    if (!selectedLaunchJsons || selectedLaunchJsons.length === 0) {
-        return;
-    }
-
-    // Determine the workspace folder for the first selected launch.json (for loading objects)
-    const workspaceFolder = path.dirname(path.dirname(selectedLaunchJsons[0].fsPath));
+    // Step 1: Determine the workspace folder for loading objects
+    const workspaceFolder = workspaceFolders[0].uri.fsPath;
 
     // Try to get the current object from active editor
     let currentObjectId: number | undefined;
@@ -245,8 +238,80 @@ export async function selectStartupObjectId() {
         return;
     }
 
-    // Update the selected launch.json file(s)
-    await updateLaunchJsonFiles(selectedLaunchJsons, selectedObject);
+    // Step 2: Select which launch.json file(s) to update (or auto-select all if setting is enabled)
+    const config = vscode.workspace.getConfiguration('alNavigator');
+    const updateAllLaunchJsons = config.get<boolean>('updateAllLaunchJsons', false);
+
+    const launchJsonFiles = await findAllLaunchJsonFiles();
+    let selectedLaunchJsons: vscode.Uri[];
+
+    if (updateAllLaunchJsons) {
+        // Auto-select all launch.json files
+        selectedLaunchJsons = launchJsonFiles;
+        CustomConsole.customConsole.appendLine(`[AL Navigator] updateAllLaunchJsons=true, auto-selecting all ${launchJsonFiles.length} launch.json file(s)`);
+    } else {
+        // Let user select which launch.json files to update
+        const selected = await selectLaunchJsonFile(launchJsonFiles);
+        if (!selected || selected.length === 0) {
+            return;
+        }
+        selectedLaunchJsons = selected;
+    }
+
+    // Step 3: Check configuration setting and determine which configurations to update
+    const updateAllConfigs = config.get<boolean>('updateAllLaunchConfigurations', true);
+
+    let configurationsToUpdateMap: Map<string, number[]> = new Map();
+
+    if (!updateAllConfigs) {
+        // Collect all configurations from all launch.json files
+        const allConfigsInfo: Array<{
+            launchJsonPath: string;
+            configIndex: number;
+            config: any;
+            hasMultipleConfigs: boolean;
+        }> = [];
+
+        for (const launchJsonUri of selectedLaunchJsons) {
+            const launchJsonPath = launchJsonUri.fsPath;
+            if (!fs.existsSync(launchJsonPath)) {
+                continue;
+            }
+
+            try {
+                const launchJson = parseLaunchJsonWithComments(launchJsonPath);
+                if (!launchJson.configurations || launchJson.configurations.length === 0) {
+                    continue;
+                }
+
+                const hasMultiple = launchJson.configurations.length > 1;
+                launchJson.configurations.forEach((config: any, index: number) => {
+                    allConfigsInfo.push({
+                        launchJsonPath,
+                        configIndex: index,
+                        config,
+                        hasMultipleConfigs: hasMultiple
+                    });
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Error reading ${launchJsonPath}: ${error.message}`);
+                return;
+            }
+        }
+
+        // Show unified selection dialog if there are configurations to select
+        if (allConfigsInfo.length > 0) {
+            const selectedConfigs = await selectAllLaunchConfigurations(allConfigsInfo);
+            if (!selectedConfigs || selectedConfigs.size === 0) {
+                vscode.window.showInformationMessage('No configurations selected for update.');
+                return;
+            }
+            configurationsToUpdateMap = selectedConfigs;
+        }
+    }
+
+    // Step 4: Update the selected launch.json file(s)
+    await updateLaunchJsonFiles(selectedLaunchJsons, selectedObject, configurationsToUpdateMap);
 }
 
 // Show recently used objects for quick selection
@@ -370,42 +435,94 @@ async function showAllObjects(
 // Update all selected launch.json files with the chosen startup object
 async function updateLaunchJsonFiles(
     selectedLaunchJsons: vscode.Uri[],
-    selectedObject: { label: string; id: number; type: string }
+    selectedObject: { label: string; id: number; type: string },
+    configurationsToUpdateMap?: Map<string, number[]>
 ): Promise<void> {
     let totalUpdated = 0;
     let totalConfigs = 0;
 
+    CustomConsole.customConsole.appendLine(`[AL Navigator] ========================================`);
+    CustomConsole.customConsole.appendLine(`[AL Navigator] updateLaunchJsonFiles called`);
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Selected object: ${selectedObject.label} (ID: ${selectedObject.id}, Type: ${selectedObject.type})`);
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Number of launch.json files: ${selectedLaunchJsons.length}`);
+
+    // Get the configuration setting
+    const config = vscode.workspace.getConfiguration('alNavigator');
+    const updateAllConfigs = config.get<boolean>('updateAllLaunchConfigurations', true);
+    CustomConsole.customConsole.appendLine(`[AL Navigator] updateAllLaunchConfigurations setting: ${updateAllConfigs}`);
+
     for (const launchJsonUri of selectedLaunchJsons) {
         const launchJsonPath = launchJsonUri.fsPath;
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Processing: ${launchJsonPath}`);
+
         if (!fs.existsSync(launchJsonPath)) {
-            vscode.window.showWarningMessage(`Launch.json file not found: ${launchJsonPath}`);
+            const msg = `Launch.json file not found: ${launchJsonPath}`;
+            CustomConsole.customConsole.appendLine(`[AL Navigator] WARNING: ${msg}`);
+            vscode.window.showWarningMessage(msg);
             continue;
         }
 
         try {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Parsing launch.json...`);
             const launchJson = parseLaunchJsonWithComments(launchJsonPath);
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Parsed successfully. Configurations found: ${launchJson.configurations?.length || 0}`);
+
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Parsed successfully. Configurations found: ${launchJson.configurations?.length || 0}`);
 
             if (!launchJson.configurations || launchJson.configurations.length === 0) {
-                vscode.window.showWarningMessage(`No configurations found in ${launchJsonPath}`);
+                const msg = `No configurations found in ${launchJsonPath}`;
+                CustomConsole.customConsole.appendLine(`[AL Navigator] WARNING: ${msg}`);
+                vscode.window.showWarningMessage(msg);
                 continue;
             }
 
-            // Update all configurations in this file
-            let updatedCount = 0;
-            for (const config of launchJson.configurations) {
-                config.startupObjectId = selectedObject.id;
-                config.startupObjectType = selectedObject.type;
-                updatedCount++;
+            let configurationsToUpdate: number[] = [];
+
+            // Check if configurations were already selected
+            if (configurationsToUpdateMap && configurationsToUpdateMap.has(launchJsonPath)) {
+                // Use the pre-selected configurations
+                configurationsToUpdate = configurationsToUpdateMap.get(launchJsonPath)!;
+                CustomConsole.customConsole.appendLine(`[AL Navigator] Using pre-selected configurations: ${configurationsToUpdate.join(', ')}`);
+            } else if (updateAllConfigs) {
+                // Setting says to update all configurations
+                configurationsToUpdate = launchJson.configurations.map((_, index) => index);
+                CustomConsole.customConsole.appendLine(`[AL Navigator] updateAllConfigs=true, selecting all configurations: ${configurationsToUpdate.join(', ')}`);
+            } else {
+                // If we get here, it means updateAllConfigs is false but no configurations were pre-selected
+                // This can happen if the launch.json has only one configuration (auto-selected)
+                // or if this launch.json wasn't in the original selection
+                configurationsToUpdate = launchJson.configurations.map((_, index) => index);
+                CustomConsole.customConsole.appendLine(`[AL Navigator] No pre-selection, defaulting to all configurations: ${configurationsToUpdate.join(', ')}`);
             }
 
+            // Update selected configurations
+            let updatedCount = 0;
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Updating configuration objects in memory...`);
+            for (const configIndex of configurationsToUpdate) {
+                const configName = launchJson.configurations[configIndex]?.name || `Index ${configIndex}`;
+                CustomConsole.customConsole.appendLine(`[AL Navigator]   Config ${configIndex} (${configName}): Setting startupObjectId=${selectedObject.id}, startupObjectType=${selectedObject.type}`);
+                launchJson.configurations[configIndex].startupObjectId = selectedObject.id;
+                launchJson.configurations[configIndex].startupObjectType = selectedObject.type;
+                updatedCount++;
+            }
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Memory updates complete. Calling writeLaunchJsonWithFormatting...`);
+
             // Write file with preserved formatting and comments
-            writeLaunchJsonWithFormatting(launchJsonPath, launchJson);
+            writeLaunchJsonWithFormatting(launchJsonPath, launchJson, configurationsToUpdate);
+
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Write completed successfully for ${launchJsonPath}`);
             totalUpdated++;
             totalConfigs += updatedCount;
         } catch (error) {
-            vscode.window.showErrorMessage(`Error updating ${launchJsonPath}: ${error.message}`);
+            const errorMsg = `Error updating ${launchJsonPath}: ${error.message}`;
+            CustomConsole.customConsole.appendLine(`[AL Navigator] ❌ ERROR: ${errorMsg}`);
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Stack trace: ${error.stack}`);
+            vscode.window.showErrorMessage(errorMsg);
         }
     }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] ========================================`);
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Update complete. Total files updated: ${totalUpdated}, Total configurations: ${totalConfigs}`);
 
     if (totalUpdated > 0) {
         const fileText = totalUpdated === 1 ? 'file' : 'files';
@@ -432,6 +549,103 @@ async function updateLaunchJsonFiles(
     } else {
         vscode.window.showErrorMessage('Failed to update any launch.json files.');
     }
+}
+
+// Select which launch configurations to update (unified dialog for all launch.json files)
+async function selectAllLaunchConfigurations(
+    allConfigsInfo: Array<{
+        launchJsonPath: string;
+        configIndex: number;
+        config: any;
+        hasMultipleConfigs: boolean;
+    }>
+): Promise<Map<string, number[]> | undefined> {
+    interface ConfigQuickPickItem extends vscode.QuickPickItem {
+        launchJsonPath: string;
+        configIndex: number;
+    }
+
+    // Group by launch.json file for better display
+    const launchJsonGroups = new Map<string, typeof allConfigsInfo>();
+    for (const info of allConfigsInfo) {
+        if (!launchJsonGroups.has(info.launchJsonPath)) {
+            launchJsonGroups.set(info.launchJsonPath, []);
+        }
+        launchJsonGroups.get(info.launchJsonPath)!.push(info);
+    }
+
+    const options: ConfigQuickPickItem[] = [];
+
+    // Build options with separators for each launch.json file
+    for (const [launchJsonPath, configs] of launchJsonGroups.entries()) {
+        const folderName = path.basename(path.dirname(path.dirname(launchJsonPath)));
+
+        // Add configurations from this launch.json
+        configs.forEach((info, localIndex) => {
+            const label = info.config.name || `Configuration ${info.configIndex + 1}`;
+            const description = configs.length > 1
+                ? `${info.config.server || 'Local'} - ${info.config.serverInstance || 'N/A'}`
+                : `${folderName} - ${info.config.server || 'Local'}`;
+
+            options.push({
+                label: configs.length > 1 ? `  ${label}` : label, // Indent if multiple configs in same file
+                description,
+                detail: `${folderName}/${path.basename(launchJsonPath)} - Type: ${info.config.type || 'al'}, Auth: ${info.config.authentication || 'Windows'}`,
+                launchJsonPath: info.launchJsonPath,
+                configIndex: info.configIndex,
+                picked: true // Pre-select all
+            });
+        });
+    }
+
+    const selectedItems = await vscode.window.showQuickPick(options, {
+        placeHolder: `Select which launch configurations to update (${allConfigsInfo.length} configuration${allConfigsInfo.length > 1 ? 's' : ''} found)`,
+        canPickMany: true,
+        ignoreFocusOut: true
+    });
+
+    if (!selectedItems || selectedItems.length === 0) {
+        return undefined;
+    }
+
+    // Build map of launch.json path -> array of config indices
+    const result = new Map<string, number[]>();
+    for (const item of selectedItems) {
+        if (!result.has(item.launchJsonPath)) {
+            result.set(item.launchJsonPath, []);
+        }
+        result.get(item.launchJsonPath)!.push(item.configIndex);
+    }
+
+    return result;
+}
+
+// Select which launch configurations to update
+async function selectLaunchConfigurations(configurations: any[], launchJsonPath: string): Promise<number[] | undefined> {
+    interface ConfigQuickPickItem extends vscode.QuickPickItem {
+        index: number;
+    }
+
+    const options: ConfigQuickPickItem[] = configurations.map((config, index) => ({
+        label: config.name || `Configuration ${index + 1}`,
+        description: `${config.server || 'Local'} - ${config.serverInstance || 'N/A'}`,
+        detail: `Type: ${config.type || 'al'}, Authentication: ${config.authentication || 'Windows'}`,
+        index: index,
+        picked: true // Pre-select all configurations by default
+    }));
+
+    const selectedItems = await vscode.window.showQuickPick(options, {
+        placeHolder: `Select which configurations to update in ${path.basename(launchJsonPath)}`,
+        canPickMany: true,
+        ignoreFocusOut: true
+    });
+
+    if (!selectedItems || selectedItems.length === 0) {
+        return undefined;
+    }
+
+    // Return the selected configuration indices
+    return selectedItems.map(item => item.index);
 }
 
 /**
@@ -484,46 +698,78 @@ function parseLaunchJsonWithComments(launchJsonPath: string): any {
  */
 function writeLaunchJsonWithFormatting(
     launchJsonPath: string,
-    launchJson: any
+    launchJson: any,
+    configurationsToUpdate: number[]
 ): void {
-    const content = fs.readFileSync(launchJsonPath, 'utf-8');
+    try {
+        let content = fs.readFileSync(launchJsonPath, 'utf-8');
 
-    // Apply edits to update configurations
-    let edits: jsonc.Edit[] = [];
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Updating launch.json: ${launchJsonPath}`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Configurations to update: ${configurationsToUpdate.join(', ')}`);
 
-    if (launchJson.configurations && Array.isArray(launchJson.configurations)) {
-        for (let i = 0; i < launchJson.configurations.length; i++) {
-            const config = launchJson.configurations[i];
+        if (launchJson.configurations && Array.isArray(launchJson.configurations)) {
+            for (let i = 0; i < launchJson.configurations.length; i++) {
+                // Only update configurations that are in the list
+                if (!configurationsToUpdate.includes(i)) {
+                    continue;
+                }
 
-            // Update startupObjectId
-            if (config.startupObjectId !== undefined) {
-                edits.push(
-                    ...jsonc.modify(
+                const config = launchJson.configurations[i];
+                CustomConsole.customConsole.appendLine(`[AL Navigator] Updating configuration ${i}: ${config.name || 'Unnamed'}`);
+
+                try {
+                    // Apply edits sequentially to avoid overlapping edits
+                    // Each edit is based on the current content state
+
+                    // Update startupObjectId
+                    const objectIdEdits = jsonc.modify(
                         content,
                         ['configurations', i, 'startupObjectId'],
                         config.startupObjectId,
                         { formattingOptions: { tabSize: 4, insertSpaces: true } }
-                    )
-                );
-            }
+                    );
+                    CustomConsole.customConsole.appendLine(`[AL Navigator]   - startupObjectId edits: ${objectIdEdits.length}`);
 
-            // Update startupObjectType
-            if (config.startupObjectType !== undefined) {
-                edits.push(
-                    ...jsonc.modify(
+                    if (objectIdEdits.length > 0) {
+                        // Sort edits by offset in descending order
+                        objectIdEdits.sort((a, b) => b.offset - a.offset);
+                        // Apply the edits immediately to update content
+                        content = jsonc.applyEdits(content, objectIdEdits);
+                        CustomConsole.customConsole.appendLine(`[AL Navigator]   - Applied startupObjectId edits`);
+                    }
+
+                    // Update startupObjectType (using the updated content from previous edit)
+                    const objectTypeEdits = jsonc.modify(
                         content,
                         ['configurations', i, 'startupObjectType'],
                         config.startupObjectType,
                         { formattingOptions: { tabSize: 4, insertSpaces: true } }
-                    )
-                );
+                    );
+                    CustomConsole.customConsole.appendLine(`[AL Navigator]   - startupObjectType edits: ${objectTypeEdits.length}`);
+
+                    if (objectTypeEdits.length > 0) {
+                        // Sort edits by offset in descending order
+                        objectTypeEdits.sort((a, b) => b.offset - a.offset);
+                        // Apply the edits immediately to update content
+                        content = jsonc.applyEdits(content, objectTypeEdits);
+                        CustomConsole.customConsole.appendLine(`[AL Navigator]   - Applied startupObjectType edits`);
+                    }
+                } catch (error) {
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] ERROR updating configuration ${i}: ${error.message}`);
+                    throw error;
+                }
             }
         }
-    }
 
-    // Apply all edits
-    const updatedContent = jsonc.applyEdits(content, edits);
-    fs.writeFileSync(launchJsonPath, updatedContent, 'utf-8');
+        // Write the final updated content
+        fs.writeFileSync(launchJsonPath, content, 'utf-8');
+
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Successfully updated ${launchJsonPath}`);
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] ERROR in writeLaunchJsonWithFormatting: ${error.message}`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Stack trace: ${error.stack}`);
+        throw new Error(`Failed to update launch.json: ${error.message}`);
+    }
 }
 
 // Function to get the app name from app.json
@@ -547,7 +793,70 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
     const objects: { id: number; name: string; type: string; appName: string }[] = [];
     const appFiles = fs.readdirSync(path.join(folderPath, '.alpackages')).filter(file => file.endsWith('.app'));
 
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Found ${appFiles.length} .app files in .alpackages folder`);
+
+    // Get current workspace app info to exclude old versions
+    const currentAppInfo = getCurrentAppInfo(folderPath);
+    if (currentAppInfo) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Current workspace app: ${currentAppInfo.name} (${currentAppInfo.version})`);
+    }
+
+    // Group apps by name and version (extracted from filename)
+    const appsByName = new Map<string, Array<{ file: string; version: string; appName: string }>>();
+
+    // Process each app file - extract name and version from filename
     for (const file of appFiles) {
+        // Parse filename: "Publisher_AppName_Version.app"
+        // Example: "Microsoft_Base Application_27.0.38460.40242.app"
+        const fileNameWithoutExt = file.replace('.app', '');
+        const parts = fileNameWithoutExt.split('_');
+
+        if (parts.length < 3) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Skipping ${file} - unexpected filename format`);
+            continue;
+        }
+
+        // Last part is version, everything before last underscore is app name
+        const version = parts[parts.length - 1];
+        const appName = parts.slice(1, -1).join('_'); // Skip publisher (first part), take everything until version
+        const publisher = parts[0];
+
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Checking ${file}: ${appName} v${version}`);
+
+        // Skip if this is the current workspace app
+        if (currentAppInfo && appName === currentAppInfo.name) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Skipping ${file} - it's the workspace app itself (${currentAppInfo.name})`);
+            continue;
+        }
+
+        if (!appsByName.has(appName)) {
+            appsByName.set(appName, []);
+        }
+        appsByName.get(appName)!.push({ file, version, appName });
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Added app: ${appName} v${version} (${file})`);
+    }
+
+    // Determine which app files to process (latest version only)
+    const filesToProcess: string[] = [];
+    for (const [appName, versions] of appsByName.entries()) {
+        if (versions.length === 1) {
+            filesToProcess.push(versions[0].file);
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Processing ${appName}: ${versions[0].file}`);
+        } else {
+            // Sort by version descending and take the first (latest)
+            const sorted = versions.sort((a, b) => compareVersions(b.version, a.version));
+            filesToProcess.push(sorted[0].file);
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Multiple versions of ${appName} found. Using latest: ${sorted[0].version} (${sorted[0].file})`);
+            for (let i = 1; i < sorted.length; i++) {
+                CustomConsole.customConsole.appendLine(`[AL Navigator]   - Skipping older version: ${sorted[i].version} (${sorted[i].file})`);
+            }
+        }
+    }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Processing ${filesToProcess.length} app files for object extraction`);
+
+    // Extract objects from selected files
+    for (const file of filesToProcess) {
         const appFilePath = path.join(folderPath, '.alpackages', file);
         const cleanedAppFilePath = path.join(path.dirname(appFilePath), `${path.basename(appFilePath, '.app')}.zip`);
 
@@ -556,6 +865,7 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
 
             const zip = new AdmZip(cleanedAppFilePath);
             const entries = zip.getEntries();
+            let objectCount = 0;
 
             for (const entry of entries) {
                 if (entry.entryName.endsWith('.al')) {
@@ -569,11 +879,14 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
                         const name = match[3];
                         if (!isNaN(id)) {
                             objects.push({ id, name, type: capitalize(type), appName: file });
+                            objectCount++;
                         }
                     }
                 }
             }
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Extracted ${objectCount} objects from ${file}`);
         } catch (error) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Error processing ${file}: ${error.message}`);
             vscode.window.showErrorMessage(`Error processing .app file ${file}: ${error.message}`);
         } finally {
             // Delete the temporary ZIP file
@@ -581,13 +894,51 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
                 try {
                     fs.unlinkSync(cleanedAppFilePath);
                 } catch (unlinkError) {
-                    vscode.window.showWarningMessage(`Could not delete temporary file ${cleanedAppFilePath}: ${unlinkError.message}`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] Warning: Could not delete temp file ${cleanedAppFilePath}`);
                 }
             }
         }
     }
 
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Total objects extracted from .app files: ${objects.length}`);
     return objects;
+}
+
+// Get current workspace app information
+function getCurrentAppInfo(workspaceFolder: string): { name: string; version: string } | null {
+    const appJsonPath = path.join(workspaceFolder, 'app.json');
+    if (!fs.existsSync(appJsonPath)) {
+        return null;
+    }
+
+    try {
+        const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf-8'));
+        return {
+            name: appJson.name || 'Unknown',
+            version: appJson.version || '0.0.0.0'
+        };
+    } catch (error) {
+        console.error('Error reading app.json:', error.message);
+        return null;
+    }
+}
+
+// Compare semantic versions (e.g., "1.2.3.4")
+function compareVersions(version1: string, version2: string): number {
+    const v1Parts = version1.split('.').map(p => parseInt(p, 10) || 0);
+    const v2Parts = version2.split('.').map(p => parseInt(p, 10) || 0);
+
+    // Ensure both arrays have the same length
+    const maxLength = Math.max(v1Parts.length, v2Parts.length);
+    while (v1Parts.length < maxLength) v1Parts.push(0);
+    while (v2Parts.length < maxLength) v2Parts.push(0);
+
+    for (let i = 0; i < maxLength; i++) {
+        if (v1Parts[i] > v2Parts[i]) return 1;
+        if (v1Parts[i] < v2Parts[i]) return -1;
+    }
+
+    return 0;
 }
 
 
