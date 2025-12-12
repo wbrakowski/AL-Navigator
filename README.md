@@ -99,17 +99,38 @@ Instantly switch startup objects with a single click from the status bar!
    - **Administration**: Company Information, User Setup, Job Queue Entries
 
 4. **📋 All Objects**: Browse all pages and reports from your workspace and .app files
+   - **Smart filtering**: Excludes previous versions of your own app from the list
+   - **Duplicate handling**: Shows only the latest version when multiple versions of the same dependency app exist
+   - **Cleaner selection**: Significantly improved readability for multi-app workspaces
+
+**Multi-Launch.json Support:**
+- When your workspace contains multiple launch.json files (e.g., in different folders), you can:
+  - Select which launch.json files to update
+  - Or enable the setting `alNavigator.updateAllLaunchJsons` to automatically update all files without prompting
+
+**Multi-Configuration Support:**
+- When your launch.json has multiple configurations (e.g., for different containers), you can:
+  - Select which specific configurations to update with a unified multi-select dialog
+  - All configurations from all selected launch.json files are shown together with clear file path indicators
+  - Or enable the setting `alNavigator.updateAllLaunchConfigurations` (default: true) to automatically update all configurations without prompting
+
+**Configuration Settings:**
+- `alNavigator.updateAllLaunchJsons` (default: false) - Automatically update all launch.json files without prompting
+- `alNavigator.updateAllLaunchConfigurations` (default: true) - Automatically update all configurations within selected launch.json files
 
 **Additional Features:**
 - Persistent tracking across VS Code sessions
-- Select multiple launch.json files to update at once
+- Comprehensive logging to AL Navigator output channel for troubleshooting
+- Improved workflow: Select object first, then launch.json files, then configurations
 - Finds launch.json in nested folder structures
 - Status bar updates automatically after switching
 
 **Example Workflows:**
 1. **Ultra-Quick**: Click 🚀 → "Recently Used" → Select → Done!
 2. **Current Object**: Open a Page/Report → Click 🚀 → "Current Object" → Done!
-3. **Command Palette**: `AL Navigator: Select Startup Object ID` → Choose source → Select
+3. **Multi-File**: Click 🚀 → Select object → Choose which launch.json files → Select configurations
+4. **Full Auto**: Enable both settings → Click 🚀 → Select object → Done! (All files and configs updated automatically)
+5. **Command Palette**: `AL Navigator: Select Startup Object ID` → Choose source → Select
 
 ---
 
@@ -201,33 +222,34 @@ Add variables and parameters with a few keystrokes:
 
 ## 📜 Full Functionality List
 
-| **Command**                                                                           | **Description**                                                                                                                                                               |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **AL Navigator: Analyze and Optimize Report**                                         | Comprehensive report and report extension analysis: fonts, expressions, and dataset variables (works from both AL and RDL/RDLC files, with processing-only report detection). |
-| **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.                                                                                             |
-| **AL Navigator: Select Startup Object ID in launch.json** *(Enhanced!)*               | 🚀 Status bar button + unified selection: Current Object, Recently Used, Popular Objects & All Objects. Tracks usage history.                                                  |
-| **AL Navigator: Rename report dataitem column**                                       | Rename variables in AL files and their corresponding RDLC files.                                                                                                              |
-| **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.                                                                                                |
-| **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.                                                                                             |
-| **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                                                                                                                    |
-| **AL Navigator: Next Action**                                                         | Navigate to the next action in your AL page file.                                                                                                                             |
-| **AL Navigator: End of local variables**                                              | Jump directly to the end of the local variables section in your file.                                                                                                         |
-| **AL Navigator: End of global variables**                                             | Jump directly to the end of the global variables section in your file.                                                                                                        |
-| **AL Navigator: Show Microsoft Translation (English -> Target Language)**             | Display the translation of a field or symbol from English to the target language.                                                                                             |
-| **AL Navigator: Show Microsoft Translation (Target Language -> English)**             | Display the translation of a field or symbol from the target language to English.                                                                                             |
-| **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                                                                                                               |
-| **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.                                                                                                       |
+| **Command**                                                                           | **Description**                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **AL Navigator: Analyze and Optimize Report**                                         | Comprehensive report and report extension analysis: fonts, expressions, and dataset variables (works from both AL and RDL/RDLC files, with processing-only report detection).                             |
+| **AL Navigator: Insert translation from comment into xlf file**                       | Inserts the comment with the translation in the `target` elements in XLIFF files.                                                                                                                         |
+| **AL Navigator: Select Startup Object ID in launch.json** *(Enhanced!)*               | 🚀 Status bar button + unified selection with multi-launch.json and multi-configuration support. Recently Used, Popular Objects & All Objects with smart filtering. Comprehensive settings for automation. |
+| **AL Navigator: Rename report dataitem column**                                       | Rename variables in AL files and their corresponding RDLC files.                                                                                                                                          |
+| **AL Navigator: Next DataItem (starting from top)**                                   | Navigate to the next `DataItem` in your AL report file, starting from the top.                                                                                                                            |
+| **AL Navigator: Next DataItem (starting from bottom)**                                | Navigate to the next `DataItem` in your AL report file, starting from the bottom.                                                                                                                         |
+| **AL Navigator: Keys**                                                                | Quickly move to the keys section in your `.al` table file.                                                                                                                                                |
+| **AL Navigator: Next Action**                                                         | Navigate to the next action in your AL page file.                                                                                                                                                         |
+| **AL Navigator: End of local variables**                                              | Jump directly to the end of the local variables section in your file.                                                                                                                                     |
+| **AL Navigator: End of global variables**                                             | Jump directly to the end of the global variables section in your file.                                                                                                                                    |
+| **AL Navigator: Show Microsoft Translation (English -> Target Language)**             | Display the translation of a field or symbol from English to the target language.                                                                                                                         |
+| **AL Navigator: Show Microsoft Translation (Target Language -> English)**             | Display the translation of a field or symbol from the target language to English.                                                                                                                         |
+| **AL Navigator: Show translation and copy to clipboard (English -> Target Language)** | Display the translation and copy it directly to your clipboard.                                                                                                                                           |
+| **AL Navigator: Create a new report**                                                 | Easily create new reports, including layouts and necessary definitions.                                                                                                                                   |
 
 ---
 
 ## ⚙️ Settings
-| Setting                                 | Description                                                                                        |
-| --------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `alNavigator.ignoreALPrefix`            | Removes prefixes from suggested variable names.                                                    |
-| `alNavigator.ignoreALSuffix`            | Removes suffixes from suggested variable names.                                                    |
-| `alNavigator.translationTargetLanguage` | Defines the target language for translation functionalities.                                       |
-| `alNavigator.maxNoOfShownTranslations`  | Sets the maximum number of translations displayed.                                                 |
-| `alNavigator.enableHoverProviders`      | Enables hover translations for target languages on symbols (field names, etc.). Requires a reload. |
+| Setting                                     | Description                                                                                                                      |
+| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `alNavigator.ignoreALPrefix`                | Removes prefixes from suggested variable names.                                                                                  |
+| `alNavigator.ignoreALSuffix`                | Removes suffixes from suggested variable names.                                                                                  |
+| `alNavigator.translationTargetLanguage`     | Defines the target language for translation functionalities.                                                                     |
+| `alNavigator.maxNoOfShownTranslations`      | Sets the maximum number of translations displayed.                                                                               |
+| `alNavigator.enableHoverProviders`          | Enables hover translations for target languages on symbols (field names, etc.). Requires a reload.                               |
+| `alNavigator.updateAllLaunchConfigurations` | When enabled, updates all configurations in launch.json without prompting. When disabled (default), select which ones to update. |
 
 ---
 
