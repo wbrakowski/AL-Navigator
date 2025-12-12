@@ -4,6 +4,12 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.5]**
+- **Fixed:** Resolved "Overlapping edit" error when updating launch.json with multiple configurations - JSON edits are now applied incrementally to prevent conflicts
+- **Enhancement:** App version filtering - when loading objects from .alpackages, only the latest version of each app is shown by default (configurable via `alNavigator.appVersionFilter` setting)
+- **Enhancement:** Workspace app exclusion - the extension now automatically filters out the developer's own app from .alpackages listing to prevent duplicate object entries
+- **New Setting:** Added `alNavigator.appVersionFilter` configuration option - choose between 'latest' (default, shows newest version only) or 'all' (shows all versions) when loading objects from dependency apps
+
 ### **[0.8.4]**
 - **Fixed:** Launch.json parser now supports JSON files with comments - the extension can now properly read and modify launch.json files that contain single-line (//) or multi-line (/* */) comments
 - **Enhancement:** Improved compatibility with Visual Studio Code's default launch.json format which often includes commented-out configurations

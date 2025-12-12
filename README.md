@@ -99,12 +99,17 @@ Instantly switch startup objects with a single click from the status bar!
    - **Administration**: Company Information, User Setup, Job Queue Entries
 
 4. **📋 All Objects**: Browse all pages and reports from your workspace and .app files
+   - **Smart filtering** *(New!)*: Shows only the latest version of each dependency app by default
+   - Automatically excludes your workspace app from .alpackages to prevent duplicates
+   - Configurable via `alNavigator.appVersionFilter` setting (latest/all)
+   - Perfect for AppSource/Marketplace development with multiple app versions
 
 **Additional Features:**
 - Persistent tracking across VS Code sessions
 - Select multiple launch.json files to update at once
 - Finds launch.json in nested folder structures
 - Status bar updates automatically after switching
+- **Fixed**: No more "Overlapping edit" errors with multiple launch configurations
 
 **Example Workflows:**
 1. **Ultra-Quick**: Click 🚀 → "Recently Used" → Select → Done!
@@ -228,6 +233,7 @@ Add variables and parameters with a few keystrokes:
 | `alNavigator.translationTargetLanguage` | Defines the target language for translation functionalities.                                       |
 | `alNavigator.maxNoOfShownTranslations`  | Sets the maximum number of translations displayed.                                                 |
 | `alNavigator.enableHoverProviders`      | Enables hover translations for target languages on symbols (field names, etc.). Requires a reload. |
+| `alNavigator.appVersionFilter`          | Controls which app versions to load from .alpackages: `latest` (default, newest only) or `all` (all versions). |
 
 ---
 
