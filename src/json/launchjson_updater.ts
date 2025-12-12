@@ -5,6 +5,7 @@ import { ALFile } from '../al/alFile';
 import { RecentlyUsedObjectsManager } from './recentlyUsedObjects';
 import * as jsonc from 'jsonc-parser';
 import { CustomConsole } from '../additional/console';
+import { getAlPackagesFolder } from '../files/folderHelper';
 const AdmZip = require('adm-zip'); // For handling .app files
 
 // Popular Business Central objects that are frequently used as startup objects
@@ -791,7 +792,28 @@ function getAppNameFromAppJson(workspaceFolder: string): string {
 // Extracts objects from .app files
 async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: number; name: string; type: string; appName: string }[]> {
     const objects: { id: number; name: string; type: string; appName: string }[] = [];
-    const appFiles = fs.readdirSync(path.join(folderPath, '.alpackages')).filter(file => file.endsWith('.app'));
+
+    // Get the .alpackages folder path (supports custom al.packageCachePath configuration)
+    const alpackagesFolderPath = getAlPackagesFolder(folderPath);
+
+    if (!alpackagesFolderPath) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] No .alpackages folder found in workspace: ${folderPath}`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Please check your 'al.packageCachePath' configuration in settings.json if you're using a custom path`);
+        vscode.window.showWarningMessage('AL Navigator: No .alpackages folder found. Please check your workspace configuration.');
+        return objects;
+    }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Using .alpackages folder: ${alpackagesFolderPath}`);
+
+    let appFiles: string[];
+    try {
+        appFiles = fs.readdirSync(alpackagesFolderPath).filter(file => file.endsWith('.app'));
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error reading .alpackages folder: ${error.message}`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Folder path: ${alpackagesFolderPath}`);
+        vscode.window.showErrorMessage(`AL Navigator: Error accessing .alpackages folder: ${error.message}`);
+        return objects;
+    }
 
     CustomConsole.customConsole.appendLine(`[AL Navigator] Found ${appFiles.length} .app files in .alpackages folder`);
 
@@ -857,7 +879,7 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
 
     // Extract objects from selected files
     for (const file of filesToProcess) {
-        const appFilePath = path.join(folderPath, '.alpackages', file);
+        const appFilePath = path.join(alpackagesFolderPath, file);
         const cleanedAppFilePath = path.join(path.dirname(appFilePath), `${path.basename(appFilePath, '.app')}.zip`);
 
         try {
