@@ -80,28 +80,6 @@ Instantly switch startup objects with a single click from the status bar!
 - Object name is cached in launch.json for fast loading
 - Automatically updates after switching
 
-**🌍 Multilingual Object Names** *(Enhanced!)*:
-- Object list now displays both **English and translated names** automatically detected from your .app packages
-- Example: `Page | ID: 22 | Customer List / Debitorenliste` (shows German translation)
-- Translations are automatically extracted from XLF files in your .app packages
-- Works with all languages available in your dependencies - no configuration needed!
-- Makes it easier to find objects by their localized names
-- **✨ New: 16 Intelligent Fallback Strategies** - The extension now includes smart patterns to translate object names that don't have direct translations:
-  - **Suffix Strategies**: Removes "Entity", "Part", "FactBox", "Preview", "Card" suffixes to find base translations
-  - **Append Strategies**: Adds German equivalents like "zeilen" (Lines), "einrichtung" (Setup), "Aktivitäten" (Activities), "Assistent" (Wizard)
-  - **Prefix Strategies**: Removes technical prefixes like "APIV2 - " from API pages
-  - **Pluralization**: Converts "List" → plural form, "Lookup" → plural form
-  - **Name Transformations**: "persons" → "people", "Subform" → "Lines"
-  - **Prefix Removal**: Strips common prefixes like "Comment" for better matching
-- **✨ New: Smart Glossary System** - Built-in translations for common Business Central abbreviations:
-  - **G/L (General Ledger)**: "G/L Entry" → "Sachposten", "G/L Account" → "Sachkonto"
-  - **IC (Intercompany)**: "IC Partner" → "Konz.-Partner", "IC Inbox" → "Konz.-Eingang"
-  - **Job/Project**: "Job" → "Projekt", "Job Card" → "Projektkarte", "Job Planning Lines" → "Projektplanungszeilen"
-  - **Common Abbreviations**: "Purch." → "Einkauf", "Whse." → "Lager", "VAT" → "MwSt.", and 40+ more
-  - Glossary runs before fallback patterns to create base translations that patterns can build upon
-- **Result**: Translation coverage improved from ~73% to ~76% (111 additional objects translated from 1250 untranslated)
-- **Future-proof**: System automatically improves as Microsoft adds more base translations in future releases
-
 **Selection Options (in one unified command):**
 1. **📄 Current Object**: Instantly use the currently open Page or Report
    - Only shown when a Page or Report is currently active
