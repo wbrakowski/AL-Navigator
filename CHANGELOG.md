@@ -4,6 +4,33 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.7]**
+- **New Feature:** Object list now displays translations from XLF files - when selecting startup objects, the extension shows both English and translated object names (e.g., "Customer List / Debitorenliste") automatically detected from your .app packages
+- **Enhancement:** Automatic translation extraction from .app packages - the extension now parses XLF translation files from all .app files in your .alpackages folder to provide accurate object name translations
+- **Enhancement:** Multi-language support for object selection - works with all available languages in your .app dependencies, no configuration needed
+- **Enhancement:** Automatic language detection - the extension automatically detects and loads ALL available translations from XLF files without requiring manual language configuration
+- **Enhancement:** Simplified user experience - removed language switcher button from object selection. The extension now shows all available translations automatically from your dependencies
+- **Enhancement:** Improved cache stability - cache key no longer depends on language configuration, making it more stable across different workspace setups
+- **Enhancement:** Significantly improved translation coverage with 10 new intelligent fallback strategies - the extension now automatically translates many more object names that previously appeared only in English
+- **New Fallback Strategy:** Entity suffix removal - API pages like "Sales Invoice Entity" now find translations by removing the "Entity" suffix
+- **New Fallback Strategy:** Part suffix removal - List part pages like "G/L Entries Part" now find translations by removing the "Part" suffix
+- **New Fallback Strategy:** FactBox suffix removal - FactBox pages like "Item Statistics FactBox" now find translations by removing the "FactBox" suffix
+- **New Fallback Strategy:** Lines translation - Subpage lines like "Sales Lines" now translate correctly by appending "zeilen" to the base object translation
+- **New Fallback Strategy:** Setup translation - Setup pages like "Marketing Setup" now translate correctly by appending "einrichtung" to the base object translation
+- **New Fallback Strategy:** Preview suffix handling - Preview pages like "G/L Posting Preview" now find translations by removing the suffix or adding "Vorschau"
+- **New Fallback Strategy:** Card suffix handling - Card pages like "Resource Group Card" now find translations by removing the suffix or adding "Karte"
+- **New Fallback Strategy:** Activities translation - Activity pages like "Office 365 Sales Activities" now translate correctly by appending "Aktivitäten"
+- **New Fallback Strategy:** Wizard translation - Wizard pages like "CRM Connection Setup Wizard" now translate correctly by appending "Assistent"
+- **New Fallback Strategy:** APIV2 prefix removal - API pages like "APIV2 - Sales Quotes" now find translations by removing the technical API prefix
+- **New Feature:** Intelligent glossary system for abbreviations - the extension now provides base translations for common Business Central abbreviations (G/L, IC, Job, etc.) that enable fallback patterns to work more effectively
+- **New Glossary:** G/L (General Ledger) terms - translates "G/L Entry" to "Sachposten", "G/L Account" to "Sachkonto", and related variations
+- **New Glossary:** IC (Intercompany) terms - translates "IC Partner" to "Konz.-Partner", "IC Inbox" to "Konz.-Eingang", and related objects
+- **New Glossary:** Job/Project terms - translates "Job" to "Projekt", "Job Card" to "Projektkarte", "Job Planning Lines" to "Projektplanungszeilen", and related objects
+- **New Glossary:** Common abbreviations - translates "Purch." to "Einkauf", "Whse." to "Lager", "VAT" to "MwSt.", and many more standard Business Central abbreviations
+- **Enhancement:** Glossary enables fallback patterns - by providing base translations (e.g., "G/L Entry" → "Sachposten"), the existing fallback patterns can now successfully translate compound objects
+- **Technical:** Glossary runs before fallback patterns, creating a foundation of base translations that patterns can build upon
+- **Impact:** Translation coverage improved from ~73% to ~76% (111 of previously untranslated 1250 objects now covered). The system is future-proof and will automatically improve as Microsoft adds more base translations in future releases.
+
 ### **[0.8.6]**
 - **Fixed:** Custom .alpackages folder path support - the startup object selection now properly respects the `al.packageCachePath` setting in settings.json, allowing you to use .app files from custom locations (e.g., shared network folders or alternative local paths)
 - **Enhancement:** Comprehensive logging for .alpackages folder detection - added detailed debug messages to the AL Navigator output channel showing which paths are checked and why a path is used or skipped

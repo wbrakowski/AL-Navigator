@@ -248,7 +248,7 @@ Add variables and parameters with a few keystrokes:
 | ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
 | `alNavigator.ignoreALPrefix`                | Removes prefixes from suggested variable names.                                                                                  |
 | `alNavigator.ignoreALSuffix`                | Removes suffixes from suggested variable names.                                                                                  |
-| `alNavigator.translationTargetLanguage`     | Defines the target language for translation functionalities.                                                                     |
+| `alNavigator.translationTargetLanguage`     | Defines the target language for hover translation display and translation commands (not used for startup object translations).   |
 | `alNavigator.maxNoOfShownTranslations`      | Sets the maximum number of translations displayed.                                                                               |
 | `alNavigator.enableHoverProviders`          | Enables hover translations for target languages on symbols (field names, etc.). Requires a reload.                               |
 | `alNavigator.updateAllLaunchConfigurations` | When enabled, updates all configurations in launch.json without prompting. When disabled (default), select which ones to update. |

@@ -6,7 +6,36 @@ import { RecentlyUsedObjectsManager } from './recentlyUsedObjects';
 import * as jsonc from 'jsonc-parser';
 import { CustomConsole } from '../additional/console';
 import { getAlPackagesFolder } from '../files/folderHelper';
+import * as crypto from 'crypto';
 const AdmZip = require('adm-zip'); // For handling .app files
+
+// Cache interface for storing loaded objects and translations
+interface ObjectCache {
+    objects: { id: number; name: string; type: string; appName: string }[];
+    translations: Map<string, string>;
+    cacheKey: string;
+    timestamp: number;
+    appFiles: string[]; // List of .app filenames that were loaded
+    alFilesHash?: string; // Hash of workspace .al files for detecting changes
+    selectedLanguage?: string; // Track which language was used for translations
+}
+
+// Serializable cache interface for persistence (Map needs to be converted to array)
+interface SerializableObjectCache {
+    objects: { id: number; name: string; type: string; appName: string }[];
+    translations: [string, string][]; // Map converted to array of [key, value] pairs
+    cacheKey: string;
+    timestamp: number;
+    appFiles: string[];
+    alFilesHash?: string; // Hash of workspace .al files for detecting changes
+    selectedLanguage?: string; // Track which language was used for translations
+}
+
+// Global cache storage (in-memory)
+let objectCache: ObjectCache | null = null;
+
+// Cache key for workspace state
+const CACHE_STATE_KEY = 'alNavigator.objectCache';
 
 // Popular Business Central objects that are frequently used as startup objects
 interface PopularObject {
@@ -360,6 +389,412 @@ async function showPopularObjects(
     });
 }
 
+// Generate a cache key based on workspace content
+async function generateCacheKey(workspaceFolder: string): Promise<string> {
+    const hash = crypto.createHash('md5');
+
+    // Hash .app files (name + size + modified time)
+    const alpackagesFolderPath = getAlPackagesFolder(workspaceFolder);
+    if (alpackagesFolderPath && fs.existsSync(alpackagesFolderPath)) {
+        try {
+            const appFiles = fs.readdirSync(alpackagesFolderPath).filter(file => file.endsWith('.app'));
+            for (const file of appFiles.sort()) {
+                const filePath = path.join(alpackagesFolderPath, file);
+                const stats = fs.statSync(filePath);
+                hash.update(`${file}-${stats.size}-${stats.mtimeMs}`);
+            }
+        } catch (error) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Error hashing .app files: ${error.message}`);
+        }
+    }
+
+    // Note: We intentionally do NOT hash .al files here anymore!
+    // Reason: The partial cache update mechanism (attemptPartialCacheUpdate) handles 
+    // workspace .al file changes efficiently by only reloading workspace objects.
+    // If we include .al file hashes here, the cache key would change on every .al file 
+    // modification, causing unnecessary full reloads of all .app objects.
+    // The cache is now only invalidated when .app files change, and .al changes are 
+    // handled incrementally.
+
+    return hash.digest('hex');
+}
+
+// Generate hash for workspace .al files only (for detecting workspace changes)
+async function generateAlFilesHash(workspaceFolder: string): Promise<string> {
+    const hash = crypto.createHash('md5');
+
+    try {
+        const pattern = new vscode.RelativePattern(workspaceFolder, '**/*.al');
+        const alFiles = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
+
+        // Sort files for consistent hashing
+        const sortedFiles = alFiles.map(f => f.fsPath).sort();
+
+        // Hash each AL file path and modification time
+        for (const filePath of sortedFiles) {
+            try {
+                const stats = fs.statSync(filePath);
+                const relativePath = path.relative(workspaceFolder, filePath);
+                hash.update(`${relativePath}-${stats.mtimeMs}`);
+            } catch (statError) {
+                // File might have been deleted between findFiles and statSync
+            }
+        }
+
+        // Also include count
+        hash.update(`alfiles-${alFiles.length}`);
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error hashing .al files: ${error.message}`);
+    }
+
+    return hash.digest('hex');
+}
+
+// Load cache from persistent storage
+async function loadCacheFromStorage(workspaceFolder: string): Promise<void> {
+    if (!extensionContext) {
+        return;
+    }
+
+    try {
+        const workspaceState = extensionContext.workspaceState;
+        const cacheKey = `${CACHE_STATE_KEY}.${Buffer.from(workspaceFolder).toString('base64')}`;
+        const storedCache = workspaceState.get<SerializableObjectCache>(cacheKey);
+
+        if (storedCache) {
+            // Convert serializable cache back to ObjectCache
+            objectCache = {
+                objects: storedCache.objects,
+                translations: new Map(storedCache.translations),
+                cacheKey: storedCache.cacheKey,
+                timestamp: storedCache.timestamp,
+                appFiles: storedCache.appFiles,
+                alFilesHash: storedCache.alFilesHash,
+                selectedLanguage: storedCache.selectedLanguage
+            };
+
+            const ageMinutes = (Date.now() - objectCache.timestamp) / 60000;
+            const ageHours = ageMinutes / 60;
+            const ageDays = ageHours / 24;
+
+            let ageString: string;
+            if (ageDays >= 1) {
+                ageString = `${ageDays.toFixed(1)} days`;
+            } else if (ageHours >= 1) {
+                ageString = `${ageHours.toFixed(1)} hours`;
+            } else {
+                ageString = `${ageMinutes.toFixed(1)} minutes`;
+            }
+
+            CustomConsole.customConsole.appendLine(`[AL Navigator] 💾 Loaded cache from storage: ${objectCache.objects.length} objects, ${objectCache.translations.size} translations (age: ${ageString}, language: ${objectCache.selectedLanguage || 'auto'})`);
+        }
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error loading cache from storage: ${error.message}`);
+        objectCache = null;
+    }
+}
+
+// Save cache to persistent storage
+async function saveCacheToStorage(workspaceFolder: string): Promise<void> {
+    if (!extensionContext || !objectCache) {
+        return;
+    }
+
+    try {
+        const workspaceState = extensionContext.workspaceState;
+        const cacheKey = `${CACHE_STATE_KEY}.${Buffer.from(workspaceFolder).toString('base64')}`;
+
+        // Convert ObjectCache to SerializableObjectCache
+        const serializableCache: SerializableObjectCache = {
+            objects: objectCache.objects,
+            translations: Array.from(objectCache.translations.entries()),
+            cacheKey: objectCache.cacheKey,
+            timestamp: objectCache.timestamp,
+            appFiles: objectCache.appFiles,
+            alFilesHash: objectCache.alFilesHash,
+            selectedLanguage: objectCache.selectedLanguage
+        };
+
+        await workspaceState.update(cacheKey, serializableCache);
+        CustomConsole.customConsole.appendLine(`[AL Navigator] 💾 Saved cache to storage: ${objectCache.objects.length} objects, ${objectCache.translations.size} translations (language: ${objectCache.selectedLanguage || 'auto'})`);
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error saving cache to storage: ${error.message}`);
+    }
+}
+
+// Check if cache is valid for the current workspace
+async function isCacheValid(workspaceFolder: string, appName: string, selectedLanguage: string = ''): Promise<boolean> {
+    // Try to load from storage if not in memory
+    if (!objectCache) {
+        await loadCacheFromStorage(workspaceFolder);
+    }
+
+    if (!objectCache) {
+        return false;
+    }
+
+    const currentKey = await generateCacheKey(workspaceFolder);
+    const isValid = objectCache.cacheKey === currentKey;
+
+    if (isValid) {
+        // Cache key is valid (no .app changes), but we still need to check if .al files changed
+        // This allows us to do partial updates for workspace .al changes without full reload
+        const canPartialUpdate = await attemptPartialCacheUpdate(workspaceFolder, appName, selectedLanguage);
+        if (canPartialUpdate) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Cache partially updated (workspace .al files changed)`);
+            // Save updated cache
+            await saveCacheToStorage(workspaceFolder);
+            return true;
+        }
+
+        // No changes detected at all
+        const ageMinutes = (Date.now() - objectCache.timestamp) / 60000;
+        CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Using cached objects and translations (age: ${ageMinutes.toFixed(1)} minutes)`);
+        return true;
+    } else {
+        // Cache key changed (.app files changed) - try partial update
+        const canPartialUpdate = await attemptPartialCacheUpdate(workspaceFolder, appName, selectedLanguage);
+        if (canPartialUpdate) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Cache partially updated (.app files changed)`);
+            // Save updated cache
+            await saveCacheToStorage(workspaceFolder);
+            return true;
+        } else {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Cache invalid - workspace has changed (full reload required)`);
+        }
+    }
+
+    return false;
+}
+// Attempt to partially update cache (e.g., remove objects from deleted .app files)
+async function attemptPartialCacheUpdate(workspaceFolder: string, appName: string, selectedLanguage: string = ''): Promise<boolean> {
+    if (!objectCache) {
+        return false;
+    }
+
+    try {
+        // Get current .app files
+        const alpackagesFolderPath = getAlPackagesFolder(workspaceFolder);
+        if (!alpackagesFolderPath || !fs.existsSync(alpackagesFolderPath)) {
+            return false;
+        }
+
+        const currentAppFiles = fs.readdirSync(alpackagesFolderPath)
+            .filter(file => file.endsWith('.app'))
+            .sort();
+
+        // Compare with cached .app files
+        const cachedAppFiles = objectCache.appFiles || [];
+        const addedApps = currentAppFiles.filter(app => !cachedAppFiles.includes(app));
+        const removedApps = cachedAppFiles.filter(app => !currentAppFiles.includes(app));
+
+        // Check if workspace .al files changed
+        const currentAlHash = await generateAlFilesHash(workspaceFolder);
+        const cachedAlHash = objectCache.alFilesHash || '';
+        const alFilesChanged = currentAlHash !== cachedAlHash;
+
+        // Check if only .app files changed (no AL file changes)
+        const onlyAppChanges = (removedApps.length > 0 || addedApps.length > 0) && !alFilesChanged;
+
+        // Check if only .al files changed (no .app file changes)
+        const onlyAlChanges = addedApps.length === 0 && removedApps.length === 0 && alFilesChanged;
+
+        // Debug logging
+        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔍 Partial Update Check:`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator]    Apps: added=${addedApps.length}, removed=${removedApps.length}`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator]    AL files changed: ${alFilesChanged} (current hash: ${currentAlHash.substring(0, 8)}..., cached: ${cachedAlHash.substring(0, 8)}...)`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator]    Scenarios: onlyAppChanges=${onlyAppChanges}, onlyAlChanges=${onlyAlChanges}`);
+
+        // No changes at all
+        if (addedApps.length === 0 && removedApps.length === 0 && !alFilesChanged) {
+            // CustomConsole.customConsole.appendLine(`[AL Navigator] ℹ️  No changes detected - cache is up to date`);
+            return false; // Return false so caller knows no update was needed
+        } if (removedApps.length > 0 && addedApps.length === 0 && onlyAppChanges) {
+            // Only apps were removed - we can partially update
+            CustomConsole.customConsole.appendLine(`[AL Navigator] 📦 Scenario: Only .app files removed`);
+            return await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: 'Updating AL Objects Cache...',
+                    cancellable: false,
+                },
+                async (progress) => {
+                    const partialUpdateStartTime = Date.now();
+
+                    // Count objects before filtering
+                    const objectsBefore = objectCache!.objects.length;
+
+                    // Remove objects from deleted apps
+                    progress.report({ message: 'Removing objects from deleted apps...' });
+                    const filteredObjects = objectCache!.objects.filter(obj => {
+                        // Keep workspace objects
+                        if (obj.appName === '*workspace*') {
+                            return true;
+                        }
+                        // Keep objects from apps that still exist
+                        return !removedApps.includes(obj.appName);
+                    });
+
+                    const objectsRemoved = objectsBefore - filteredObjects.length;
+
+                    // Remove translations from deleted apps (we need to reload translations for safety)
+                    // because we don't track which translation came from which app
+                    progress.report({ message: 'Reloading translations...' });
+                    const translationsMap = await extractTranslationsFromAppFiles(workspaceFolder);
+
+                    // Update cache
+                    const newCacheKey = await generateCacheKey(workspaceFolder);
+                    const newAlHash = await generateAlFilesHash(workspaceFolder);
+                    objectCache = {
+                        objects: filteredObjects,
+                        translations: translationsMap,
+                        cacheKey: newCacheKey,
+                        timestamp: Date.now(),
+                        appFiles: currentAppFiles,
+                        alFilesHash: newAlHash,
+                        selectedLanguage: selectedLanguage
+                    };
+
+                    const partialUpdateDuration = Date.now() - partialUpdateStartTime;
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] ✅ Removed ${objectsRemoved} objects. Cache: ${filteredObjects.length} objects (${partialUpdateDuration}ms)`);
+                    return true;
+                }
+            );
+        }
+
+        // Check if only apps were added (no removals, no .al file changes)
+        if (addedApps.length > 0 && removedApps.length === 0 && onlyAppChanges) {
+            return await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: 'Updating AL Objects Cache...',
+                    cancellable: false,
+                },
+                async (progress) => {
+                    const partialUpdateStartTime = Date.now();
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Only apps added - partial cache update possible`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] Detected new .app files: ${addedApps.join(', ')}`);
+
+                    // Extract objects only from new apps
+                    progress.report({ message: `Extracting objects from ${addedApps.length} new app${addedApps.length > 1 ? 's' : ''}...` });
+                    const extractStartTime = Date.now();
+                    const newObjects: { id: number; name: string; type: string; appName: string }[] = [];
+                    for (const appFileName of addedApps) {
+                        const appFilePath = path.join(alpackagesFolderPath, appFileName);
+                        const objectsFromApp = await extractObjectsFromSingleAppFile(appFilePath, appFileName);
+                        newObjects.push(...objectsFromApp);
+                    }
+                    const extractDuration = Date.now() - extractStartTime;
+
+                    // Reload all translations (we don't know which translation came from new app)
+                    progress.report({ message: 'Reloading translations...' });
+                    const translationStartTime = Date.now();
+                    const translationsMap = await extractTranslationsFromAppFiles(workspaceFolder);
+                    const translationDuration = Date.now() - translationStartTime;
+
+                    // Update cache
+                    const combinedObjects = [...objectCache!.objects, ...newObjects];
+                    const newCacheKey = await generateCacheKey(workspaceFolder);
+                    const newAlHash = await generateAlFilesHash(workspaceFolder);
+                    objectCache = {
+                        objects: combinedObjects,
+                        translations: translationsMap,
+                        cacheKey: newCacheKey,
+                        timestamp: Date.now(),
+                        appFiles: currentAppFiles,
+                        alFilesHash: newAlHash,
+                        selectedLanguage: selectedLanguage
+                    };
+
+                    const partialUpdateDuration = Date.now() - partialUpdateStartTime;
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] Added ${newObjects.length} objects from new apps. Cache now has ${combinedObjects.length} objects.`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] ⏱️  Partial update breakdown: extraction=${extractDuration}ms, translations=${translationDuration}ms, total=${partialUpdateDuration}ms (${(partialUpdateDuration / 1000).toFixed(2)}s)`);
+                    return true;
+                }
+            );
+        }
+
+        // Check if only .al files changed (no .app file changes)
+        if (addedApps.length === 0 && removedApps.length === 0) {
+            return await vscode.window.withProgress(
+                {
+                    location: vscode.ProgressLocation.Notification,
+                    title: 'Updating Workspace AL Objects...',
+                    cancellable: false,
+                },
+                async (progress) => {
+                    const partialUpdateStartTime = Date.now();
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Only workspace .al files changed - partial cache update possible`);
+
+                    // Remove all workspace objects from cache
+                    progress.report({ message: 'Removing old workspace objects...' });
+                    const objectsBefore = objectCache!.objects.length;
+                    const appOnlyObjects = objectCache!.objects.filter(obj => obj.appName !== '*workspace*');
+                    const workspaceObjectsBefore = objectsBefore - appOnlyObjects.length;
+
+                    // Re-extract workspace objects
+                    progress.report({ message: 'Extracting workspace AL objects...' });
+                    const extractStartTime = Date.now();
+                    const alObjects = await extractObjectsFromAlFiles(workspaceFolder, ['page', 'report'], '*workspace*');
+                    const extractDuration = Date.now() - extractStartTime;
+
+                    // Combine app objects with new workspace objects
+                    const combinedObjects = [...appOnlyObjects, ...alObjects];
+
+                    // Update cache
+                    const newCacheKey = await generateCacheKey(workspaceFolder);
+                    const newAlHash = await generateAlFilesHash(workspaceFolder);
+                    objectCache = {
+                        objects: combinedObjects,
+                        translations: objectCache!.translations, // Keep existing translations
+                        cacheKey: newCacheKey,
+                        timestamp: Date.now(),
+                        appFiles: currentAppFiles,
+                        alFilesHash: newAlHash,
+                        selectedLanguage: selectedLanguage
+                    };
+
+                    const partialUpdateDuration = Date.now() - partialUpdateStartTime;
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] Replaced ${workspaceObjectsBefore} workspace objects with ${alObjects.length} objects. Cache now has ${combinedObjects.length} objects.`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] ⏱️  Partial update breakdown: extraction=${extractDuration}ms, total=${partialUpdateDuration}ms (${(partialUpdateDuration / 1000).toFixed(2)}s)`);
+                    return true;
+                }
+            );
+        }
+
+        // Changes are too complex for partial update
+        CustomConsole.customConsole.appendLine(`[AL Navigator] ✗ Changes too complex for partial update - full reload required`);
+        CustomConsole.customConsole.appendLine(`[AL Navigator]   Reason: addedApps=${addedApps.length}, removedApps=${removedApps.length}, onlyAppChanges=${onlyAppChanges}`);
+        return false;
+
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error during partial cache update: ${error.message}`);
+        return false;
+    }
+}
+
+// Clear the object cache (exported function)
+export async function clearObjectCache(): Promise<void> {
+    if (objectCache) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Cache cleared (had ${objectCache.objects.length} objects and ${objectCache.translations.size} translations)`);
+        objectCache = null;
+
+        // Also clear from persistent storage
+        if (extensionContext) {
+            const workspaceFolder = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+            if (workspaceFolder) {
+                const cacheKey = `${CACHE_STATE_KEY}.${Buffer.from(workspaceFolder).toString('base64')}`;
+                await extensionContext.workspaceState.update(cacheKey, undefined);
+                CustomConsole.customConsole.appendLine(`[AL Navigator] 💾 Cleared cache from storage`);
+            }
+        }
+
+        vscode.window.showInformationMessage('AL Navigator: Object cache cleared. Objects will be reloaded on next selection.');
+    } else {
+        vscode.window.showInformationMessage('AL Navigator: No cache to clear.');
+    }
+}
+
 // Show all objects from workspace and .app files
 async function showAllObjects(
     workspaceFolder: string,
@@ -367,70 +802,583 @@ async function showAllObjects(
     currentObjectId?: number,
     currentObjectType?: string
 ): Promise<{ label: string; id: number; type: string } | undefined> {
-    // Show progress indicator
-    const progressMessage = vscode.window.withProgress(
-        {
-            location: vscode.ProgressLocation.Notification,
-            title: 'Loading AL Objects...',
-            cancellable: false,
-        },
-        async (progress) => {
-            try {
-                progress.report({ message: 'Extracting objects from .app files...' });
-                const appObjects = await extractObjectsFromAppFiles(workspaceFolder);
+    // Automatically detect the most common translation language
+    const selectedLanguage = await detectMostCommonLanguage(workspaceFolder);
 
-                progress.report({ message: 'Extracting objects from .al files...' });
-                const alObjects = await extractObjectsFromAlFiles(workspaceFolder, ['page', 'report'], appName);
+    if (selectedLanguage) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] 🌍 Language: ${selectedLanguage.toUpperCase()}`);
+    } else {
+        // CustomConsole.customConsole.appendLine(`[AL Navigator] ℹ️  No translations available - showing English names only`);
+    }
 
-                progress.report({ message: 'Combining and sorting objects...' });
-                const combinedObjects = [...alObjects, ...appObjects].sort((a, b) => {
-                    // If we have a current object, sort it to the top
-                    if (currentObjectId) {
-                        const aIsCurrent = a.id === currentObjectId && a.type === currentObjectType;
-                        const bIsCurrent = b.id === currentObjectId && b.type === currentObjectType;
-                        if (aIsCurrent && !bIsCurrent) return -1;
-                        if (!aIsCurrent && bIsCurrent) return 1;
+    // Check if we can use cached data
+    const cacheValid = await isCacheValid(workspaceFolder, appName, selectedLanguage);
+
+    let combinedObjects: { id: number; name: string; type: string; appName: string }[];
+    let translations: Map<string, string>;
+
+    // Invalidate cache if it has 0 translations but we expect some (language is selected)
+    const cacheHasInvalidTranslations = objectCache && selectedLanguage && objectCache.translations.size === 0;
+
+    if (cacheHasInvalidTranslations) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] ⚠️  Cache has 0 translations but language '${selectedLanguage}' is selected - invalidating cache`);
+    }
+
+    if (cacheValid && objectCache && objectCache.selectedLanguage === selectedLanguage && !cacheHasInvalidTranslations) {
+        // CustomConsole.customConsole.appendLine(`[AL Navigator] Using ${objectCache.objects.length} cached objects and ${objectCache.translations.size} cached translations for ${selectedLanguage || 'no language'}`);
+        combinedObjects = objectCache.objects;
+        translations = objectCache.translations;
+    } else {
+        const fullLoadStartTime = Date.now();
+        // Show progress indicator
+        const progressMessage = vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: selectedLanguage ? `Loading AL Objects (${selectedLanguage})...` : 'Loading AL Objects...',
+                cancellable: false,
+            },
+            async (progress) => {
+                try {
+                    progress.report({ message: 'Extracting objects from .app files...' });
+                    const appStartTime = Date.now();
+                    const appObjects = await extractObjectsFromAppFiles(workspaceFolder);
+                    const appDuration = Date.now() - appStartTime;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] ⏱️  App extraction took ${appDuration}ms`);
+
+                    progress.report({ message: 'Extracting objects from .al files...' });
+                    const alStartTime = Date.now();
+                    const alObjects = await extractObjectsFromAlFiles(workspaceFolder, ['page', 'report'], '*workspace*');
+                    const alDuration = Date.now() - alStartTime;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] ⏱️  AL file extraction took ${alDuration}ms`);
+
+                    progress.report({ message: selectedLanguage ? `Loading translations (${selectedLanguage})...` : 'Loading translations...' });
+                    const translationStartTime = Date.now();
+
+                    // Load translations from .app files
+                    const appTranslations = await extractTranslationsFromAppFiles(workspaceFolder, selectedLanguage);
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] Loaded ${appTranslations.size} translations from .app files`);
+
+                    // Load translations from workspace XLF files
+                    const workspaceTranslations = await extractTranslationsFromWorkspaceXlf(workspaceFolder, selectedLanguage);
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] Loaded ${workspaceTranslations.size} translations from workspace XLF`);
+
+                    // Load translations from AL file comments (e.g., Comment = 'DEU="..."')
+                    const alCommentTranslations = await extractTranslationsFromAlFileComments(workspaceFolder, selectedLanguage);
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] Loaded ${alCommentTranslations.size} translations from AL file comments`);
+
+                    // Combine translations (priority: AL comments > workspace XLF > app translations)
+                    const combinedTranslations = new Map<string, string>([
+                        ...appTranslations,
+                        ...workspaceTranslations,
+                        ...alCommentTranslations  // AL comments have highest priority
+                    ]);
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 📊 Total combined translations: ${combinedTranslations.size}`);
+
+                    const translationDuration = Date.now() - translationStartTime;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] ⏱️  Translation extraction took ${translationDuration}ms`);
+
+                    progress.report({ message: 'Combining and sorting objects...' });
+                    const combined = [...alObjects, ...appObjects];
+
+                    if (combined.length === 0) {
+                        vscode.window.showErrorMessage('No AL objects found in the workspace or .app files.');
+                        return { objects: [], translations: new Map<string, string>() };
                     }
 
-                    if (a.type !== b.type) {
-                        return a.type === 'Page' ? -1 : 1; // Pages first
-                    }
-                    return a.id - b.id; // Sort by ID
-                });
-
-                if (combinedObjects.length === 0) {
-                    vscode.window.showErrorMessage('No AL objects found in the workspace or .app files.');
-                    return [];
+                    return { objects: combined, translations: combinedTranslations };
+                } catch (error) {
+                    vscode.window.showErrorMessage(`Error: ${error.message}`);
+                    return { objects: [], translations: new Map<string, string>() };
                 }
-
-                return combinedObjects;
-            } catch (error) {
-                vscode.window.showErrorMessage(`Error: ${error.message}`);
-                return [];
             }
-        }
-    );
+        );
 
-    const combinedObjects = await progressMessage;
+        const result = await progressMessage;
+        combinedObjects = result.objects;
+        translations = result.translations;
+
+        const fullLoadDuration = Date.now() - fullLoadStartTime;
+        CustomConsole.customConsole.appendLine(`[AL Navigator] ⏱️  Full cache reload: ${fullLoadDuration}ms (${(fullLoadDuration / 1000).toFixed(2)}s)`);
+
+        // Cache the results
+        if (combinedObjects.length > 0) {
+            const cacheKey = await generateCacheKey(workspaceFolder);
+            const alHash = await generateAlFilesHash(workspaceFolder);
+
+            // Get current .app files for cache
+            const alpackagesFolderPath = getAlPackagesFolder(workspaceFolder);
+            const appFiles = alpackagesFolderPath && fs.existsSync(alpackagesFolderPath)
+                ? fs.readdirSync(alpackagesFolderPath).filter(file => file.endsWith('.app')).sort()
+                : [];
+
+            objectCache = {
+                objects: combinedObjects,
+                translations: translations,
+                cacheKey: cacheKey,
+                timestamp: Date.now(),
+                appFiles: appFiles,
+                alFilesHash: alHash,
+                selectedLanguage: selectedLanguage
+            };
+            // CustomConsole.customConsole.appendLine(`[AL Navigator] Cached ${combinedObjects.length} objects and ${translations.size} translations from ${appFiles.length} .app files (language: ${selectedLanguage || 'auto'})`);
+
+            // Save cache to persistent storage
+            await saveCacheToStorage(workspaceFolder);
+        }
+    }
+
+    // Sort objects (after loading from cache or fresh load)
+    combinedObjects.sort((a, b) => {
+        // If we have a current object, sort it to the top
+        if (currentObjectId) {
+            const aIsCurrent = a.id === currentObjectId && a.type === currentObjectType;
+            const bIsCurrent = b.id === currentObjectId && b.type === currentObjectType;
+            if (aIsCurrent && !bIsCurrent) return -1;
+            if (!aIsCurrent && bIsCurrent) return 1;
+        }
+
+        if (a.type !== b.type) {
+            return a.type === 'Page' ? -1 : 1; // Pages first
+        }
+        return a.id - b.id; // Sort by ID
+    });
 
     if (combinedObjects.length === 0) {
         return undefined;
     }
 
-    // Show the Quick Pick menu
-    return await vscode.window.showQuickPick(
-        combinedObjects.map((obj) => ({
-            label: `${obj.type} | ID: ${obj.id} | ${obj.name}`,
+    // Show the Quick Pick menu with translations
+    // CustomConsole.customConsole.appendLine(`[AL Navigator] Building QuickPick with ${combinedObjects.length} objects and ${translations.size} translations`);
+
+    // Debug: Show all translation keys that contain "Customer" to understand the mapping
+    // CustomConsole.customConsole.appendLine(`[AL Navigator] === Debug: All Customer-related translations ===`);
+    // for (const [key, value] of translations.entries()) {
+    //     if (key.toLowerCase().includes('customer')) {
+    //         CustomConsole.customConsole.appendLine(`[AL Navigator]   ${key} = ${value}`);
+    //     }
+    // }
+    // CustomConsole.customConsole.appendLine(`[AL Navigator] === End of Customer translations ===`);
+
+    // Debug: Show all translation keys that contain "Location" to understand the mapping
+    // CustomConsole.customConsole.appendLine(`[AL Navigator] === Debug: All Location-related translations ===`);
+    // for (const [key, value] of translations.entries()) {
+    //     if (key.toLowerCase().includes('location')) {
+    //         CustomConsole.customConsole.appendLine(`[AL Navigator]   ${key} = ${value}`);
+    //     }
+    // }
+    // CustomConsole.customConsole.appendLine(`[AL Navigator] === End of Location translations ===`);
+
+    // Create QuickPick for object selection
+    const quickPick = vscode.window.createQuickPick();
+    quickPick.placeholder = currentObjectId
+        ? `Select an object (Current: ${currentObjectType} ${currentObjectId})`
+        : `Select an object to set as the startup object`;
+
+    quickPick.items = combinedObjects.map((obj) => {
+        // Use the object name (English) as the key for translation lookup
+        const translationKey = `${obj.type}-${obj.name}`;
+        let translation = translations.get(translationKey);
+        let usedFallback = false;
+
+        // Glossary: Apply abbreviation translations BEFORE fallback strategies
+        // This provides base translations that fallback patterns can then use
+        // Example: "G/L Entry" -> "Sachposten" (then "G/L Entries" can become "Sachposten" via fallback)
+        if (!translation) {
+            const glossary = new Map<string, string>([
+                // General Ledger / Sachposten
+                ['G/L', 'Sachposten'],
+                ['G/L Entry', 'Sachposten'],
+                ['G/L Entries', 'Sachposten'],
+                ['G/L Account', 'Sachkonto'],
+                ['G/L Accounts', 'Sachkonten'],
+                ['G/L Register', 'Sachpostenjournal'],
+
+                // Intercompany / Konzernintern
+                ['IC', 'Konz.'],
+                ['IC Partner', 'Konz.-Partner'],
+                ['IC Partners', 'Konz.-Partner'],
+                ['IC Inbox', 'Konz.-Eingang'],
+                ['IC Outbox', 'Konz.-Ausgang'],
+
+                // Job / Projekt
+                ['Job', 'Projekt'],
+                ['Jobs', 'Projekte'],
+                ['Job Card', 'Projektkarte'],
+                ['Job List', 'Projekte'],
+                ['Job Task', 'Projektaufgabe'],
+                ['Job Tasks', 'Projektaufgaben'],
+                ['Job Planning Line', 'Projektplanungszeile'],
+                ['Job Planning Lines', 'Projektplanungszeilen'],
+                ['Job Journal', 'Projekt Buch.-Blatt'],
+
+                // CRM / Customer Relationship Management
+                ['CRM', 'CRM'],
+                ['CRM Statistics', 'CRM-Statistik'],
+
+                // Additional common abbreviations
+                ['Std.', 'Standard'],
+                ['Purch.', 'Einkauf'],
+                ['Whse.', 'Lager'],
+                ['Invt.', 'Lager'],
+                ['FA', 'Anlagen'],
+                ['BOM', 'Stückliste'],
+                ['SKU', 'Lagereinheit'],
+                ['VAT', 'MwSt.'],
+                ['Qty', 'Menge'],
+                ['Amt', 'Betrag'],
+                ['Subcontracting', 'Fremdarbeit'],
+
+                // Power BI & Azure (keep English)
+                ['Power BI', 'Power BI'],
+                ['Azure AD', 'Azure AD'],
+                ['Azure', 'Azure'],
+
+                // Email & Technical (keep English)
+                ['Email', 'E-Mail'],
+                ['SMTP', 'SMTP'],
+                ['OCR', 'OCR'],
+                ['XML', 'XML'],
+                ['API', 'API']
+            ]);
+
+            // First try exact match in glossary
+            let glossaryTranslation = glossary.get(obj.name);
+
+            // If no exact match, try to find and replace parts
+            if (!glossaryTranslation) {
+                let modifiedName = obj.name;
+                let foundGlossaryMatch = false;
+
+                // Try to replace each glossary term in the object name
+                for (const [englishTerm, germanTerm] of glossary.entries()) {
+                    if (modifiedName.includes(englishTerm)) {
+                        modifiedName = modifiedName.replace(new RegExp(englishTerm, 'g'), germanTerm);
+                        foundGlossaryMatch = true;
+                    }
+                }
+
+                // If we found glossary matches, try to look up the modified name
+                if (foundGlossaryMatch) {
+                    const glossaryKey = `${obj.type}-${modifiedName}`;
+                    glossaryTranslation = translations.get(glossaryKey);
+
+                    if (glossaryTranslation) {
+                        translation = glossaryTranslation;
+                        usedFallback = true;
+                        CustomConsole.customConsole.appendLine(`[AL Navigator] 📖 Glossary: "${obj.name}" -> "${modifiedName}" = "${translation}"`);
+                    }
+                }
+            } else {
+                // Found exact match in glossary
+                translation = glossaryTranslation;
+                usedFallback = true;
+                CustomConsole.customConsole.appendLine(`[AL Navigator] 📖 Glossary (exact): "${obj.name}" = "${translation}"`);
+            }
+        }
+
+        // Fallback strategies if no direct translation found
+        if (!translation) {
+            // Strategy 1: If name ends with " List", try plural form
+            // Example: "Location List" -> "Locations"
+            if (obj.name.endsWith(' List')) {
+                const baseNamePlural = obj.name.replace(' List', 's');
+                const fallbackKey = `${obj.type}-${baseNamePlural}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (List→s): "${obj.name}" -> "${baseNamePlural}" = "${translation}"`);
+                }
+            }
+
+            // Strategy 2: Try replacing "persons" with "people"
+            // Example: "Salespersons/Purchasers" -> "Salespeople/Purchasers"
+            if (!translation && obj.name.includes('persons')) {
+                const peopleName = obj.name.replace('persons', 'people');
+                const fallbackKey = `${obj.type}-${peopleName}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (persons→people): "${obj.name}" -> "${peopleName}" = "${translation}"`);
+                }
+            }
+
+            // Strategy 3: Try common singular/plural variations
+            // Example: "Salesperson" -> "Salespeople", "Person" -> "People"
+            if (!translation && obj.name.includes('person')) {
+                const variations = [
+                    obj.name.replace('person', 'people'),
+                    obj.name.replace('Person', 'People')
+                ];
+
+                for (const variant of variations) {
+                    const fallbackKey = `${obj.type}-${variant}`;
+                    translation = translations.get(fallbackKey);
+                    if (translation) {
+                        usedFallback = true;
+                        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (person→people): "${obj.name}" -> "${variant}" = "${translation}"`);
+                        break;
+                    }
+                }
+            }
+
+            // Strategy 4: If name ends with " Lookup", try plural form
+            // Example: "Vendor Lookup" -> "Vendors", "Customer Lookup" -> "Customers"
+            if (!translation && obj.name.endsWith(' Lookup')) {
+                const baseName = obj.name.replace(' Lookup', '');
+                const baseNamePlural = baseName + 's';
+                const fallbackKey = `${obj.type}-${baseNamePlural}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Lookup→s): "${obj.name}" -> "${baseNamePlural}" = "${translation}"`);
+                }
+            }
+
+            // Strategy 5: If name ends with " Subform", try just "Lines"
+            // Example: "Sales Order Subform" -> "Lines", "Purchase Order Subform" -> "Lines"
+            // Microsoft uses generic "Lines" caption for most subform pages
+            if (!translation && obj.name.endsWith(' Subform')) {
+                const fallbackKey = `${obj.type}-Lines`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Subform→Lines): "${obj.name}" -> "Lines" = "${translation}"`);
+                }
+            }
+
+            // Strategy 6: If name contains " Comment " with a prefix, try removing prefix
+            // Example: "Purch. Comment List" -> "Comment List", "Sales Comment Sheet" -> "Comment Sheet"
+            // Microsoft uses this pattern for comment pages across different modules
+            if (!translation && obj.name.includes(' Comment ')) {
+                const commentIndex = obj.name.indexOf(' Comment ');
+                if (commentIndex > 0) {
+                    const withoutPrefix = obj.name.substring(commentIndex + 1); // +1 to skip the space
+                    const fallbackKey = `${obj.type}-${withoutPrefix}`;
+                    translation = translations.get(fallbackKey);
+
+                    if (translation) {
+                        usedFallback = true;
+                        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Remove prefix before Comment): "${obj.name}" -> "${withoutPrefix}" = "${translation}"`);
+                    }
+                }
+            }
+
+            // Strategy 7: If name ends with " Entity", try without Entity suffix
+            // Example: "Sales Invoice Entity" -> "Sales Invoice", "Customer Entity" -> "Customer"
+            // API pages often have "Entity" suffix which is not in translations
+            if (!translation && obj.name.endsWith(' Entity')) {
+                const baseName = obj.name.replace(' Entity', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Entity): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                }
+            }
+
+            // Strategy 8: If name ends with " Part", try without Part suffix
+            // Example: "G/L Entries Part" -> "G/L Entries", "My Notifications Part" -> "My Notifications"
+            // List parts often have "Part" suffix which is not in translations
+            if (!translation && obj.name.endsWith(' Part')) {
+                const baseName = obj.name.replace(' Part', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Part): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                }
+            }
+
+            // Strategy 9: If name ends with " FactBox", try without FactBox suffix
+            // Example: "Item Statistics FactBox" -> "Item Statistics", "Job List FactBox" -> "Job List"
+            // FactBox pages typically have same caption as their base page
+            if (!translation && obj.name.endsWith(' FactBox')) {
+                const baseName = obj.name.replace(' FactBox', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (FactBox): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                }
+            }
+
+            // Strategy 10: If name ends with " Lines", try translating as "Zeilen"
+            // Example: "Sales Lines" -> "Sales" + "Zeilen", "Worksheet Lines" -> "Worksheet" + "Zeilen"
+            // Many line subpages follow this pattern
+            if (!translation && obj.name.endsWith(' Lines')) {
+                const baseName = obj.name.replace(' Lines', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                const baseTranslation = translations.get(fallbackKey);
+
+                if (baseTranslation) {
+                    // Combine base translation with "Zeilen" (German for "Lines")
+                    translation = `${baseTranslation}zeilen`;
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Lines→Zeilen): "${obj.name}" -> "${baseName}" + "zeilen" = "${translation}"`);
+                }
+            }
+
+            // Strategy 11: If name ends with " Setup", try translating as "Einrichtung"
+            // Example: "Marketing Setup" -> "Marketing" + "Einrichtung"
+            // Setup pages typically use this German translation pattern
+            if (!translation && obj.name.endsWith(' Setup')) {
+                const baseName = obj.name.replace(' Setup', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                const baseTranslation = translations.get(fallbackKey);
+
+                if (baseTranslation) {
+                    // Combine base translation with "Einrichtung" (German for "Setup")
+                    translation = `${baseTranslation}einrichtung`;
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Setup→Einrichtung): "${obj.name}" -> "${baseName}" + "einrichtung" = "${translation}"`);
+                }
+            }
+
+            // Strategy 12: If name ends with " Preview", try without Preview or with "Vorschau"
+            // Example: "G/L Posting Preview" -> "G/L Posting", then try with "Vorschau"
+            // Preview pages often have same caption as their base page
+            if (!translation && obj.name.endsWith(' Preview')) {
+                const baseName = obj.name.replace(' Preview', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Preview): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                } else {
+                    // Try adding "Vorschau" to the base translation
+                    const baseTranslation = translations.get(fallbackKey);
+                    if (baseTranslation) {
+                        translation = `${baseTranslation} Vorschau`;
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Preview→Vorschau): "${obj.name}" -> "${baseName}" + " Vorschau" = "${translation}"`);
+                    }
+                }
+            }
+
+            // Strategy 13: If name ends with " Card", try without Card or with "Karte"
+            // Example: "Resource Group Card" -> "Resource Group", then try with "Karte"
+            // Card pages often have same caption as their base entity
+            if (!translation && obj.name.endsWith(' Card')) {
+                const baseName = obj.name.replace(' Card', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Card): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                } else {
+                    // Try adding "Karte" to the base translation
+                    const baseTranslation = translations.get(fallbackKey);
+                    if (baseTranslation) {
+                        translation = `${baseTranslation}karte`;
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Card→Karte): "${obj.name}" -> "${baseName}" + "karte" = "${translation}"`);
+                    }
+                }
+            }
+
+            // Strategy 14: If name ends with " Activities", try translating as "Aktivitäten"
+            // Example: "Office 365 Sales Activities" -> "Office 365 Sales" + "Aktivitäten"
+            // Activity pages follow this pattern
+            if (!translation && obj.name.endsWith(' Activities')) {
+                const baseName = obj.name.replace(' Activities', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                const baseTranslation = translations.get(fallbackKey);
+
+                if (baseTranslation) {
+                    // Combine base translation with "Aktivitäten" (German for "Activities")
+                    translation = `${baseTranslation} Aktivitäten`;
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Activities→Aktivitäten): "${obj.name}" -> "${baseName}" + " Aktivitäten" = "${translation}"`);
+                }
+            }
+
+            // Strategy 15: If name ends with " Wizard", try translating as "Assistent"
+            // Example: "CRM Connection Setup Wizard" -> "CRM Connection Setup" + "Assistent"
+            // Wizard pages use "Assistent" in German
+            if (!translation && obj.name.endsWith(' Wizard')) {
+                const baseName = obj.name.replace(' Wizard', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                const baseTranslation = translations.get(fallbackKey);
+
+                if (baseTranslation) {
+                    // Combine base translation with "Assistent" (German for "Wizard")
+                    translation = `${baseTranslation} Assistent`;
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Wizard→Assistent): "${obj.name}" -> "${baseName}" + " Assistent" = "${translation}"`);
+                }
+            }
+
+            // Strategy 16: If name starts with "APIV2 -", try removing the API prefix
+            // Example: "APIV2 - Sales Quotes" -> "Sales Quotes"
+            // API pages have this technical prefix which is not in translations
+            if (!translation && obj.name.startsWith('APIV2 - ')) {
+                const baseName = obj.name.replace('APIV2 - ', '');
+                const fallbackKey = `${obj.type}-${baseName}`;
+                translation = translations.get(fallbackKey);
+
+                if (translation) {
+                    usedFallback = true;
+                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (APIV2): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                }
+            }
+
+            // Note: Generic keyword-based fallback removed because it caused too many false matches
+            // (e.g., "Email Editor" matching "Email Viewer", "Job List" matching "Inventory List")
+            // Only specific, tested fallback strategies are kept
+        }
+
+        // Debug: Log the first few lookups
+        if (combinedObjects.indexOf(obj) < 3) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Lookup: ${translationKey} -> ${translation || 'NOT FOUND'}${usedFallback ? ' (via fallback)' : ''}`);
+        }
+
+        const nameWithTranslation = translation
+            ? `${obj.name} / ${translation}`
+            : obj.name;
+
+        return {
+            label: `${obj.type} | ID: ${obj.id} | ${nameWithTranslation}`,
             detail: `App: ${obj.appName || 'Unknown'}`,
             id: obj.id,
             type: obj.type,
-        })),
-        {
-            placeHolder: currentObjectId
-                ? `Select an object (Current: ${currentObjectType} ${currentObjectId})`
-                : 'Select an object to set as the startup object (Type | ID | Name | App)'
-        }
-    );
+            translation: translation, // Store translation for later analysis
+        } as any; // Cast to any to add custom properties
+    });
+
+    // Log all objects without translation for pattern analysis
+    const untranslatedObjects = quickPick.items.filter((item: any) => !item.translation);
+    if (untranslatedObjects.length > 0) {
+        CustomConsole.customConsole.appendLine(`\n[AL Navigator] ❌ ${untranslatedObjects.length} objects without translation:`);
+        untranslatedObjects.forEach((item: any) => {
+            CustomConsole.customConsole.appendLine(`   ${item.type} | "${item.label.split(' | ')[2]}" (ID: ${item.id}, App: ${item.detail.replace('App: ', '')})`);
+        });
+        CustomConsole.customConsole.appendLine(`[AL Navigator] ===\n`);
+    }
+
+    // Return a promise that handles object selection
+    return new Promise((resolve) => {
+        quickPick.onDidAccept(() => {
+            const selected = quickPick.selectedItems[0] as any;
+            quickPick.hide();
+            resolve(selected);
+        });
+
+        quickPick.onDidHide(() => {
+            quickPick.dispose();
+            resolve(undefined);
+        });
+
+        quickPick.show();
+    });
 }
 
 // Update all selected launch.json files with the chosen startup object
@@ -926,6 +1874,56 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
     return objects;
 }
 
+// Extract objects from a single .app file (used for incremental cache updates)
+async function extractObjectsFromSingleAppFile(
+    appFilePath: string,
+    appFileName: string
+): Promise<{ id: number; name: string; type: string; appName: string }[]> {
+    const objects: { id: number; name: string; type: string; appName: string }[] = [];
+    const cleanedAppFilePath = path.join(path.dirname(appFilePath), `${path.basename(appFilePath, '.app')}.zip`);
+
+    try {
+        await removeHeaderFromAppFile(appFilePath, cleanedAppFilePath);
+
+        const zip = new AdmZip(cleanedAppFilePath);
+        const entries = zip.getEntries();
+        let objectCount = 0;
+
+        for (const entry of entries) {
+            if (entry.entryName.endsWith('.al')) {
+                const content = entry.getData().toString('utf-8');
+                const matches = [
+                    ...content.matchAll(/(page|report)\s+(\d+)\s+"([^"]+)"/gi)
+                ];
+                for (const match of matches) {
+                    const type = match[1].toLowerCase();
+                    const id = parseInt(match[2], 10);
+                    const name = match[3];
+                    if (!isNaN(id)) {
+                        objects.push({ id, name, type: capitalize(type), appName: appFileName });
+                        objectCount++;
+                    }
+                }
+            }
+        }
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Extracted ${objectCount} objects from ${appFileName}`);
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error processing ${appFileName}: ${error.message}`);
+        throw error;
+    } finally {
+        // Delete the temporary ZIP file
+        if (fs.existsSync(cleanedAppFilePath)) {
+            try {
+                fs.unlinkSync(cleanedAppFilePath);
+            } catch (unlinkError) {
+                CustomConsole.customConsole.appendLine(`[AL Navigator] Warning: Could not delete temp file ${cleanedAppFilePath}`);
+            }
+        }
+    }
+
+    return objects;
+}
+
 // Get current workspace app information
 function getCurrentAppInfo(workspaceFolder: string): { name: string; version: string } | null {
     const appJsonPath = path.join(workspaceFolder, 'app.json');
@@ -994,6 +1992,418 @@ async function extractObjectsFromAlFiles(
     }
 
     return objects;
+}
+
+// Detect most common language from XLF files in .app packages
+// Returns the language that appears most frequently across all .app files
+async function detectMostCommonLanguage(folderPath: string): Promise<string | undefined> {
+    const languageCounts = new Map<string, number>();
+
+    const alpackagesFolderPath = getAlPackagesFolder(folderPath);
+    if (!alpackagesFolderPath) {
+        return undefined;
+    }
+
+    let appFiles: string[];
+    try {
+        appFiles = fs.readdirSync(alpackagesFolderPath).filter(file => file.endsWith('.app'));
+    } catch (error) {
+        return undefined;
+    }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔍 Analyzing ${appFiles.length} .app files to determine most common translation language...`);
+
+    // Scan each .app file and count language occurrences
+    for (const file of appFiles) {
+        const appFilePath = path.join(alpackagesFolderPath, file);
+        const cleanedAppFilePath = path.join(path.dirname(appFilePath), `${path.basename(appFilePath, '.app')}_lang_detect_temp.zip`);
+
+        try {
+            await removeHeaderFromAppFile(appFilePath, cleanedAppFilePath);
+            const zip = new AdmZip(cleanedAppFilePath);
+            const entries = zip.getEntries();
+
+            for (const entry of entries) {
+                // Find XLF files, but EXCLUDE *.g.xlf (generated base files)
+                if (entry.entryName.includes('Translations/') &&
+                    entry.entryName.endsWith('.xlf') &&
+                    !entry.entryName.endsWith('.g.xlf')) {
+
+                    // Extract language code from filename
+                    // Examples: "Base Application.de-DE.xlf" -> "de-DE"
+                    //           "System Application.fr-FR.xlf" -> "fr-FR"
+                    const filename = path.basename(entry.entryName);
+                    const langMatch = filename.match(/\.([a-z]{2}-[A-Z]{2})\.xlf$/);
+                    if (langMatch) {
+                        const lang = langMatch[1].toLowerCase();
+                        languageCounts.set(lang, (languageCounts.get(lang) || 0) + 1);
+                    }
+                }
+            }
+        } catch (error) {
+            // Silently skip problematic .app files during language detection
+        } finally {
+            if (fs.existsSync(cleanedAppFilePath)) {
+                try {
+                    fs.unlinkSync(cleanedAppFilePath);
+                } catch { /* ignore */ }
+            }
+        }
+    }
+
+    if (languageCounts.size === 0) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] ℹ️  No translation files found in any .app package`);
+        return undefined;
+    }
+
+    // Find the most common language
+    let mostCommonLanguage: string | undefined;
+    let maxCount = 0;
+
+    for (const [lang, count] of languageCounts.entries()) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator]   📊 ${lang.toUpperCase()}: ${count} file(s)`);
+        if (count > maxCount) {
+            maxCount = count;
+            mostCommonLanguage = lang;
+        }
+    }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] 🎯 Most common language: ${mostCommonLanguage?.toUpperCase()} (${maxCount} files)`);
+    return mostCommonLanguage;
+}// Extracts translations from XLF files in .app packages for a specific language
+async function extractTranslationsFromAppFiles(folderPath: string, selectedLanguage?: string): Promise<Map<string, string>> {
+    const translations = new Map<string, string>();
+
+    if (selectedLanguage) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Extracting translations for language: ${selectedLanguage}`);
+    } else {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Auto-detecting translations from .app files`);
+    }
+
+    // Get the .alpackages folder path
+    const alpackagesFolderPath = getAlPackagesFolder(folderPath);
+    if (!alpackagesFolderPath) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] No .alpackages folder found for translation extraction`);
+        return translations;
+    }
+
+    let appFiles: string[];
+    try {
+        appFiles = fs.readdirSync(alpackagesFolderPath).filter(file => file.endsWith('.app'));
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error reading .alpackages folder: ${error.message}`);
+        return translations;
+    }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Searching ${appFiles.length} .app files for XLF translations`);
+
+    // Process each app file
+    for (const file of appFiles) {
+        const appFilePath = path.join(alpackagesFolderPath, file);
+        const cleanedAppFilePath = path.join(path.dirname(appFilePath), `${path.basename(appFilePath, '.app')}_xlf_temp.zip`);
+
+        try {
+            await removeHeaderFromAppFile(appFilePath, cleanedAppFilePath);
+            const zip = new AdmZip(cleanedAppFilePath);
+            const entries = zip.getEntries();
+
+            // Look for XLF files matching the selected language, or ALL if no language specified
+            let foundXlfInThisApp = false;
+            for (const entry of entries) {
+                // EXCLUDE *.g.xlf (generated base files - not translations!)
+                if (entry.entryName.includes('Translations/') &&
+                    entry.entryName.endsWith('.xlf') &&
+                    !entry.entryName.endsWith('.g.xlf')) {
+
+                    // If a specific language is selected, only process matching files (case-insensitive)
+                    if (selectedLanguage) {
+                        const filename = path.basename(entry.entryName).toLowerCase();
+                        const searchPattern = `.${selectedLanguage.toLowerCase()}.xlf`;
+                        if (!filename.includes(searchPattern)) {
+                            continue; // Skip XLF files that don't match the selected language
+                        }
+                    }
+
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Found XLF file: ${entry.entryName} in ${file}`);
+                    foundXlfInThisApp = true;
+
+                    try {
+                        const xlfContent = entry.getData().toString('utf-8');
+                        const beforeCount = translations.size;
+                        parseXlfForObjectTranslations(xlfContent, translations);
+                        const addedCount = translations.size - beforeCount;
+                        CustomConsole.customConsole.appendLine(`[AL Navigator]   Added ${addedCount} translations from this XLF file`);
+                    } catch (parseError) {
+                        CustomConsole.customConsole.appendLine(`[AL Navigator] ✗ Error parsing XLF file ${entry.entryName}: ${parseError.message}`);
+                    }
+                }
+            }
+
+            if (!foundXlfInThisApp) {
+                CustomConsole.customConsole.appendLine(`[AL Navigator] No XLF translation files found in ${file}`);
+            }
+        } catch (error) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Error processing ${file} for translations: ${error.message}`);
+        } finally {
+            // Clean up temp file
+            if (fs.existsSync(cleanedAppFilePath)) {
+                try {
+                    fs.unlinkSync(cleanedAppFilePath);
+                } catch (unlinkError) {
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] Warning: Could not delete temp file ${cleanedAppFilePath}`);
+                }
+            }
+        }
+    }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] Extracted ${translations.size} object translations`);
+    return translations;
+}
+
+// Parse XLF content to extract object name translations (Page and Report captions)
+function parseXlfForObjectTranslations(xlfContent: string, translations: Map<string, string>): void {
+    // XLF structure example:
+    // <trans-unit id="Page 123456789 - Property 2879900210" ...>
+    //   <source>Customers</source>  <- This is the Caption text
+    //   <target>Debitoren</target>
+    //   <note from="Developer" annotates="general">Caption</note>
+    //   <note from="Xliff Generator">Page Customer List - Property Caption</note>  <- This contains the actual object name!
+    // </trans-unit>
+
+    // Match trans-units for Page and Report captions
+    const transUnitRegex = /<trans-unit[^>]*id="(Page|Report)\s+\d+[^"]*"[^>]*>([\s\S]*?)<\/trans-unit>/gi;
+    let match;
+
+    while ((match = transUnitRegex.exec(xlfContent)) !== null) {
+        const objectType = match[1]; // "Page" or "Report"
+        const transUnitContent = match[2];
+
+        // Check if this is a Caption property (the object's main name)
+        if (transUnitContent.includes('Property Caption') || transUnitContent.includes('annotates="general">Caption')) {
+            // Extract source (Caption text) and target (translated caption)
+            const sourceMatch = /<source[^>]*>(.*?)<\/source>/i.exec(transUnitContent);
+            const targetMatch = /<target[^>]*>(.*?)<\/target>/i.exec(transUnitContent);
+
+            // Extract the actual object name from the Xliff Generator note
+            // Format: "Page Customer List - Property Caption" or "Report Sales Invoice - Property Caption"
+            const noteMatch = /<note from="Xliff Generator"[^>]*>(Page|Report)\s+([^-]+?)\s+-\s+Property Caption<\/note>/i.exec(transUnitContent);
+
+            if (sourceMatch && sourceMatch[1] && targetMatch && targetMatch[1]) {
+                const captionText = sourceMatch[1].trim(); // e.g., "Customers"
+                const translation = targetMatch[1].trim(); // e.g., "Debitoren"
+
+                // Store translation with Caption as key (1for objects where Caption = Name)
+                const captionKey = `${objectType}-${captionText}`;
+                translations.set(captionKey, translation);
+
+                // Debug: Log Location-related entries to understand the XLF structure
+                if (captionText.toLowerCase().includes('location') && captionText.toLowerCase() !== 'location') {
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔍 Location XLF entry found:`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator]   Caption: "${captionText}"`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator]   Translation: "${translation}"`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator]   Note match: ${noteMatch ? `YES - "${noteMatch[2].trim()}"` : 'NO'}`);
+                    if (!noteMatch) {
+                        // Try to find ANY note to see what's in there
+                        const anyNoteMatch = /<note from="Xliff Generator"[^>]*>(.*?)<\/note>/i.exec(transUnitContent);
+                        if (anyNoteMatch) {
+                            CustomConsole.customConsole.appendLine(`[AL Navigator]   Full note content: "${anyNoteMatch[1]}"`);
+                        }
+                    }
+                }
+
+                // If we found the object name in the note, also store with object name as key
+                if (noteMatch && noteMatch[2]) {
+                    const objectName = noteMatch[2].trim(); // e.g., "Customer List"
+                    const objectNameKey = `${objectType}-${objectName}`;
+                    translations.set(objectNameKey, translation);
+
+                    // Debug: Log when Caption differs from Object Name
+                    if (captionText !== objectName) {
+                        // Only log occasionally to avoid spam
+                        if (Math.random() < 0.1) {
+                            CustomConsole.customConsole.appendLine(`[AL Navigator] Translation mapping: "${objectName}" (Caption: "${captionText}") -> "${translation}"`);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Extracts translations from XLF files in the workspace's Translations folder
+async function extractTranslationsFromWorkspaceXlf(workspaceFolder: string, selectedLanguage?: string): Promise<Map<string, string>> {
+    const translations = new Map<string, string>();
+    const translationsFolderPath = path.join(workspaceFolder, 'Translations');
+
+    // Check if Translations folder exists
+    if (!fs.existsSync(translationsFolderPath)) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] No Translations folder found in workspace`);
+        return translations;
+    }
+
+    try {
+        const files = fs.readdirSync(translationsFolderPath);
+        const xlfFiles = files.filter(file =>
+            file.endsWith('.xlf') &&
+            !file.endsWith('.g.xlf') // Exclude generated base files
+        );
+
+        if (xlfFiles.length === 0) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] No XLF translation files found in workspace Translations folder`);
+            return translations;
+        }
+
+        CustomConsole.customConsole.appendLine(`[AL Navigator] 📁 Found ${xlfFiles.length} XLF file(s) in workspace Translations folder`);
+
+        // Process each XLF file
+        for (const xlfFile of xlfFiles) {
+            // If a specific language is selected, only process matching files
+            if (selectedLanguage) {
+                const searchPattern = `.${selectedLanguage.toLowerCase()}.xlf`;
+                if (!xlfFile.toLowerCase().includes(searchPattern)) {
+                    continue; // Skip XLF files that don't match the selected language
+                }
+            }
+
+            const xlfFilePath = path.join(translationsFolderPath, xlfFile);
+            CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Processing workspace XLF: ${xlfFile}`);
+
+            try {
+                const xlfContent = fs.readFileSync(xlfFilePath, 'utf-8');
+                const beforeCount = translations.size;
+                parseXlfForObjectTranslations(xlfContent, translations);
+                const addedCount = translations.size - beforeCount;
+                CustomConsole.customConsole.appendLine(`[AL Navigator]   Added ${addedCount} translations from workspace XLF`);
+            } catch (parseError) {
+                CustomConsole.customConsole.appendLine(`[AL Navigator] ✗ Error parsing workspace XLF ${xlfFile}: ${parseError.message}`);
+            }
+        }
+
+        CustomConsole.customConsole.appendLine(`[AL Navigator] 📦 Total workspace translations: ${translations.size}`);
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error reading workspace Translations folder: ${error.message}`);
+    }
+
+    return translations;
+}
+
+// Extracts translations from AL file comments (e.g., Comment = 'DEU="..."')
+async function extractTranslationsFromAlFileComments(workspaceFolder: string, selectedLanguage?: string): Promise<Map<string, string>> {
+    const translations = new Map<string, string>();
+
+    if (!selectedLanguage) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] No language selected - skipping AL comment translation extraction`);
+        return translations;
+    }
+
+    // Map language codes to comment prefixes
+    // Common formats: DEU="...", FRA="...", ENU="...", etc.
+    const languageMap: { [key: string]: string } = {
+        'de-de': 'DEU',
+        'de-at': 'DEU',
+        'de-ch': 'DEU',
+        'fr-fr': 'FRA',
+        'fr-be': 'FRA',
+        'fr-ca': 'FRA',
+        'fr-ch': 'FRA',
+        'en-us': 'ENU',
+        'en-gb': 'ENU',
+        'en-ca': 'ENU',
+        'en-au': 'ENU',
+        'es-es': 'ESP',
+        'es-mx': 'ESM',
+        'it-it': 'ITA',
+        'it-ch': 'ITA',
+        'nl-nl': 'NLD',
+        'nl-be': 'NLB',
+        'da-dk': 'DAN',
+        'sv-se': 'SVE',
+        'nb-no': 'NOR',
+        'fi-fi': 'FIN',
+        'cs-cz': 'CSY',
+        'is-is': 'ISL'
+    };
+
+    const languagePrefix = languageMap[selectedLanguage.toLowerCase()];
+    if (!languagePrefix) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] No comment prefix mapping found for language: ${selectedLanguage}`);
+        return translations;
+    }
+
+    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔍 Searching AL files for ${languagePrefix}="..." comment translations`);
+
+    try {
+        // Search for all .al files in the workspace
+        const pattern = new vscode.RelativePattern(workspaceFolder, '**/*.al');
+        const alFiles = await vscode.workspace.findFiles(pattern, '**/node_modules/**');
+
+        let filesProcessed = 0;
+        let translationsFound = 0;
+
+        for (const file of alFiles) {
+            const content = fs.readFileSync(file.fsPath, 'utf-8');
+            const lines = content.split('\n');
+
+            // Find page and report declarations
+            // Example: page 60002 "Dispatcher Prices"
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const objectMatch = /(page|report)\s+(\d+)\s+"([^"]+)"/i.exec(line);
+
+                if (objectMatch) {
+                    const objectType = objectMatch[1].toLowerCase(); // "page" or "report"
+                    const objectId = objectMatch[2];
+                    const objectName = objectMatch[3];
+
+                    // Look for Caption in the next ~20 lines (before we hit layout/actions/triggers)
+                    // This ensures we only get the object-level Caption, not control Captions
+                    let foundTranslation = false;
+                    for (let j = i + 1; j < Math.min(i + 20, lines.length); j++) {
+                        const checkLine = lines[j];
+
+                        // Stop if we hit layout, actions, or trigger sections
+                        if (/^\s*(layout|actions|trigger|var)\s*\{/i.test(checkLine)) {
+                            break;
+                        }
+
+                        // Look for Caption with comment translation on this line
+                        const captionRegex = new RegExp(
+                            `Caption\\s*=\\s*'([^']*)'[^;]*Comment\\s*=\\s*'[^']*${languagePrefix}="([^"]*)"`,
+                            'i'
+                        );
+
+                        const capMatch = captionRegex.exec(checkLine);
+                        if (capMatch) {
+                            const englishCaption = capMatch[1];
+                            const translation = capMatch[2];
+
+                            // Store translation with object type and name
+                            const translationKey = `${capitalize(objectType)}-${objectName}`;
+                            translations.set(translationKey, translation);
+                            translationsFound++;
+
+                            CustomConsole.customConsole.appendLine(
+                                `[AL Navigator]   ✓ Found in AL: ${capitalize(objectType)} "${objectName}" -> "${translation}"`
+                            );
+
+                            foundTranslation = true;
+                            break; // Found the object caption, stop searching
+                        }
+                    }
+                }
+            }
+
+            filesProcessed++;
+        }
+
+        CustomConsole.customConsole.appendLine(
+            `[AL Navigator] 📄 Processed ${filesProcessed} AL files, found ${translationsFound} comment translations`
+        );
+    } catch (error) {
+        CustomConsole.customConsole.appendLine(`[AL Navigator] Error extracting translations from AL comments: ${error.message}`);
+    }
+
+    return translations;
 }
 
 // Removes the header from a .app file
