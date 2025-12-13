@@ -54,6 +54,10 @@ export function activate(context: vscode.ExtensionContext) {
                 quickLaunchStatusBar.updateStatusBarText();
             },
         },
+        {
+            command: "extension.clearObjectCache",
+            callback: async () => await LaunchJsonUpdater.clearObjectCache(),
+        },
         { command: "extension.insertTranslationFromComment", callback: XlfUpdater.insertTranslationFromComment },
         { command: "extension.TranslateAndCopyToClipboard", callback: () => Translator.translateAndCopyToClipboard(false) },
 
