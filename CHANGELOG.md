@@ -4,6 +4,14 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.8]**
+- **Enhancement:** Caption-based translation lookup - the extension now extracts the Caption property from page and report objects and uses it as the primary key for finding translations in XLF files, resulting in more accurate translations
+- **Enhancement:** Smart Caption detection with Locked property handling - Captions marked with `Locked = true` (technical/API names) are automatically ignored and fallback to using the object name for translation lookup
+- **Enhancement:** Improved translation accuracy - by using the Caption property which often matches the actual translation keys in XLF files, the extension now finds more direct translations without relying on fallback strategies
+- **Enhancement:** Multi-level translation fallback - when a Caption exists, the extension first tries to find a translation for the Caption, then falls back to the object name, and finally applies intelligent fallback strategies if needed
+- **Performance:** Efficient Caption extraction - uses regex pattern matching to extract Captions from the next ~2000 characters after object declaration, avoiding full file parsing
+- **Enhancement:** Caption extraction from all sources - Captions are extracted from workspace .al files, .app packages, and during incremental cache updates for consistent behavior
+
 ### **[0.8.7]**
 - **New Feature:** Object list now displays translations from XLF files - when selecting startup objects, the extension shows both English and translated object names (e.g., "Customer List / Debitorenliste") automatically detected from your .app packages
 - **Enhancement:** Automatic translation extraction from .app packages - the extension now parses XLF translation files from all .app files in your .alpackages folder to provide accurate object name translations
