@@ -11,7 +11,7 @@ const AdmZip = require('adm-zip'); // For handling .app files
 
 // Cache interface for storing loaded objects and translations
 interface ObjectCache {
-    objects: { id: number; name: string; type: string; appName: string }[];
+    objects: { id: number; name: string; type: string; appName: string; caption?: string }[];
     translations: Map<string, string>;
     cacheKey: string;
     timestamp: number;
@@ -22,7 +22,7 @@ interface ObjectCache {
 
 // Serializable cache interface for persistence (Map needs to be converted to array)
 interface SerializableObjectCache {
-    objects: { id: number; name: string; type: string; appName: string }[];
+    objects: { id: number; name: string; type: string; appName: string; caption?: string }[];
     translations: [string, string][]; // Map converted to array of [key, value] pairs
     cacheKey: string;
     timestamp: number;
@@ -814,7 +814,7 @@ async function showAllObjects(
     // Check if we can use cached data
     const cacheValid = await isCacheValid(workspaceFolder, appName, selectedLanguage);
 
-    let combinedObjects: { id: number; name: string; type: string; appName: string }[];
+    let combinedObjects: { id: number; name: string; type: string; appName: string; caption?: string }[];
     let translations: Map<string, string>;
 
     // Invalidate cache if it has 0 translations but we expect some (language is selected)
@@ -975,370 +975,396 @@ async function showAllObjects(
         : `Select an object to set as the startup object`;
 
     quickPick.items = combinedObjects.map((obj) => {
-        // Use the object name (English) as the key for translation lookup
-        const translationKey = `${obj.type}-${obj.name}`;
-        let translation = translations.get(translationKey);
+        let translation: string | undefined = undefined;
+        let usedCaption = false;
         let usedFallback = false;
 
-        // Glossary: Apply abbreviation translations BEFORE fallback strategies
-        // This provides base translations that fallback patterns can then use
-        // Example: "G/L Entry" -> "Sachposten" (then "G/L Entries" can become "Sachposten" via fallback)
-        if (!translation) {
-            const glossary = new Map<string, string>([
-                // General Ledger / Sachposten
-                ['G/L', 'Sachposten'],
-                ['G/L Entry', 'Sachposten'],
-                ['G/L Entries', 'Sachposten'],
-                ['G/L Account', 'Sachkonto'],
-                ['G/L Accounts', 'Sachkonten'],
-                ['G/L Register', 'Sachpostenjournal'],
+        // Priority 1: If Caption exists, use it as translation key
+        if (obj.caption) {
+            // Use Caption as the key for translation lookup
+            const captionTranslationKey = `${obj.type}-${obj.caption}`;
+            translation = translations.get(captionTranslationKey);
+            usedCaption = true;
 
-                // Intercompany / Konzernintern
-                ['IC', 'Konz.'],
-                ['IC Partner', 'Konz.-Partner'],
-                ['IC Partners', 'Konz.-Partner'],
-                ['IC Inbox', 'Konz.-Eingang'],
-                ['IC Outbox', 'Konz.-Ausgang'],
-
-                // Job / Projekt
-                ['Job', 'Projekt'],
-                ['Jobs', 'Projekte'],
-                ['Job Card', 'Projektkarte'],
-                ['Job List', 'Projekte'],
-                ['Job Task', 'Projektaufgabe'],
-                ['Job Tasks', 'Projektaufgaben'],
-                ['Job Planning Line', 'Projektplanungszeile'],
-                ['Job Planning Lines', 'Projektplanungszeilen'],
-                ['Job Journal', 'Projekt Buch.-Blatt'],
-
-                // CRM / Customer Relationship Management
-                ['CRM', 'CRM'],
-                ['CRM Statistics', 'CRM-Statistik'],
-
-                // Additional common abbreviations
-                ['Std.', 'Standard'],
-                ['Purch.', 'Einkauf'],
-                ['Whse.', 'Lager'],
-                ['Invt.', 'Lager'],
-                ['FA', 'Anlagen'],
-                ['BOM', 'Stückliste'],
-                ['SKU', 'Lagereinheit'],
-                ['VAT', 'MwSt.'],
-                ['Qty', 'Menge'],
-                ['Amt', 'Betrag'],
-                ['Subcontracting', 'Fremdarbeit'],
-
-                // Power BI & Azure (keep English)
-                ['Power BI', 'Power BI'],
-                ['Azure AD', 'Azure AD'],
-                ['Azure', 'Azure'],
-
-                // Email & Technical (keep English)
-                ['Email', 'E-Mail'],
-                ['SMTP', 'SMTP'],
-                ['OCR', 'OCR'],
-                ['XML', 'XML'],
-                ['API', 'API']
-            ]);
-
-            // First try exact match in glossary
-            let glossaryTranslation = glossary.get(obj.name);
-
-            // If no exact match, try to find and replace parts
-            if (!glossaryTranslation) {
-                let modifiedName = obj.name;
-                let foundGlossaryMatch = false;
-
-                // Try to replace each glossary term in the object name
-                for (const [englishTerm, germanTerm] of glossary.entries()) {
-                    if (modifiedName.includes(englishTerm)) {
-                        modifiedName = modifiedName.replace(new RegExp(englishTerm, 'g'), germanTerm);
-                        foundGlossaryMatch = true;
-                    }
-                }
-
-                // If we found glossary matches, try to look up the modified name
-                if (foundGlossaryMatch) {
-                    const glossaryKey = `${obj.type}-${modifiedName}`;
-                    glossaryTranslation = translations.get(glossaryKey);
-
-                    if (glossaryTranslation) {
-                        translation = glossaryTranslation;
-                        usedFallback = true;
-                        CustomConsole.customConsole.appendLine(`[AL Navigator] 📖 Glossary: "${obj.name}" -> "${modifiedName}" = "${translation}"`);
-                    }
-                }
-            } else {
-                // Found exact match in glossary
-                translation = glossaryTranslation;
-                usedFallback = true;
-                CustomConsole.customConsole.appendLine(`[AL Navigator] 📖 Glossary (exact): "${obj.name}" = "${translation}"`);
+            // If no translation found for caption, try with object name as fallback
+            if (!translation) {
+                const nameTranslationKey = `${obj.type}-${obj.name}`;
+                translation = translations.get(nameTranslationKey);
+                usedCaption = false; // We fell back to name-based lookup
             }
         }
 
-        // Fallback strategies if no direct translation found
+        // Priority 2: If no Caption, try to find translation using object name
         if (!translation) {
-            // Strategy 1: If name ends with " List", try plural form
-            // Example: "Location List" -> "Locations"
-            if (obj.name.endsWith(' List')) {
-                const baseNamePlural = obj.name.replace(' List', 's');
-                const fallbackKey = `${obj.type}-${baseNamePlural}`;
-                translation = translations.get(fallbackKey);
+            const translationKey = `${obj.type}-${obj.name}`;
+            translation = translations.get(translationKey);
+            usedFallback = false;
 
-                if (translation) {
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (List→s): "${obj.name}" -> "${baseNamePlural}" = "${translation}"`);
-                }
-            }
+            // Glossary: Apply abbreviation translations BEFORE fallback strategies
+            // This provides base translations that fallback patterns can then use
+            // Example: "G/L Entry" -> "Sachposten" (then "G/L Entries" can become "Sachposten" via fallback)
+            if (!translation) {
+                const glossary = new Map<string, string>([
+                    // General Ledger / Sachposten
+                    ['G/L', 'Sachposten'],
+                    ['G/L Entry', 'Sachposten'],
+                    ['G/L Entries', 'Sachposten'],
+                    ['G/L Account', 'Sachkonto'],
+                    ['G/L Accounts', 'Sachkonten'],
+                    ['G/L Register', 'Sachpostenjournal'],
 
-            // Strategy 2: Try replacing "persons" with "people"
-            // Example: "Salespersons/Purchasers" -> "Salespeople/Purchasers"
-            if (!translation && obj.name.includes('persons')) {
-                const peopleName = obj.name.replace('persons', 'people');
-                const fallbackKey = `${obj.type}-${peopleName}`;
-                translation = translations.get(fallbackKey);
+                    // Intercompany / Konzernintern
+                    ['IC', 'Konz.'],
+                    ['IC Partner', 'Konz.-Partner'],
+                    ['IC Partners', 'Konz.-Partner'],
+                    ['IC Inbox', 'Konz.-Eingang'],
+                    ['IC Outbox', 'Konz.-Ausgang'],
 
-                if (translation) {
-                    usedFallback = true;
-                    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (persons→people): "${obj.name}" -> "${peopleName}" = "${translation}"`);
-                }
-            }
+                    // Job / Projekt
+                    ['Job', 'Projekt'],
+                    ['Jobs', 'Projekte'],
+                    ['Job Card', 'Projektkarte'],
+                    ['Job List', 'Projekte'],
+                    ['Job Task', 'Projektaufgabe'],
+                    ['Job Tasks', 'Projektaufgaben'],
+                    ['Job Planning Line', 'Projektplanungszeile'],
+                    ['Job Planning Lines', 'Projektplanungszeilen'],
+                    ['Job Journal', 'Projekt Buch.-Blatt'],
 
-            // Strategy 3: Try common singular/plural variations
-            // Example: "Salesperson" -> "Salespeople", "Person" -> "People"
-            if (!translation && obj.name.includes('person')) {
-                const variations = [
-                    obj.name.replace('person', 'people'),
-                    obj.name.replace('Person', 'People')
-                ];
+                    // CRM / Customer Relationship Management
+                    ['CRM', 'CRM'],
+                    ['CRM Statistics', 'CRM-Statistik'],
 
-                for (const variant of variations) {
-                    const fallbackKey = `${obj.type}-${variant}`;
-                    translation = translations.get(fallbackKey);
-                    if (translation) {
-                        usedFallback = true;
-                        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (person→people): "${obj.name}" -> "${variant}" = "${translation}"`);
-                        break;
+                    // Additional common abbreviations
+                    ['Std.', 'Standard'],
+                    ['Purch.', 'Einkauf'],
+                    ['Whse.', 'Lager'],
+                    ['Invt.', 'Lager'],
+                    ['FA', 'Anlagen'],
+                    ['BOM', 'Stückliste'],
+                    ['SKU', 'Lagereinheit'],
+                    ['VAT', 'MwSt.'],
+                    ['Qty', 'Menge'],
+                    ['Amt', 'Betrag'],
+                    ['Subcontracting', 'Fremdarbeit'],
+
+                    // Power BI & Azure (keep English)
+                    ['Power BI', 'Power BI'],
+                    ['Azure AD', 'Azure AD'],
+                    ['Azure', 'Azure'],
+
+                    // Email & Technical (keep English)
+                    ['Email', 'E-Mail'],
+                    ['SMTP', 'SMTP'],
+                    ['OCR', 'OCR'],
+                    ['XML', 'XML'],
+                    ['API', 'API']
+                ]);
+
+                // First try exact match in glossary
+                let glossaryTranslation = glossary.get(obj.name);
+
+                // If no exact match, try to find and replace parts
+                if (!glossaryTranslation) {
+                    let modifiedName = obj.name;
+                    let foundGlossaryMatch = false;
+
+                    // Try to replace each glossary term in the object name
+                    for (const [englishTerm, germanTerm] of glossary.entries()) {
+                        if (modifiedName.includes(englishTerm)) {
+                            modifiedName = modifiedName.replace(new RegExp(englishTerm, 'g'), germanTerm);
+                            foundGlossaryMatch = true;
+                        }
                     }
-                }
-            }
 
-            // Strategy 4: If name ends with " Lookup", try plural form
-            // Example: "Vendor Lookup" -> "Vendors", "Customer Lookup" -> "Customers"
-            if (!translation && obj.name.endsWith(' Lookup')) {
-                const baseName = obj.name.replace(' Lookup', '');
-                const baseNamePlural = baseName + 's';
-                const fallbackKey = `${obj.type}-${baseNamePlural}`;
-                translation = translations.get(fallbackKey);
+                    // If we found glossary matches, try to look up the modified name
+                    if (foundGlossaryMatch) {
+                        const glossaryKey = `${obj.type}-${modifiedName}`;
+                        glossaryTranslation = translations.get(glossaryKey);
 
-                if (translation) {
+                        if (glossaryTranslation) {
+                            translation = glossaryTranslation;
+                            usedFallback = true;
+                            CustomConsole.customConsole.appendLine(`[AL Navigator] 📖 Glossary: "${obj.name}" -> "${modifiedName}" = "${translation}"`);
+                        }
+                    }
+                } else {
+                    // Found exact match in glossary
+                    translation = glossaryTranslation;
                     usedFallback = true;
-                    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Lookup→s): "${obj.name}" -> "${baseNamePlural}" = "${translation}"`);
+                    CustomConsole.customConsole.appendLine(`[AL Navigator] 📖 Glossary (exact): "${obj.name}" = "${translation}"`);
                 }
             }
 
-            // Strategy 5: If name ends with " Subform", try just "Lines"
-            // Example: "Sales Order Subform" -> "Lines", "Purchase Order Subform" -> "Lines"
-            // Microsoft uses generic "Lines" caption for most subform pages
-            if (!translation && obj.name.endsWith(' Subform')) {
-                const fallbackKey = `${obj.type}-Lines`;
-                translation = translations.get(fallbackKey);
-
-                if (translation) {
-                    usedFallback = true;
-                    CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Subform→Lines): "${obj.name}" -> "Lines" = "${translation}"`);
-                }
-            }
-
-            // Strategy 6: If name contains " Comment " with a prefix, try removing prefix
-            // Example: "Purch. Comment List" -> "Comment List", "Sales Comment Sheet" -> "Comment Sheet"
-            // Microsoft uses this pattern for comment pages across different modules
-            if (!translation && obj.name.includes(' Comment ')) {
-                const commentIndex = obj.name.indexOf(' Comment ');
-                if (commentIndex > 0) {
-                    const withoutPrefix = obj.name.substring(commentIndex + 1); // +1 to skip the space
-                    const fallbackKey = `${obj.type}-${withoutPrefix}`;
+            // Fallback strategies if no direct translation found
+            if (!translation) {
+                // Strategy 1: If name ends with " List", try plural form
+                // Example: "Location List" -> "Locations"
+                if (obj.name.endsWith(' List')) {
+                    const baseNamePlural = obj.name.replace(' List', 's');
+                    const fallbackKey = `${obj.type}-${baseNamePlural}`;
                     translation = translations.get(fallbackKey);
 
                     if (translation) {
                         usedFallback = true;
-                        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Remove prefix before Comment): "${obj.name}" -> "${withoutPrefix}" = "${translation}"`);
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (List→s): "${obj.name}" -> "${baseNamePlural}" = "${translation}"`);
                     }
                 }
-            }
 
-            // Strategy 7: If name ends with " Entity", try without Entity suffix
-            // Example: "Sales Invoice Entity" -> "Sales Invoice", "Customer Entity" -> "Customer"
-            // API pages often have "Entity" suffix which is not in translations
-            if (!translation && obj.name.endsWith(' Entity')) {
-                const baseName = obj.name.replace(' Entity', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                translation = translations.get(fallbackKey);
+                // Strategy 2: Try replacing "persons" with "people"
+                // Example: "Salespersons/Purchasers" -> "Salespeople/Purchasers"
+                if (!translation && obj.name.includes('persons')) {
+                    const peopleName = obj.name.replace('persons', 'people');
+                    const fallbackKey = `${obj.type}-${peopleName}`;
+                    translation = translations.get(fallbackKey);
 
-                if (translation) {
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Entity): "${obj.name}" -> "${baseName}" = "${translation}"`);
-                }
-            }
-
-            // Strategy 8: If name ends with " Part", try without Part suffix
-            // Example: "G/L Entries Part" -> "G/L Entries", "My Notifications Part" -> "My Notifications"
-            // List parts often have "Part" suffix which is not in translations
-            if (!translation && obj.name.endsWith(' Part')) {
-                const baseName = obj.name.replace(' Part', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                translation = translations.get(fallbackKey);
-
-                if (translation) {
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Part): "${obj.name}" -> "${baseName}" = "${translation}"`);
-                }
-            }
-
-            // Strategy 9: If name ends with " FactBox", try without FactBox suffix
-            // Example: "Item Statistics FactBox" -> "Item Statistics", "Job List FactBox" -> "Job List"
-            // FactBox pages typically have same caption as their base page
-            if (!translation && obj.name.endsWith(' FactBox')) {
-                const baseName = obj.name.replace(' FactBox', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                translation = translations.get(fallbackKey);
-
-                if (translation) {
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (FactBox): "${obj.name}" -> "${baseName}" = "${translation}"`);
-                }
-            }
-
-            // Strategy 10: If name ends with " Lines", try translating as "Zeilen"
-            // Example: "Sales Lines" -> "Sales" + "Zeilen", "Worksheet Lines" -> "Worksheet" + "Zeilen"
-            // Many line subpages follow this pattern
-            if (!translation && obj.name.endsWith(' Lines')) {
-                const baseName = obj.name.replace(' Lines', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                const baseTranslation = translations.get(fallbackKey);
-
-                if (baseTranslation) {
-                    // Combine base translation with "Zeilen" (German for "Lines")
-                    translation = `${baseTranslation}zeilen`;
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Lines→Zeilen): "${obj.name}" -> "${baseName}" + "zeilen" = "${translation}"`);
-                }
-            }
-
-            // Strategy 11: If name ends with " Setup", try translating as "Einrichtung"
-            // Example: "Marketing Setup" -> "Marketing" + "Einrichtung"
-            // Setup pages typically use this German translation pattern
-            if (!translation && obj.name.endsWith(' Setup')) {
-                const baseName = obj.name.replace(' Setup', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                const baseTranslation = translations.get(fallbackKey);
-
-                if (baseTranslation) {
-                    // Combine base translation with "Einrichtung" (German for "Setup")
-                    translation = `${baseTranslation}einrichtung`;
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Setup→Einrichtung): "${obj.name}" -> "${baseName}" + "einrichtung" = "${translation}"`);
-                }
-            }
-
-            // Strategy 12: If name ends with " Preview", try without Preview or with "Vorschau"
-            // Example: "G/L Posting Preview" -> "G/L Posting", then try with "Vorschau"
-            // Preview pages often have same caption as their base page
-            if (!translation && obj.name.endsWith(' Preview')) {
-                const baseName = obj.name.replace(' Preview', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                translation = translations.get(fallbackKey);
-
-                if (translation) {
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Preview): "${obj.name}" -> "${baseName}" = "${translation}"`);
-                } else {
-                    // Try adding "Vorschau" to the base translation
-                    const baseTranslation = translations.get(fallbackKey);
-                    if (baseTranslation) {
-                        translation = `${baseTranslation} Vorschau`;
+                    if (translation) {
                         usedFallback = true;
-                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Preview→Vorschau): "${obj.name}" -> "${baseName}" + " Vorschau" = "${translation}"`);
+                        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (persons→people): "${obj.name}" -> "${peopleName}" = "${translation}"`);
                     }
                 }
-            }
 
-            // Strategy 13: If name ends with " Card", try without Card or with "Karte"
-            // Example: "Resource Group Card" -> "Resource Group", then try with "Karte"
-            // Card pages often have same caption as their base entity
-            if (!translation && obj.name.endsWith(' Card')) {
-                const baseName = obj.name.replace(' Card', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                translation = translations.get(fallbackKey);
+                // Strategy 3: Try common singular/plural variations
+                // Example: "Salesperson" -> "Salespeople", "Person" -> "People"
+                if (!translation && obj.name.includes('person')) {
+                    const variations = [
+                        obj.name.replace('person', 'people'),
+                        obj.name.replace('Person', 'People')
+                    ];
 
-                if (translation) {
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Card): "${obj.name}" -> "${baseName}" = "${translation}"`);
-                } else {
-                    // Try adding "Karte" to the base translation
-                    const baseTranslation = translations.get(fallbackKey);
-                    if (baseTranslation) {
-                        translation = `${baseTranslation}karte`;
+                    for (const variant of variations) {
+                        const fallbackKey = `${obj.type}-${variant}`;
+                        translation = translations.get(fallbackKey);
+                        if (translation) {
+                            usedFallback = true;
+                            CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (person→people): "${obj.name}" -> "${variant}" = "${translation}"`);
+                            break;
+                        }
+                    }
+                }
+
+                // Strategy 4: If name ends with " Lookup", try plural form
+                // Example: "Vendor Lookup" -> "Vendors", "Customer Lookup" -> "Customers"
+                if (!translation && obj.name.endsWith(' Lookup')) {
+                    const baseName = obj.name.replace(' Lookup', '');
+                    const baseNamePlural = baseName + 's';
+                    const fallbackKey = `${obj.type}-${baseNamePlural}`;
+                    translation = translations.get(fallbackKey);
+
+                    if (translation) {
                         usedFallback = true;
-                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Card→Karte): "${obj.name}" -> "${baseName}" + "karte" = "${translation}"`);
+                        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Lookup→s): "${obj.name}" -> "${baseNamePlural}" = "${translation}"`);
                     }
                 }
-            }
 
-            // Strategy 14: If name ends with " Activities", try translating as "Aktivitäten"
-            // Example: "Office 365 Sales Activities" -> "Office 365 Sales" + "Aktivitäten"
-            // Activity pages follow this pattern
-            if (!translation && obj.name.endsWith(' Activities')) {
-                const baseName = obj.name.replace(' Activities', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                const baseTranslation = translations.get(fallbackKey);
+                // Strategy 5: If name ends with " Subform", try just "Lines"
+                // Example: "Sales Order Subform" -> "Lines", "Purchase Order Subform" -> "Lines"
+                // Microsoft uses generic "Lines" caption for most subform pages
+                if (!translation && obj.name.endsWith(' Subform')) {
+                    const fallbackKey = `${obj.type}-Lines`;
+                    translation = translations.get(fallbackKey);
 
-                if (baseTranslation) {
-                    // Combine base translation with "Aktivitäten" (German for "Activities")
-                    translation = `${baseTranslation} Aktivitäten`;
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Activities→Aktivitäten): "${obj.name}" -> "${baseName}" + " Aktivitäten" = "${translation}"`);
+                    if (translation) {
+                        usedFallback = true;
+                        CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Subform→Lines): "${obj.name}" -> "Lines" = "${translation}"`);
+                    }
                 }
-            }
 
-            // Strategy 15: If name ends with " Wizard", try translating as "Assistent"
-            // Example: "CRM Connection Setup Wizard" -> "CRM Connection Setup" + "Assistent"
-            // Wizard pages use "Assistent" in German
-            if (!translation && obj.name.endsWith(' Wizard')) {
-                const baseName = obj.name.replace(' Wizard', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                const baseTranslation = translations.get(fallbackKey);
+                // Strategy 6: If name contains " Comment " with a prefix, try removing prefix
+                // Example: "Purch. Comment List" -> "Comment List", "Sales Comment Sheet" -> "Comment Sheet"
+                // Microsoft uses this pattern for comment pages across different modules
+                if (!translation && obj.name.includes(' Comment ')) {
+                    const commentIndex = obj.name.indexOf(' Comment ');
+                    if (commentIndex > 0) {
+                        const withoutPrefix = obj.name.substring(commentIndex + 1); // +1 to skip the space
+                        const fallbackKey = `${obj.type}-${withoutPrefix}`;
+                        translation = translations.get(fallbackKey);
 
-                if (baseTranslation) {
-                    // Combine base translation with "Assistent" (German for "Wizard")
-                    translation = `${baseTranslation} Assistent`;
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Wizard→Assistent): "${obj.name}" -> "${baseName}" + " Assistent" = "${translation}"`);
+                        if (translation) {
+                            usedFallback = true;
+                            CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Remove prefix before Comment): "${obj.name}" -> "${withoutPrefix}" = "${translation}"`);
+                        }
+                    }
                 }
-            }
 
-            // Strategy 16: If name starts with "APIV2 -", try removing the API prefix
-            // Example: "APIV2 - Sales Quotes" -> "Sales Quotes"
-            // API pages have this technical prefix which is not in translations
-            if (!translation && obj.name.startsWith('APIV2 - ')) {
-                const baseName = obj.name.replace('APIV2 - ', '');
-                const fallbackKey = `${obj.type}-${baseName}`;
-                translation = translations.get(fallbackKey);
+                // Strategy 7: If name ends with " Entity", try without Entity suffix
+                // Example: "Sales Invoice Entity" -> "Sales Invoice", "Customer Entity" -> "Customer"
+                // API pages often have "Entity" suffix which is not in translations
+                if (!translation && obj.name.endsWith(' Entity')) {
+                    const baseName = obj.name.replace(' Entity', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    translation = translations.get(fallbackKey);
 
-                if (translation) {
-                    usedFallback = true;
-                    // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (APIV2): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                    if (translation) {
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Entity): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                    }
                 }
-            }
 
-            // Note: Generic keyword-based fallback removed because it caused too many false matches
-            // (e.g., "Email Editor" matching "Email Viewer", "Job List" matching "Inventory List")
-            // Only specific, tested fallback strategies are kept
-        }
+                // Strategy 8: If name ends with " Part", try without Part suffix
+                // Example: "G/L Entries Part" -> "G/L Entries", "My Notifications Part" -> "My Notifications"
+                // List parts often have "Part" suffix which is not in translations
+                if (!translation && obj.name.endsWith(' Part')) {
+                    const baseName = obj.name.replace(' Part', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    translation = translations.get(fallbackKey);
+
+                    if (translation) {
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Part): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                    }
+                }
+
+                // Strategy 9: If name ends with " FactBox", try without FactBox suffix
+                // Example: "Item Statistics FactBox" -> "Item Statistics", "Job List FactBox" -> "Job List"
+                // FactBox pages typically have same caption as their base page
+                if (!translation && obj.name.endsWith(' FactBox')) {
+                    const baseName = obj.name.replace(' FactBox', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    translation = translations.get(fallbackKey);
+
+                    if (translation) {
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (FactBox): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                    }
+                }
+
+                // Strategy 10: If name ends with " Lines", try translating as "Zeilen"
+                // Example: "Sales Lines" -> "Sales" + "Zeilen", "Worksheet Lines" -> "Worksheet" + "Zeilen"
+                // Many line subpages follow this pattern
+                if (!translation && obj.name.endsWith(' Lines')) {
+                    const baseName = obj.name.replace(' Lines', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    const baseTranslation = translations.get(fallbackKey);
+
+                    if (baseTranslation) {
+                        // Combine base translation with "Zeilen" (German for "Lines")
+                        translation = `${baseTranslation}zeilen`;
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Lines→Zeilen): "${obj.name}" -> "${baseName}" + "zeilen" = "${translation}"`);
+                    }
+                }
+
+                // Strategy 11: If name ends with " Setup", try translating as "Einrichtung"
+                // Example: "Marketing Setup" -> "Marketing" + "Einrichtung"
+                // Setup pages typically use this German translation pattern
+                if (!translation && obj.name.endsWith(' Setup')) {
+                    const baseName = obj.name.replace(' Setup', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    const baseTranslation = translations.get(fallbackKey);
+
+                    if (baseTranslation) {
+                        // Combine base translation with "Einrichtung" (German for "Setup")
+                        translation = `${baseTranslation}einrichtung`;
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Setup→Einrichtung): "${obj.name}" -> "${baseName}" + "einrichtung" = "${translation}"`);
+                    }
+                }
+
+                // Strategy 12: If name ends with " Preview", try without Preview or with "Vorschau"
+                // Example: "G/L Posting Preview" -> "G/L Posting", then try with "Vorschau"
+                // Preview pages often have same caption as their base page
+                if (!translation && obj.name.endsWith(' Preview')) {
+                    const baseName = obj.name.replace(' Preview', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    translation = translations.get(fallbackKey);
+
+                    if (translation) {
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Preview): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                    } else {
+                        // Try adding "Vorschau" to the base translation
+                        const baseTranslation = translations.get(fallbackKey);
+                        if (baseTranslation) {
+                            translation = `${baseTranslation} Vorschau`;
+                            usedFallback = true;
+                            // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Preview→Vorschau): "${obj.name}" -> "${baseName}" + " Vorschau" = "${translation}"`);
+                        }
+                    }
+                }
+
+                // Strategy 13: If name ends with " Card", try without Card or with "Karte"
+                // Example: "Resource Group Card" -> "Resource Group", then try with "Karte"
+                // Card pages often have same caption as their base entity
+                if (!translation && obj.name.endsWith(' Card')) {
+                    const baseName = obj.name.replace(' Card', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    translation = translations.get(fallbackKey);
+
+                    if (translation) {
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Card): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                    } else {
+                        // Try adding "Karte" to the base translation
+                        const baseTranslation = translations.get(fallbackKey);
+                        if (baseTranslation) {
+                            translation = `${baseTranslation}karte`;
+                            usedFallback = true;
+                            // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Card→Karte): "${obj.name}" -> "${baseName}" + "karte" = "${translation}"`);
+                        }
+                    }
+                }
+
+                // Strategy 14: If name ends with " Activities", try translating as "Aktivitäten"
+                // Example: "Office 365 Sales Activities" -> "Office 365 Sales" + "Aktivitäten"
+                // Activity pages follow this pattern
+                if (!translation && obj.name.endsWith(' Activities')) {
+                    const baseName = obj.name.replace(' Activities', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    const baseTranslation = translations.get(fallbackKey);
+
+                    if (baseTranslation) {
+                        // Combine base translation with "Aktivitäten" (German for "Activities")
+                        translation = `${baseTranslation} Aktivitäten`;
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Activities→Aktivitäten): "${obj.name}" -> "${baseName}" + " Aktivitäten" = "${translation}"`);
+                    }
+                }
+
+                // Strategy 15: If name ends with " Wizard", try translating as "Assistent"
+                // Example: "CRM Connection Setup Wizard" -> "CRM Connection Setup" + "Assistent"
+                // Wizard pages use "Assistent" in German
+                if (!translation && obj.name.endsWith(' Wizard')) {
+                    const baseName = obj.name.replace(' Wizard', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    const baseTranslation = translations.get(fallbackKey);
+
+                    if (baseTranslation) {
+                        // Combine base translation with "Assistent" (German for "Wizard")
+                        translation = `${baseTranslation} Assistent`;
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (Wizard→Assistent): "${obj.name}" -> "${baseName}" + " Assistent" = "${translation}"`);
+                    }
+                }
+
+                // Strategy 16: If name starts with "APIV2 -", try removing the API prefix
+                // Example: "APIV2 - Sales Quotes" -> "Sales Quotes"
+                // API pages have this technical prefix which is not in translations
+                if (!translation && obj.name.startsWith('APIV2 - ')) {
+                    const baseName = obj.name.replace('APIV2 - ', '');
+                    const fallbackKey = `${obj.type}-${baseName}`;
+                    translation = translations.get(fallbackKey);
+
+                    if (translation) {
+                        usedFallback = true;
+                        // CustomConsole.customConsole.appendLine(`[AL Navigator] 🔄 Fallback (APIV2): "${obj.name}" -> "${baseName}" = "${translation}"`);
+                    }
+                }
+
+                // Note: Generic keyword-based fallback removed because it caused too many false matches
+                // (e.g., "Email Editor" matching "Email Viewer", "Job List" matching "Inventory List")
+                // Only specific, tested fallback strategies are kept
+            }
+        } // End of else block (Priority 2: Translation from XLF files)
 
         // Debug: Log the first few lookups
         if (combinedObjects.indexOf(obj) < 3) {
-            CustomConsole.customConsole.appendLine(`[AL Navigator] Lookup: ${translationKey} -> ${translation || 'NOT FOUND'}${usedFallback ? ' (via fallback)' : ''}`);
+            if (usedCaption && obj.caption) {
+                CustomConsole.customConsole.appendLine(`[AL Navigator] 📝 Caption lookup: ${obj.type}-${obj.caption} -> ${translation || 'NOT FOUND'}`);
+            } else {
+                const translationKey = `${obj.type}-${obj.name}`;
+                CustomConsole.customConsole.appendLine(`[AL Navigator] Lookup: ${translationKey} -> ${translation || 'NOT FOUND'}${usedFallback ? ' (via fallback)' : ''}`);
+            }
         }
 
         const nameWithTranslation = translation
@@ -1738,8 +1764,8 @@ function getAppNameFromAppJson(workspaceFolder: string): string {
 }
 
 // Extracts objects from .app files
-async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: number; name: string; type: string; appName: string }[]> {
-    const objects: { id: number; name: string; type: string; appName: string }[] = [];
+async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: number; name: string; type: string; appName: string; caption?: string }[]> {
+    const objects: { id: number; name: string; type: string; appName: string; caption?: string }[] = [];
 
     // Get the .alpackages folder path (supports custom al.packageCachePath configuration)
     const alpackagesFolderPath = getAlPackagesFolder(folderPath);
@@ -1848,7 +1874,25 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
                         const id = parseInt(match[2], 10);
                         const name = match[3];
                         if (!isNaN(id)) {
-                            objects.push({ id, name, type: capitalize(type), appName: file });
+                            // Try to find Caption property after the object declaration
+                            const searchStart = match.index! + match[0].length;
+                            const searchEnd = Math.min(searchStart + 2000, content.length);
+                            const searchArea = content.substring(searchStart, searchEnd);
+
+                            // Look for Caption property - supports both single and double quotes
+                            const captionMatch = searchArea.match(/Caption\s*=\s*'([^']*)'|Caption\s*=\s*"([^"]*)"/i);
+                            let caption = captionMatch ? (captionMatch[1] || captionMatch[2]) : undefined;
+
+                            // Check if Caption is marked as "Locked = true" (technical/API names)
+                            if (caption && captionMatch) {
+                                const afterCaption = searchArea.substring(captionMatch.index! + captionMatch[0].length);
+                                const lockedMatch = afterCaption.match(/^\s*,\s*Locked\s*=\s*true/i);
+                                if (lockedMatch) {
+                                    caption = undefined; // Ignore locked captions
+                                }
+                            }
+
+                            objects.push({ id, name, type: capitalize(type), appName: file, caption });
                             objectCount++;
                         }
                     }
@@ -1878,8 +1922,8 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
 async function extractObjectsFromSingleAppFile(
     appFilePath: string,
     appFileName: string
-): Promise<{ id: number; name: string; type: string; appName: string }[]> {
-    const objects: { id: number; name: string; type: string; appName: string }[] = [];
+): Promise<{ id: number; name: string; type: string; appName: string; caption?: string }[]> {
+    const objects: { id: number; name: string; type: string; appName: string; caption?: string }[] = [];
     const cleanedAppFilePath = path.join(path.dirname(appFilePath), `${path.basename(appFilePath, '.app')}.zip`);
 
     try {
@@ -1900,7 +1944,25 @@ async function extractObjectsFromSingleAppFile(
                     const id = parseInt(match[2], 10);
                     const name = match[3];
                     if (!isNaN(id)) {
-                        objects.push({ id, name, type: capitalize(type), appName: appFileName });
+                        // Try to find Caption property after the object declaration
+                        const searchStart = match.index! + match[0].length;
+                        const searchEnd = Math.min(searchStart + 2000, content.length);
+                        const searchArea = content.substring(searchStart, searchEnd);
+
+                        // Look for Caption property - supports both single and double quotes
+                        const captionMatch = searchArea.match(/Caption\s*=\s*'([^']*)'|Caption\s*=\s*"([^"]*)"/i);
+                        let caption = captionMatch ? (captionMatch[1] || captionMatch[2]) : undefined;
+
+                        // Check if Caption is marked as "Locked = true" (technical/API names)
+                        if (caption && captionMatch) {
+                            const afterCaption = searchArea.substring(captionMatch.index! + captionMatch[0].length);
+                            const lockedMatch = afterCaption.match(/^\s*,\s*Locked\s*=\s*true/i);
+                            if (lockedMatch) {
+                                caption = undefined; // Ignore locked captions
+                            }
+                        }
+
+                        objects.push({ id, name, type: capitalize(type), appName: appFileName, caption });
                         objectCount++;
                     }
                 }
@@ -1967,8 +2029,8 @@ async function extractObjectsFromAlFiles(
     folderPath: string,
     allowedTypes: string[],
     appName: string
-): Promise<{ id: number; name: string; type: string; appName: string }[]> {
-    const objects: { id: number; name: string; type: string; appName: string }[] = [];
+): Promise<{ id: number; name: string; type: string; appName: string; caption?: string }[]> {
+    const objects: { id: number; name: string; type: string; appName: string; caption?: string }[] = [];
 
     // Search only in the specific folder (relative to workspace folder)
     const pattern = new vscode.RelativePattern(folderPath, '**/*.al');
@@ -1985,7 +2047,30 @@ async function extractObjectsFromAlFiles(
                 const id = parseInt(match[2], 10);
                 const name = match[3];
                 if (!isNaN(id)) {
-                    objects.push({ id, name, type: capitalize(type), appName });
+                    // Try to find Caption property after the object declaration
+                    // Search in the next ~2000 characters (enough to cover typical object header)
+                    const searchStart = match.index! + match[0].length;
+                    const searchEnd = Math.min(searchStart + 2000, content.length);
+                    const searchArea = content.substring(searchStart, searchEnd);
+
+                    // Look for Caption property - supports both single and double quotes
+                    // Pattern stops at common section keywords to avoid false positives
+                    const captionMatch = searchArea.match(/Caption\s*=\s*'([^']*)'|Caption\s*=\s*"([^"]*)"/i);
+                    let caption = captionMatch ? (captionMatch[1] || captionMatch[2]) : undefined;
+
+                    // Check if Caption is marked as "Locked = true" (technical/API names)
+                    // These should not be used as translation keys
+                    if (caption && captionMatch) {
+                        // Look ahead after the caption to see if it's locked
+                        const afterCaption = searchArea.substring(captionMatch.index! + captionMatch[0].length);
+                        const lockedMatch = afterCaption.match(/^\s*,\s*Locked\s*=\s*true/i);
+                        if (lockedMatch) {
+                            // This is a locked caption (technical name), ignore it for translation lookup
+                            caption = undefined;
+                        }
+                    }
+
+                    objects.push({ id, name, type: capitalize(type), appName, caption });
                 }
             }
         }
