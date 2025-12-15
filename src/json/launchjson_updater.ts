@@ -1866,14 +1866,16 @@ async function extractObjectsFromAppFiles(folderPath: string): Promise<{ id: num
             for (const entry of entries) {
                 if (entry.entryName.endsWith('.al')) {
                     const content = entry.getData().toString('utf-8');
+                    // Match both quoted and unquoted object names
                     const matches = [
-                        ...content.matchAll(/(page|report)\s+(\d+)\s+"([^"]+)"/gi)
+                        ...content.matchAll(/(page|report)\s+(\d+)\s+(?:"([^"]+)"|(\w+))/gi)
                     ];
                     for (const match of matches) {
                         const type = match[1].toLowerCase();
                         const id = parseInt(match[2], 10);
-                        const name = match[3];
-                        if (!isNaN(id)) {
+                        // match[3] = quoted name, match[4] = unquoted name
+                        const name = match[3] || match[4];
+                        if (!isNaN(id) && name) {
                             // Try to find Caption property after the object declaration
                             const searchStart = match.index! + match[0].length;
                             const searchEnd = Math.min(searchStart + 2000, content.length);
@@ -1936,14 +1938,16 @@ async function extractObjectsFromSingleAppFile(
         for (const entry of entries) {
             if (entry.entryName.endsWith('.al')) {
                 const content = entry.getData().toString('utf-8');
+                // Match both quoted and unquoted object names
                 const matches = [
-                    ...content.matchAll(/(page|report)\s+(\d+)\s+"([^"]+)"/gi)
+                    ...content.matchAll(/(page|report)\s+(\d+)\s+(?:"([^"]+)"|(\w+))/gi)
                 ];
                 for (const match of matches) {
                     const type = match[1].toLowerCase();
                     const id = parseInt(match[2], 10);
-                    const name = match[3];
-                    if (!isNaN(id)) {
+                    // match[3] = quoted name, match[4] = unquoted name
+                    const name = match[3] || match[4];
+                    if (!isNaN(id) && name) {
                         // Try to find Caption property after the object declaration
                         const searchStart = match.index! + match[0].length;
                         const searchEnd = Math.min(searchStart + 2000, content.length);
@@ -2038,15 +2042,18 @@ async function extractObjectsFromAlFiles(
 
     for (const file of alFiles) {
         const content = fs.readFileSync(file.fsPath, 'utf-8');
+        // Match both quoted and unquoted object names:
+        // report 50101 "My Report" OR report 50101 MyReport
         const matches = [
-            ...content.matchAll(/(page|report)\s+(\d+)\s+"([^"]+)"/gi)
+            ...content.matchAll(/(page|report)\s+(\d+)\s+(?:"([^"]+)"|(\w+))/gi)
         ];
         for (const match of matches) {
             const type = match[1].toLowerCase();
             if (allowedTypes.includes(type)) {
                 const id = parseInt(match[2], 10);
-                const name = match[3];
-                if (!isNaN(id)) {
+                // match[3] = quoted name, match[4] = unquoted name
+                const name = match[3] || match[4];
+                if (!isNaN(id) && name) {
                     // Try to find Caption property after the object declaration
                     // Search in the next ~2000 characters (enough to cover typical object header)
                     const searchStart = match.index! + match[0].length;
