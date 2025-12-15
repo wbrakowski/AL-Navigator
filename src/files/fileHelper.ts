@@ -78,6 +78,7 @@ export async function copyReportFileToWorkspace(tempAppFilePath: string, targetF
 export interface ReportInfo {
     id: number;
     name: string;
+    caption?: string; // Optional: The Caption property value (may differ from name)
     appName: string;
     appFilePath: string;
 }
@@ -125,9 +126,24 @@ export async function getAllReportsFromAppFiles(alpackagesFolderPath: string): P
                             const name = match[2];
 
                             if (!isNaN(id)) {
+                                // Try to extract the Caption property value
+                                // Look for: Caption = 'value'; or Caption = "value";
+                                // This should be within the report declaration (after the report line)
+                                const reportStartIndex = match.index!;
+                                const remainingContent = content.substring(reportStartIndex);
+
+                                // Find the dataset section or first { to limit search scope
+                                const datasetMatch = /dataset\s*{/i.exec(remainingContent);
+                                const searchScope = datasetMatch ? remainingContent.substring(0, datasetMatch.index) : remainingContent.substring(0, 500);
+
+                                // Match Caption property: Caption = 'text' or Caption = "text"
+                                const captionMatch = /Caption\s*=\s*['"]([^'"]+)['"]/i.exec(searchScope);
+                                const caption = captionMatch ? captionMatch[1] : undefined;
+
                                 reports.push({
                                     id,
                                     name,
+                                    caption,
                                     appName: appFile,
                                     appFilePath
                                 });

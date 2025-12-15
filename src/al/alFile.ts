@@ -37,11 +37,15 @@ export class ALFile {
         const lines = this.fileText.split('\n');
         let objectDeclarationLine = lines[0];
 
-        // Check if first line is a namespace declaration
+        // Check if first line is a namespace declaration or comment
         const namespacePattern = /^\s*namespace\s+[\w.]+\s*;/i;
-        if (namespacePattern.test(lines[0])) {
-            // Find the first line that contains an object type after the namespace
-            for (let i = 1; i < Math.min(lines.length, 10); i++) {
+        const commentPattern = /^\s*(\/\/|\/\*)/;
+
+        // If file starts with namespace or comments, search for object declaration
+        if (namespacePattern.test(lines[0]) || commentPattern.test(lines[0])) {
+            // Find the first line that contains an object type
+            // Extended search up to 50 lines to handle copyright headers, namespace, and using statements
+            for (let i = 1; i < Math.min(lines.length, 50); i++) {
                 if (lines[i].match(/^\s*(codeunit|page|pagecustomization|pageextension|report|table|tableextension|xmlport)\s+/i)) {
                     objectDeclarationLine = lines[i];
                     break;
