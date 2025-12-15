@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.8.9]**
+- **Fixed:** Support for unquoted object names - the extension now correctly detects and processes objects with unquoted names (e.g., `report 50101 MyReport` in addition to `report 50101 "MyReport"`), ensuring all AL objects are properly recognized regardless of naming style
+
 ### **[0.8.8]**
 - **Enhancement:** Caption-based translation lookup - the extension now extracts the Caption property from page and report objects and uses it as the primary key for finding translations in XLF files, resulting in more accurate translations
 - **Enhancement:** Smart Caption detection with Locked property handling - Captions marked with `Locked = true` (technical/API names) are automatically ignored and fallback to using the object name for translation lookup
