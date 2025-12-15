@@ -5,6 +5,7 @@ import { ALFiles } from '../alFiles';
 import { ObjectTypes } from '../objectTypes';
 import * as FileHelper from '../../files/fileHelper';
 import * as FolderHelper from '../../files/folderHelper';
+import * as LaunchJsonUpdater from '../../json/launchjson_updater';
 import { StringFunctions } from '../../additional/stringFunctions';
 import { reportTextBuilder } from './reportTextBuilder';
 import { ALCodeOutlineExtension } from '../../al_code_outline/devToolsExtensionContext';
@@ -40,22 +41,88 @@ export class Report {
         try {
           progress.report({ message: 'Extracting reports from .app files...' });
           const reports = await FileHelper.getAllReportsFromAppFiles(alpackagesFolderPath);
-
           if (reports.length === 0) {
             vscode.window.showInformationMessage('No reports found in any app package.');
             return undefined;
           }
 
-          progress.report({ message: 'Preparing report selection...' });
+          progress.report({ message: 'Loading translations for reports...' });
+          // Load translations like in launchjson_updater
+          // First, detect the most common language
+          const selectedLanguage = await LaunchJsonUpdater.detectMostCommonLanguage(activeWorkspaceFolder);
 
-          // Create QuickPick items with report details
-          const reportItems = reports.map(report => ({
-            label: `Report | ID: ${report.id} | ${report.name}`,
-            description: `App: ${report.appName}`,
-            detail: report.appFilePath,
-            reportName: report.name,
-            appFilePath: report.appFilePath
-          }));
+          // Load translations from .app files
+          const appTranslations = await LaunchJsonUpdater.extractTranslationsFromAppFiles(activeWorkspaceFolder, selectedLanguage);
+
+          // Load translations from workspace XLF files
+          const workspaceTranslations = await LaunchJsonUpdater.extractTranslationsFromWorkspaceXlf(activeWorkspaceFolder, selectedLanguage);
+
+          // Load translations from AL file comments
+          const alCommentTranslations = await LaunchJsonUpdater.extractTranslationsFromAlFileComments(activeWorkspaceFolder, selectedLanguage);
+
+          // Combine translations (priority: AL comments > workspace XLF > app translations)
+          const translations = new Map<string, string>([
+            ...appTranslations,
+            ...workspaceTranslations,
+            ...alCommentTranslations
+          ]);
+
+          CustomConsole.customConsole.appendLine(`[AL Navigator] Report selection: Loaded ${translations.size} translations for language ${selectedLanguage || 'auto'}`);
+
+          // Debug: Show some sample translation keys (first 10 Report translations)
+          let debugCount = 0;
+          for (const [key, value] of translations) {
+            if (key.startsWith('Report-') && debugCount < 10) {
+              CustomConsole.customConsole.appendLine(`[AL Navigator]   Sample key: "${key}" -> "${value}"`);
+              debugCount++;
+            }
+          }
+
+          // Create QuickPick items with translations
+          const reportItems = reports.map(report => {
+            let translation: string | undefined = undefined;
+
+            // Priority 1: If Caption exists, use it as translation key (same logic as launch.json)
+            if (report.caption) {
+              const captionTranslationKey = `Report-${report.caption}`;
+              translation = translations.get(captionTranslationKey);
+
+              // If no translation found for caption, try with report name as fallback
+              if (!translation) {
+                const nameTranslationKey = `Report-${report.name}`;
+                translation = translations.get(nameTranslationKey);
+              }
+            }
+
+            // Priority 2: If no Caption, try to find translation using report name
+            if (!translation) {
+              const translationKey = `Report-${report.name}`;
+              translation = translations.get(translationKey);
+            }
+
+            // Debug: Log if translation not found for this report
+            if (!translation && report.id === 1305) {
+              CustomConsole.customConsole.appendLine(`[AL Navigator] ⚠️ No translation found for Report ${report.id}`);
+              CustomConsole.customConsole.appendLine(`[AL Navigator]   Name: "${report.name}"`);
+              CustomConsole.customConsole.appendLine(`[AL Navigator]   Caption: "${report.caption || 'N/A'}"`);
+              CustomConsole.customConsole.appendLine(`[AL Navigator]   Tried keys: "Report-${report.caption}" and "Report-${report.name}"`);
+              // Check if there's a similar key
+              for (const [key, value] of translations) {
+                if (key.includes('Standard Sales') || key.includes('Order Conf') || key.includes('Sales - Confirmation')) {
+                  CustomConsole.customConsole.appendLine(`[AL Navigator]   Similar key found: "${key}" -> "${value}"`);
+                }
+              }
+            }
+
+            const nameWithTranslation = translation ? `${report.name} / ${translation}` : report.name;
+            return {
+              label: `Report | ID: ${report.id} | ${nameWithTranslation}`,
+              description: `App: ${report.appName}`,
+              detail: report.appFilePath,
+              reportName: report.name,
+              appFilePath: report.appFilePath
+            };
+          });
 
           // Show the report selection
           const selectedReport = await vscode.window.showQuickPick(reportItems, {

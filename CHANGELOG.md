@@ -4,6 +4,15 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.0]**
+- **New Feature:** Report translation support in "Create a new report" dialog - when browsing reports to copy, the extension now displays translated report names (e.g., "Standard Sales - Order Conf. / Verkauf - Auftragsbestätigung") using the same translation system as the startup object selection
+- **Enhancement:** Caption-based report translation - reports are translated using their Caption property as the primary lookup key, ensuring accurate translations match the actual report captions in XLF files
+- **Enhancement:** Multi-source translation loading for reports - translations are loaded from .app packages, workspace XLF files, and AL file comment translations, with proper priority handling
+- **Fixed:** Extended AL file parsing for files with copyright headers - the extension now searches up to 50 lines (instead of 10) to find object declarations, correctly handling files with lengthy copyright headers, namespace declarations, and multiple using statements
+- **Enhancement:** "Current Object" in startup object selection now shows object name and translation - when selecting a startup object, the "Current Object" option now displays the full object name with translation (e.g., "Report 50100: Standard Sales - Order Conf. Copy / Verkauf - Auftragsbestätigung") matching the format of other objects in the list
+- **Enhancement:** Improved object detection in startup selection - the extension now extracts and displays the Caption property from the currently open page or report, providing more accurate translation lookups
+- **Enhancement:** Comment-aware object parsing - the parser now recognizes files starting with comment blocks (// or /*) in addition to namespace declarations, ensuring reliable object detection across different file formats
+
 ### **[0.8.9]**
 - **Fixed:** Support for unquoted object names - the extension now correctly detects and processes objects with unquoted names (e.g., `report 50101 MyReport` in addition to `report 50101 "MyReport"`), ensuring all AL objects are properly recognized regardless of naming style
 

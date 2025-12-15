@@ -1,3 +1,4 @@
+// Function declarations for hoisting
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -6,8 +7,35 @@ import { RecentlyUsedObjectsManager } from './recentlyUsedObjects';
 import * as jsonc from 'jsonc-parser';
 import { CustomConsole } from '../additional/console';
 import { getAlPackagesFolder } from '../files/folderHelper';
+// Self-import for internal usage of exported functions
+
 import * as crypto from 'crypto';
 const AdmZip = require('adm-zip'); // For handling .app files
+
+// ============================================================================
+// UTILITY FUNCTIONS (must be defined before use)
+// ============================================================================
+
+// Removes the header from a .app file
+export async function removeHeaderFromAppFile(sourceFilePath: string, targetFilePath: string): Promise<any> {
+    const headerSize = 40; // Custom header size
+    const util = require('util');
+    const readFileAsync = util.promisify(fs.readFile);
+    const writeFileAsync = util.promisify(fs.writeFile);
+
+    const data = await readFileAsync(sourceFilePath);
+    const newData = data.slice(headerSize); // Remove the header
+    return writeFileAsync(targetFilePath, newData);
+}
+
+// Utility function to capitalize the first letter of a string
+export function capitalize(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+// ============================================================================
+// INTERFACES AND CONSTANTS
+// ============================================================================
 
 // Cache interface for storing loaded objects and translations
 interface ObjectCache {
@@ -168,22 +196,83 @@ export async function selectStartupObjectId() {
     // Try to get the current object from active editor
     let currentObjectId: number | undefined;
     let currentObjectType: string | undefined;
+    let currentObjectName: string | undefined;
+    let currentObjectCaption: string | undefined;
     const activeEditor = vscode.window.activeTextEditor;
     if (activeEditor && activeEditor.document.languageId === 'al') {
         try {
             const alFile = new ALFile(activeEditor.document.uri);
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Current file object detection:`);
+            CustomConsole.customConsole.appendLine(`[AL Navigator]   File: ${activeEditor.document.fileName}`);
+            CustomConsole.customConsole.appendLine(`[AL Navigator]   Object Type: ${alFile.alObject.objectType || 'NOT DETECTED'}`);
+            CustomConsole.customConsole.appendLine(`[AL Navigator]   Object ID: ${alFile.alObject.objectID || 'NOT DETECTED'}`);
+            CustomConsole.customConsole.appendLine(`[AL Navigator]   Object No: ${alFile.alObject.objectNo || 'NOT DETECTED'}`);
+            CustomConsole.customConsole.appendLine(`[AL Navigator]   Object Name: ${alFile.alObject.objectName || 'NOT DETECTED'}`);
+
             if (alFile.alObject.objectID &&
                 (alFile.alObject.objectType === 'Page' || alFile.alObject.objectType === 'Report')) {
                 currentObjectId = alFile.alObject.objectNo;
                 currentObjectType = alFile.alObject.objectType;
+                currentObjectName = alFile.alObject.objectName;
+
+                // Try to extract Caption from file text
+                const captionMatch = /Caption\s*=\s*['"]([^'"]+)['"]/i.exec(alFile.fileText);
+                if (captionMatch) {
+                    currentObjectCaption = captionMatch[1];
+                    CustomConsole.customConsole.appendLine(`[AL Navigator]   Caption: ${currentObjectCaption}`);
+                }
+
+                CustomConsole.customConsole.appendLine(`[AL Navigator]   ✓ Current object detected for Quick Access: ${currentObjectType} ${currentObjectId}`);
+            } else {
+                CustomConsole.customConsole.appendLine(`[AL Navigator]   ✗ Current object NOT valid for Quick Access (must be Page or Report)`);
             }
         } catch (error) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator]   ✗ Error parsing AL file: ${error}`);
             // Ignore errors, just won't prefilter
+        }
+    } else {
+        if (!activeEditor) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] No active editor`);
+        } else {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Active editor language: ${activeEditor.document.languageId} (expected: al)`);
         }
     }
 
     // Load app name from app.json
     const appName = getAppNameFromAppJson(workspaceFolder);
+
+    // If we have a current object, load translations for it
+    let currentObjectTranslation: string | undefined;
+    if (currentObjectId && currentObjectType && (currentObjectName || currentObjectCaption)) {
+        // Detect language
+        const selectedLanguage = await detectMostCommonLanguage(workspaceFolder);
+
+        // Load translations from all sources
+        const appTranslations = await extractTranslationsFromAppFiles(workspaceFolder, selectedLanguage);
+        const workspaceTranslations = await extractTranslationsFromWorkspaceXlf(workspaceFolder, selectedLanguage);
+        const alCommentTranslations = await extractTranslationsFromAlFileComments(workspaceFolder, selectedLanguage);
+
+        // Combine translations
+        const translations = new Map<string, string>([
+            ...appTranslations,
+            ...workspaceTranslations,
+            ...alCommentTranslations
+        ]);
+
+        // Look up translation (Caption first, then Name)
+        if (currentObjectCaption) {
+            const captionKey = `${currentObjectType}-${currentObjectCaption}`;
+            currentObjectTranslation = translations.get(captionKey);
+        }
+        if (!currentObjectTranslation && currentObjectName) {
+            const nameKey = `${currentObjectType}-${currentObjectName}`;
+            currentObjectTranslation = translations.get(nameKey);
+        }
+
+        if (currentObjectTranslation) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator]   Translation found: ${currentObjectTranslation}`);
+        }
+    }
 
     // Build Quick Access menu options
     const quickAccessOptions: Array<{
@@ -194,10 +283,14 @@ export async function selectStartupObjectId() {
     }> = [];
 
     // Add "Current Object" option if a Page or Report is currently open
-    if (currentObjectId && currentObjectType) {
+    if (currentObjectId && currentObjectType && currentObjectName) {
+        const displayName = currentObjectTranslation
+            ? `${currentObjectName} / ${currentObjectTranslation}`
+            : currentObjectName;
+
         quickAccessOptions.push({
             label: `$(file) Current Object`,
-            description: `${currentObjectType} ${currentObjectId}`,
+            description: `${currentObjectType} ${currentObjectId}: ${displayName}`,
             detail: 'Use the currently open Page or Report as startup object',
             action: 'current'
         });
@@ -244,10 +337,14 @@ export async function selectStartupObjectId() {
     let selectedObject: { label: string; id: number; type: string } | undefined;
 
     if (quickAccessChoice.action === 'current') {
-        // Use the current object directly
-        if (currentObjectId && currentObjectType) {
+        // Use the current object directly with name and translation
+        if (currentObjectId && currentObjectType && currentObjectName) {
+            const displayName = currentObjectTranslation
+                ? `${currentObjectName} / ${currentObjectTranslation}`
+                : currentObjectName;
+
             selectedObject = {
-                label: `${currentObjectType} | ID: ${currentObjectId}`,
+                label: `${currentObjectType} | ID: ${currentObjectId} | ${displayName}`,
                 id: currentObjectId,
                 type: currentObjectType
             };
@@ -2088,7 +2185,7 @@ async function extractObjectsFromAlFiles(
 
 // Detect most common language from XLF files in .app packages
 // Returns the language that appears most frequently across all .app files
-async function detectMostCommonLanguage(folderPath: string): Promise<string | undefined> {
+export async function detectMostCommonLanguage(folderPath: string): Promise<string | undefined> {
     const languageCounts = new Map<string, number>();
 
     const alpackagesFolderPath = getAlPackagesFolder(folderPath);
@@ -2162,8 +2259,10 @@ async function detectMostCommonLanguage(folderPath: string): Promise<string | un
 
     CustomConsole.customConsole.appendLine(`[AL Navigator] 🎯 Most common language: ${mostCommonLanguage?.toUpperCase()} (${maxCount} files)`);
     return mostCommonLanguage;
-}// Extracts translations from XLF files in .app packages for a specific language
-async function extractTranslationsFromAppFiles(folderPath: string, selectedLanguage?: string): Promise<Map<string, string>> {
+}
+
+// Extracts translations from XLF files in .app packages for a specific language
+export async function extractTranslationsFromAppFiles(folderPath: string, selectedLanguage?: string): Promise<Map<string, string>> {
     const translations = new Map<string, string>();
 
     if (selectedLanguage) {
@@ -2242,7 +2341,6 @@ async function extractTranslationsFromAppFiles(folderPath: string, selectedLangu
                 try {
                     fs.unlinkSync(cleanedAppFilePath);
                 } catch (unlinkError) {
-                    CustomConsole.customConsole.appendLine(`[AL Navigator] Warning: Could not delete temp file ${cleanedAppFilePath}`);
                 }
             }
         }
@@ -2263,7 +2361,7 @@ function parseXlfForObjectTranslations(xlfContent: string, translations: Map<str
     // </trans-unit>
 
     // Match trans-units for Page and Report captions
-    const transUnitRegex = /<trans-unit[^>]*id="(Page|Report)\s+\d+[^"]*"[^>]*>([\s\S]*?)<\/trans-unit>/gi;
+    const transUnitRegex = /<trans-unit[^>]*id="(Page|Report)\s+\d+[^\"]*"[^>]*>([\s\S]*?)<\/trans-unit>/gi;
     let match;
 
     while ((match = transUnitRegex.exec(xlfContent)) !== null) {
@@ -2323,7 +2421,7 @@ function parseXlfForObjectTranslations(xlfContent: string, translations: Map<str
 }
 
 // Extracts translations from XLF files in the workspace's Translations folder
-async function extractTranslationsFromWorkspaceXlf(workspaceFolder: string, selectedLanguage?: string): Promise<Map<string, string>> {
+export async function extractTranslationsFromWorkspaceXlf(workspaceFolder: string, selectedLanguage?: string): Promise<Map<string, string>> {
     const translations = new Map<string, string>();
     const translationsFolderPath = path.join(workspaceFolder, 'Translations');
 
@@ -2380,7 +2478,7 @@ async function extractTranslationsFromWorkspaceXlf(workspaceFolder: string, sele
 }
 
 // Extracts translations from AL file comments (e.g., Comment = 'DEU="..."')
-async function extractTranslationsFromAlFileComments(workspaceFolder: string, selectedLanguage?: string): Promise<Map<string, string>> {
+export async function extractTranslationsFromAlFileComments(workspaceFolder: string, selectedLanguage?: string): Promise<Map<string, string>> {
     const translations = new Map<string, string>();
 
     if (!selectedLanguage) {
@@ -2496,21 +2594,4 @@ async function extractTranslationsFromAlFileComments(workspaceFolder: string, se
     }
 
     return translations;
-}
-
-// Removes the header from a .app file
-async function removeHeaderFromAppFile(sourceFilePath: string, targetFilePath: string): Promise<any> {
-    const headerSize = 40; // Custom header size
-    const util = require('util');
-    const readFileAsync = util.promisify(fs.readFile);
-    const writeFileAsync = util.promisify(fs.writeFile);
-
-    const data = await readFileAsync(sourceFilePath);
-    const newData = data.slice(headerSize); // Remove the header
-    return writeFileAsync(targetFilePath, newData);
-}
-
-// Utility function to capitalize the first letter of a string
-function capitalize(text: string): string {
-    return text.charAt(0).toUpperCase() + text.slice(1);
 }
