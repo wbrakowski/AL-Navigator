@@ -244,15 +244,26 @@ Add variables and parameters with a few keystrokes:
 ## ⚙️ Settings
 
 ### AL Navigator Settings
-| Setting                                     | Description                                                                                                                      |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `alNavigator.ignoreALPrefix`                | Removes prefixes from suggested variable names.                                                                                  |
-| `alNavigator.ignoreALSuffix`                | Removes suffixes from suggested variable names.                                                                                  |
-| `alNavigator.translationTargetLanguage`     | Defines the target language for hover translation display and translation commands (not used for startup object translations).   |
-| `alNavigator.maxNoOfShownTranslations`      | Sets the maximum number of translations displayed.                                                                               |
-| `alNavigator.enableHoverProviders`          | Enables hover translations for target languages on symbols (field names, etc.). Requires a reload.                               |
-| `alNavigator.updateAllLaunchConfigurations` | When enabled, updates all configurations in launch.json without prompting. When disabled (default), select which ones to update. |
-| `alNavigator.updateAllLaunchJsons`          | When enabled, automatically updates all launch.json files in the workspace. When disabled (default), prompts for file selection. |
+| Setting                                     | Description                                                                                                                                                            |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `alNavigator.ignoreALPrefix`                | Removes prefixes from suggested variable names.                                                                                                                        |
+| `alNavigator.ignoreALSuffix`                | Removes suffixes from suggested variable names.                                                                                                                        |
+| `alNavigator.translationTargetLanguage`     | Defines the target language for hover translation display and translation commands (not used for startup object translations).                                         |
+| `alNavigator.maxNoOfShownTranslations`      | Sets the maximum number of translations displayed.                                                                                                                     |
+| `alNavigator.enableHoverProviders`          | Enables hover translations for target languages on symbols (field names, etc.). Requires a reload.                                                                     |
+| `alNavigator.updateAllLaunchConfigurations` | When enabled, updates all configurations in launch.json without prompting. When disabled (default), select which ones to update.                                       |
+| `alNavigator.updateAllLaunchJsons`          | When enabled, automatically updates all launch.json files in the workspace. When disabled (default), prompts for file selection.                                       |
+| `alNavigator.enableTelemetry`               | Enable anonymous telemetry to help improve AL Navigator. Collects usage statistics and error reports (default: enabled). Respects VS Code's global telemetry settings. |
+| `alNavigator.enableTelemetry`               | Enable anonymous telemetry to help improve AL Navigator. Collects usage statistics and error reports. **Default: enabled**                                             |
+
+**Privacy Notice:** Telemetry data is completely anonymous and includes only:
+- Extension version, VS Code version, and platform (Windows/Mac/Linux)
+- Command usage statistics (which features are used and how often)
+- Performance metrics (execution times)
+- Error reports (to help identify and fix bugs)
+- **No personal information, code, file paths, or project details are transmitted**
+
+Users can opt-out at any time by setting `alNavigator.enableTelemetry` to `false`.
 
 ### AL Language Settings (for custom .alpackages folder)
 AL Navigator fully supports the AL Language extension's custom package cache path configuration:
@@ -288,7 +299,44 @@ The extension will use the first path that exists. This is particularly useful f
 
 ---
 
-## 💖 Thanks to
+## � Privacy & Telemetry
+
+AL Navigator collects **anonymous usage statistics** to help improve the extension. This is completely optional and can be disabled.
+
+### What is collected?
+- ✅ Extension version and VS Code version
+- ✅ Command usage (which features are used)
+- ✅ Performance metrics (execution times)
+- ✅ Error reports (to fix bugs faster)
+- ✅ Platform information (Windows/Mac/Linux)
+
+### What is NOT collected?
+- ❌ No personal information (names, emails, etc.)
+- ❌ No code or file contents
+- ❌ No file paths or project names
+- ❌ No workspace information
+
+### Smart Sampling
+To minimize data volume and costs:
+- Only **10% of successful commands** are tracked
+- **100% of errors** are tracked (to improve stability)
+- Total data sent is minimal
+
+### How to disable?
+Set `"alNavigator.enableTelemetry": false` in your settings.
+
+**Note:** AL Navigator also respects VS Code's global telemetry setting (`telemetry.telemetryLevel`).
+
+### Security
+The telemetry instrumentation key is public in the source code (following VS Code extension best practices). It is protected by:
+- Daily data volume cap (100 MB/day)
+- Rate limiting by Azure Application Insights
+- Smart sampling (only 10% of successful commands tracked)
+- Read-only access (key can only send data, not read it)
+
+---
+
+## �💖 Thanks to
 - **David Feldhoff** for his contributions and feedback.  
 - **Andrzej Zwierzchowski** for providing an awesome API in the AZ AL Dev Tools/AL Code Outline extension.
 
