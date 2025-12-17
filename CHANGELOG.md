@@ -4,6 +4,10 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.2]**
+- **Enhancement:** Enhanced error tracking with detailed context - error reports now include error name, error location (file and line), and Node.js version for faster debugging and better issue resolution
+- **Enhancement:** Increased telemetry sampling to 100% - all commands are now tracked (previously 10%) to provide comprehensive usage insights and identify feature adoption patterns
+
 ### **[0.9.1]**
 - **New Feature:** Anonymous telemetry for usage statistics and error tracking - helps improve the extension by understanding which features are used and identifying bugs faster
 - **Privacy:** Telemetry is completely anonymous and contains no personal information, code, or file paths - only command names, execution times, and error reports

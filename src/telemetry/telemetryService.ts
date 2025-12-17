@@ -26,9 +26,9 @@ export class TelemetryService {
     private readonly instrumentationKey = '8f145939-c56a-495d-a090-88c934715fc1';
 
     // Sampling rate for successful commands (0.0 - 1.0)
-    // 0.1 = 10% of successful commands are tracked
+    // 1.0 = 100% of all commands are tracked
     // Errors are ALWAYS tracked at 100%
-    private readonly samplingRate = 0.1;
+    private readonly samplingRate = 1.0;
 
     private constructor() {
         // Private constructor for singleton pattern
@@ -186,6 +186,7 @@ export class TelemetryService {
 
     /**
      * Track an error (always tracked at 100%, no sampling)
+     * Enhanced with more contextual information
      * @param error The error to track
      * @param properties Additional properties to track
      */
@@ -198,19 +199,55 @@ export class TelemetryService {
             // DEBUG: Log error tracking
             CustomConsole.customConsole.appendLine(`[Telemetry] Tracking error: ${error.message}`);
 
-            // Errors are ALWAYS tracked (no sampling)
-            this.reporter.sendTelemetryErrorEvent('extension.error', {
+            // Enhanced error properties with more context
+            const errorProperties = {
                 ...properties,
                 errorMessage: error.message,
+                errorName: error.name, // Error type (TypeError, ReferenceError, etc.)
                 errorStack: error.stack || 'No stack trace',
+                errorLocation: this.extractErrorLocation(error.stack), // File and line number
                 extensionVersion: this.extensionVersion,
                 sessionId: this.sessionId,
-                platform: process.platform
-            });
+                platform: process.platform,
+                nodeVersion: process.version,
+                vscodeVersion: vscode.version
+            };
+
+            // Errors are ALWAYS tracked (no sampling)
+            this.reporter.sendTelemetryErrorEvent('extension.error', errorProperties);
 
             CustomConsole.customConsole.appendLine(`[Telemetry] Error event sent successfully`);
         } catch (trackError) {
             CustomConsole.customConsole.appendLine(`[Telemetry] ERROR sending error event: ${trackError}`);
+        }
+    }
+
+    /**
+     * Extract the first meaningful line from error stack trace
+     * @param stack Error stack trace
+     * @returns First file location from stack or 'Unknown'
+     */
+    private extractErrorLocation(stack: string | undefined): string {
+        if (!stack) {
+            return 'Unknown';
+        }
+
+        try {
+            // Find first line that contains file path
+            const lines = stack.split('\n');
+            const firstLocation = lines.find(line =>
+                line.includes('.ts:') || line.includes('.js:')
+            );
+
+            if (!firstLocation) {
+                return 'Unknown';
+            }
+
+            // Extract just the file and line number (without full path)
+            const match = firstLocation.match(/([^\/\\]+\.(?:ts|js)):?(\d+)/);
+            return match ? `${match[1]}:${match[2]}` : 'Unknown';
+        } catch (e) {
+            return 'Unknown';
         }
     }
 
