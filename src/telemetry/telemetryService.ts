@@ -25,10 +25,9 @@ export class TelemetryService {
     // Free tier: 5 GB/month (plenty for extension telemetry)
     private readonly instrumentationKey = '8f145939-c56a-495d-a090-88c934715fc1';
 
-    // Sampling rate for successful commands (0.0 - 1.0)
-    // 1.0 = 100% of all commands are tracked
-    // Errors are ALWAYS tracked at 100%
-    private readonly samplingRate = 1.0;
+    // Sampling rate for commands and errors (0.0 - 1.0)
+    // 0.1 = 10% of all commands and errors are tracked
+    private readonly samplingRate = 0.1;
 
     private constructor() {
         // Private constructor for singleton pattern
@@ -85,17 +84,9 @@ export class TelemetryService {
             CustomConsole.customConsole.appendLine(`[Telemetry] Instrumentation Key: ${this.instrumentationKey.substring(0, 8)}...`);
             CustomConsole.customConsole.appendLine(`[Telemetry] Session ID: ${this.sessionId}`);
             CustomConsole.customConsole.appendLine(`[Telemetry] Extension Version: ${this.extensionVersion}`);
-            CustomConsole.customConsole.appendLine(`[Telemetry] Sampling rate: ${this.samplingRate * 100}% for successful commands, 100% for errors`);
+            CustomConsole.customConsole.appendLine(`[Telemetry] Sampling rate: ${this.samplingRate * 100}% for commands and errors`);
 
-            // Track activation event
-            this.trackEvent('extension.activated', {
-                version: this.extensionVersion,
-                vscodeVersion: vscode.version,
-                platform: process.platform,
-                sessionId: this.sessionId
-            });
-
-            CustomConsole.customConsole.appendLine('[Telemetry] Activation event sent');
+            CustomConsole.customConsole.appendLine('[Telemetry] Telemetry service initialized successfully');
 
         } catch (error) {
             CustomConsole.customConsole.appendLine(`[Telemetry] ERROR initializing: ${error}`);
@@ -104,9 +95,8 @@ export class TelemetryService {
     }
 
     /**
-     * Track a command execution with smart sampling
-     * Successful commands: 10% sampling
-     * Failed commands: 100% tracking (no sampling)
+     * Track a command execution with 10% sampling
+     * Both successful and failed commands use the same sampling rate
      * 
      * @param commandName The name of the command
      * @param properties Additional properties to track
@@ -123,10 +113,8 @@ export class TelemetryService {
         }
 
         try {
-            // Apply sampling only for successful commands
-            // Errors are tracked separately and always at 100%
-            const isError = properties?.status === 'error';
-            const shouldTrack = isError || Math.random() < this.samplingRate;
+            // Apply sampling for all commands (10%)
+            const shouldTrack = Math.random() < this.samplingRate;
 
             if (!shouldTrack) {
                 CustomConsole.customConsole.appendLine(`[Telemetry] Command ${commandName} filtered by sampling`);
@@ -143,7 +131,7 @@ export class TelemetryService {
                 extensionVersion: this.extensionVersion,
                 sessionId: this.sessionId,
                 platform: process.platform,
-                sampled: isError ? 'no' : 'yes' // Indicate if this was sampled
+                sampled: 'yes' // All commands are sampled at 10%
             }, measurements);
 
             CustomConsole.customConsole.appendLine(`[Telemetry] Command event sent successfully`);
@@ -185,7 +173,7 @@ export class TelemetryService {
     }
 
     /**
-     * Track an error (always tracked at 100%, no sampling)
+     * Track an error with sampling (10%)
      * Enhanced with more contextual information
      * @param error The error to track
      * @param properties Additional properties to track
@@ -196,6 +184,14 @@ export class TelemetryService {
         }
 
         try {
+            // Apply sampling for errors too
+            const shouldTrack = Math.random() < this.samplingRate;
+
+            if (!shouldTrack) {
+                CustomConsole.customConsole.appendLine(`[Telemetry] Error ${error.name} filtered by sampling`);
+                return; // Skip this error due to sampling
+            }
+
             // DEBUG: Log error tracking
             CustomConsole.customConsole.appendLine(`[Telemetry] Tracking error: ${error.message}`);
 
@@ -210,10 +206,11 @@ export class TelemetryService {
                 sessionId: this.sessionId,
                 platform: process.platform,
                 nodeVersion: process.version,
-                vscodeVersion: vscode.version
+                vscodeVersion: vscode.version,
+                sampled: 'yes' // Indicate this error was sampled
             };
 
-            // Errors are ALWAYS tracked (no sampling)
+            // Track error with sampling applied
             this.reporter.sendTelemetryErrorEvent('extension.error', errorProperties);
 
             CustomConsole.customConsole.appendLine(`[Telemetry] Error event sent successfully`);
@@ -281,8 +278,8 @@ export class TelemetryService {
      */
     public dispose(): void {
         if (this.isEnabled && this.reporter) {
-            this.trackEvent('extension.deactivated');
             // Reporter will be disposed by VS Code (it's in subscriptions)
+            CustomConsole.customConsole.appendLine('[Telemetry] Telemetry service disposed');
         }
     }
 

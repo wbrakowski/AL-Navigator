@@ -4,6 +4,10 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.3]**
+- **Cost Optimization:** Reduced telemetry sampling to 10% for both commands and errors - significantly reduces Azure Application Insights data volume and costs while still providing valuable usage insights
+- **Breaking Change:** Error tracking now also uses 10% sampling (previously 100%) - multiply reported counts by 10 to estimate actual numbers
+
 ### **[0.9.2]**
 - **Enhancement:** Enhanced error tracking with detailed context - error reports now include error name, error location (file and line), and Node.js version for faster debugging and better issue resolution
 - **Enhancement:** Increased telemetry sampling to 100% - all commands are now tracked (previously 10%) to provide comprehensive usage insights and identify feature adoption patterns
