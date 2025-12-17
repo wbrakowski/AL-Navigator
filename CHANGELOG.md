@@ -4,6 +4,14 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.1]**
+- **New Feature:** Anonymous telemetry for usage statistics and error tracking - helps improve the extension by understanding which features are used and identifying bugs faster
+- **Privacy:** Telemetry is completely anonymous and contains no personal information, code, or file paths - only command names, execution times, and error reports
+- **User Control:** Users can opt-out via `alNavigator.enableTelemetry` setting or VS Code's global `telemetry.telemetryLevel` setting
+- **Cost-Efficient:** Smart sampling (10% for successful commands, 100% for errors) minimizes data volume while maintaining insights
+- **Transparent:** Debug logging in AL Navigator output channel shows exactly what data is being sent
+- **Secure:** Instrumentation key is public (following VS Code extension best practices) but protected by daily data cap and rate limiting
+
 ### **[0.9.0]**
 - **New Feature:** Report translation support in "Create a new report" dialog - when browsing reports to copy, the extension now displays translated report names (e.g., "Standard Sales - Order Conf. / Verkauf - Auftragsbestätigung") using the same translation system as the startup object selection
 - **Enhancement:** Caption-based report translation - reports are translated using their Caption property as the primary lookup key, ensuring accurate translations match the actual report captions in XLF files

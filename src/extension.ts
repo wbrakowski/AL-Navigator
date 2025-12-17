@@ -13,12 +13,17 @@ import { ALCodeActionsProvider } from './al/codeActions/alCodeActionsProvider';
 import { ReportRenameProvider } from './al/report/reportRenameProvider';
 import { ReportAnalyzer } from './report/reportAnalyzer';
 import { QuickLaunchStatusBar } from './json/quickLaunchStatusBar';
+import { TelemetryService, trackCommandExecution } from './telemetry/telemetryService';
 const fieldHover = require('./additional/fieldHover');
 
 export function activate(context: vscode.ExtensionContext) {
     // Initialize output console for logging
     CustomConsole.customConsole = vscode.window.createOutputChannel("AL Navigator");
     console.log('Congratulations, AL Navigator is ready to rumble!');
+
+    // Initialize Telemetry Service
+    const telemetry = TelemetryService.getInstance();
+    telemetry.initialize(context);
 
     const config = vscode.workspace.getConfiguration('alNavigator');
 
@@ -31,40 +36,40 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Register all commands
     const commandsToRegister = [
-        { command: "extension.DataItem", callback: FileJumper.jumpToNextDataItem },
-        { command: "extension.DataItemBottom", callback: FileJumper.jumpToNextDataItemFromBottom },
-        { command: "extension.Keys", callback: FileJumper.jumpToKeys },
-        { command: "extension.LastLocalVarLine", callback: FileJumper.jumpToLastLocalVarLine },
-        { command: "extension.LastGlobalVarLine", callback: FileJumper.jumpToLastGlobalVarLine },
-        { command: "extension.Actions", callback: FileJumper.jumpToNextActions },
-        { command: "extension.ShowMSTranslation", callback: () => Translator.showMicrosoftTranslation(false) },
-        { command: "extension.ShowMSTranslationReverse", callback: () => Translator.showMicrosoftTranslation(true) },
+        { command: "extension.DataItem", callback: trackCommandExecution("extension.DataItem", FileJumper.jumpToNextDataItem) },
+        { command: "extension.DataItemBottom", callback: trackCommandExecution("extension.DataItemBottom", FileJumper.jumpToNextDataItemFromBottom) },
+        { command: "extension.Keys", callback: trackCommandExecution("extension.Keys", FileJumper.jumpToKeys) },
+        { command: "extension.LastLocalVarLine", callback: trackCommandExecution("extension.LastLocalVarLine", FileJumper.jumpToLastLocalVarLine) },
+        { command: "extension.LastGlobalVarLine", callback: trackCommandExecution("extension.LastGlobalVarLine", FileJumper.jumpToLastGlobalVarLine) },
+        { command: "extension.Actions", callback: trackCommandExecution("extension.Actions", FileJumper.jumpToNextActions) },
+        { command: "extension.ShowMSTranslation", callback: trackCommandExecution("extension.ShowMSTranslation", () => Translator.showMicrosoftTranslation(false)) },
+        { command: "extension.ShowMSTranslationReverse", callback: trackCommandExecution("extension.ShowMSTranslationReverse", () => Translator.showMicrosoftTranslation(true)) },
         {
-            command: "extension.StartCreateReportDialog", callback: () => ReportCreator.startCreateReportDialog(new ALFiles()),
+            command: "extension.StartCreateReportDialog", callback: trackCommandExecution("extension.StartCreateReportDialog", () => ReportCreator.startCreateReportDialog(new ALFiles())),
         },
         {
             command: "extension.analyzeReport",
-            callback: () => ReportAnalyzer.analyzeReport(),
+            callback: trackCommandExecution("extension.analyzeReport", () => ReportAnalyzer.analyzeReport()),
         },
         {
             command: "extension.selectStartupObjectId",
-            callback: async () => {
+            callback: trackCommandExecution("extension.selectStartupObjectId", async () => {
                 await LaunchJsonUpdater.selectStartupObjectId();
                 // Update status bar after switching
                 quickLaunchStatusBar.updateStatusBarText();
-            },
+            }),
         },
         {
             command: "extension.clearObjectCache",
-            callback: async () => await LaunchJsonUpdater.clearObjectCache(),
+            callback: trackCommandExecution("extension.clearObjectCache", async () => await LaunchJsonUpdater.clearObjectCache()),
         },
-        { command: "extension.insertTranslationFromComment", callback: XlfUpdater.insertTranslationFromComment },
-        { command: "extension.TranslateAndCopyToClipboard", callback: () => Translator.translateAndCopyToClipboard(false) },
+        { command: "extension.insertTranslationFromComment", callback: trackCommandExecution("extension.insertTranslationFromComment", XlfUpdater.insertTranslationFromComment) },
+        { command: "extension.TranslateAndCopyToClipboard", callback: trackCommandExecution("extension.TranslateAndCopyToClipboard", () => Translator.translateAndCopyToClipboard(false)) },
 
         // Register new rename command to trigger ReportRenameProvider
         {
             command: "extension.renameALNavigator",
-            callback: async () => {
+            callback: trackCommandExecution("extension.renameALNavigator", async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
                     vscode.window.showErrorMessage('No active editor found.');
@@ -120,12 +125,12 @@ export function activate(context: vscode.ExtensionContext) {
                     } else {
                         vscode.window.showErrorMessage('Failed to apply rename edits.');
                     }
-                } catch (error) {
+                } catch (error: any) {
                     vscode.window.showErrorMessage(`Rename failed: ${error.message}`);
                     console.error(error);
                 }
-            },
-        }
+            }),
+        },
     ];
 
     // Register commands dynamically
@@ -156,4 +161,8 @@ export function activate(context: vscode.ExtensionContext) {
     }
 }
 
-export function deactivate() { }
+export function deactivate() {
+    // Dispose telemetry service and flush pending data
+    const telemetry = TelemetryService.getInstance();
+    telemetry.dispose();
+}
