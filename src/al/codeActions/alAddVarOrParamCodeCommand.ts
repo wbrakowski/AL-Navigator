@@ -112,18 +112,20 @@ export class ALAddVarOrParamCodeCommand extends ALCodeCommand {
 
         if (editor) {
             if (newVarName !== "") {
-                await editor.edit(editBuilder => {
+                const success = await editor.edit(editBuilder => {
                     let startCharacter = range.start.character - varNameOriginal.length;
                     let startPos = new vscode.Position(range.start.line, startCharacter);
                     let replaceRange = new vscode.Range(startPos, range.end);
                     editBuilder.replace(replaceRange, newVarName);
-                }).then(success => {
+                });
+
+                if (success) {
                     // Remove the selection that is automatically active after replacing text
                     if (editor) {
                         var position = editor.selection.end;
                         editor.selection = new vscode.Selection(position, position);
                     }
-                });
+                }
             }
             await editor.edit(editBuilder => {
                 switch (this.cmdType) {

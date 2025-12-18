@@ -241,23 +241,35 @@ export async function selectStartupObjectId() {
     // Load app name from app.json
     const appName = getAppNameFromAppJson(workspaceFolder);
 
+    // Load cache from storage early (for current object detection)
+    await loadCacheFromStorage(workspaceFolder);
+
     // If we have a current object, load translations for it
     let currentObjectTranslation: string | undefined;
     if (currentObjectId && currentObjectType && (currentObjectName || currentObjectCaption)) {
         // Detect language
         const selectedLanguage = await detectMostCommonLanguage(workspaceFolder);
 
-        // Load translations from all sources
-        const appTranslations = await extractTranslationsFromAppFiles(workspaceFolder, selectedLanguage);
-        const workspaceTranslations = await extractTranslationsFromWorkspaceXlf(workspaceFolder, selectedLanguage);
-        const alCommentTranslations = await extractTranslationsFromAlFileComments(workspaceFolder, selectedLanguage);
+        // Check if we can use cached translations
+        let translations: Map<string, string>;
+        const cacheIsValid = await isCacheValid(workspaceFolder, appName, selectedLanguage);
+        if (objectCache && cacheIsValid) {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] ✓ Using cached translations for current object detection`);
+            translations = objectCache.translations;
+        } else {
+            CustomConsole.customConsole.appendLine(`[AL Navigator] Loading translations for current object detection (cache invalid or missing)`);
+            // Load translations from all sources
+            const appTranslations = await extractTranslationsFromAppFiles(workspaceFolder, selectedLanguage);
+            const workspaceTranslations = await extractTranslationsFromWorkspaceXlf(workspaceFolder, selectedLanguage);
+            const alCommentTranslations = await extractTranslationsFromAlFileComments(workspaceFolder, selectedLanguage);
 
-        // Combine translations
-        const translations = new Map<string, string>([
-            ...appTranslations,
-            ...workspaceTranslations,
-            ...alCommentTranslations
-        ]);
+            // Combine translations
+            translations = new Map<string, string>([
+                ...appTranslations,
+                ...workspaceTranslations,
+                ...alCommentTranslations
+            ]);
+        }
 
         // Look up translation (Caption first, then Name)
         if (currentObjectCaption) {

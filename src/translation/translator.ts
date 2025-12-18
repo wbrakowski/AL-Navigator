@@ -3,23 +3,39 @@ import * as tsl from './translationService';
 import * as DocUtils from '../document/docUtils';
 import { baseAppTranslationFiles } from "../external_resources/BaseAppTranslationFiles";
 
-export function showMicrosoftTranslation(reverse: boolean) {
+export async function showMicrosoftTranslation(reverse: boolean) {
   console.log('Running: showMicrosoftTranslationLocal');
   let currentWord = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
   // Replace two single apostrophes with one
   currentWord = currentWord.replace(/''/g, "'");
-  vscode.window.showInputBox({ value: currentWord, prompt: "Translate String:" }).then(searchString =>
-    tsl.showBaseAppTranslation(searchString, reverse, true, false));
+
+  try {
+    const searchString = await vscode.window.showInputBox({ value: currentWord, prompt: "Translate String:" });
+    if (searchString !== undefined) {
+      await tsl.showBaseAppTranslation(searchString, reverse, true, false);
+    }
+  } catch (error) {
+    console.error('Error in showMicrosoftTranslation:', error);
+    throw error; // Re-throw to be caught by trackCommandExecution
+  }
 
   console.log('Done: showMicrosoftTranslationLocal');
 }
 
 
-export function translateAndCopyToClipboard(reverse: boolean) {
+export async function translateAndCopyToClipboard(reverse: boolean) {
   console.log('Running: translateAndCopyToClipboard');
   let currentWord = vscode.window.activeTextEditor ? DocUtils.getSelectedWord(vscode.window.activeTextEditor) : "";
-  vscode.window.showInputBox({ value: currentWord, prompt: "Translate and copy translation for string:" }).then(searchString =>
-    tsl.showBaseAppTranslation(searchString, reverse, true, true));
+
+  try {
+    const searchString = await vscode.window.showInputBox({ value: currentWord, prompt: "Translate and copy translation for string:" });
+    if (searchString !== undefined) {
+      await tsl.showBaseAppTranslation(searchString, reverse, true, true);
+    }
+  } catch (error) {
+    console.error('Error in translateAndCopyToClipboard:', error);
+    throw error; // Re-throw to be caught by trackCommandExecution
+  }
 
   console.log('Done: translateAndCopyToClipboard');
 }

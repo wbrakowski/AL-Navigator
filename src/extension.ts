@@ -42,14 +42,14 @@ export function activate(context: vscode.ExtensionContext) {
         { command: "extension.LastLocalVarLine", callback: trackCommandExecution("extension.LastLocalVarLine", FileJumper.jumpToLastLocalVarLine) },
         { command: "extension.LastGlobalVarLine", callback: trackCommandExecution("extension.LastGlobalVarLine", FileJumper.jumpToLastGlobalVarLine) },
         { command: "extension.Actions", callback: trackCommandExecution("extension.Actions", FileJumper.jumpToNextActions) },
-        { command: "extension.ShowMSTranslation", callback: trackCommandExecution("extension.ShowMSTranslation", () => Translator.showMicrosoftTranslation(false)) },
-        { command: "extension.ShowMSTranslationReverse", callback: trackCommandExecution("extension.ShowMSTranslationReverse", () => Translator.showMicrosoftTranslation(true)) },
+        { command: "extension.ShowMSTranslation", callback: trackCommandExecution("extension.ShowMSTranslation", async () => await Translator.showMicrosoftTranslation(false)) },
+        { command: "extension.ShowMSTranslationReverse", callback: trackCommandExecution("extension.ShowMSTranslationReverse", async () => await Translator.showMicrosoftTranslation(true)) },
         {
-            command: "extension.StartCreateReportDialog", callback: trackCommandExecution("extension.StartCreateReportDialog", () => ReportCreator.startCreateReportDialog(new ALFiles())),
+            command: "extension.StartCreateReportDialog", callback: trackCommandExecution("extension.StartCreateReportDialog", async () => await ReportCreator.startCreateReportDialog(new ALFiles())),
         },
         {
             command: "extension.analyzeReport",
-            callback: trackCommandExecution("extension.analyzeReport", () => ReportAnalyzer.analyzeReport()),
+            callback: trackCommandExecution("extension.analyzeReport", async () => await ReportAnalyzer.analyzeReport()),
         },
         {
             command: "extension.selectStartupObjectId",
@@ -63,8 +63,8 @@ export function activate(context: vscode.ExtensionContext) {
             command: "extension.clearObjectCache",
             callback: trackCommandExecution("extension.clearObjectCache", async () => await LaunchJsonUpdater.clearObjectCache()),
         },
-        { command: "extension.insertTranslationFromComment", callback: trackCommandExecution("extension.insertTranslationFromComment", XlfUpdater.insertTranslationFromComment) },
-        { command: "extension.TranslateAndCopyToClipboard", callback: trackCommandExecution("extension.TranslateAndCopyToClipboard", () => Translator.translateAndCopyToClipboard(false)) },
+        { command: "extension.insertTranslationFromComment", callback: trackCommandExecution("extension.insertTranslationFromComment", async () => await XlfUpdater.insertTranslationFromComment()) },
+        { command: "extension.TranslateAndCopyToClipboard", callback: trackCommandExecution("extension.TranslateAndCopyToClipboard", async () => await Translator.translateAndCopyToClipboard(false)) },
 
         // Register new rename command to trigger ReportRenameProvider
         {
