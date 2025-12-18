@@ -4,6 +4,11 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.4]**
+- **Performance:** Massive performance improvement for startup object selection - translation cache is now loaded once at startup and reused for both current object detection and object list display, eliminating redundant XLF file parsing that caused 3-5 second delays
+- **Fixed:** Cache not being utilized during current object detection - the extension now properly checks cache validity before extracting translations, reducing load time from ~5 seconds to <1 second when cache is valid
+- **Enhancement:** Improved cache loading strategy - cache is now loaded early in the command flow, allowing both current object translation lookup and full object list to benefit from cached translations
+
 ### **[0.9.3]**
 - **Cost Optimization:** Reduced telemetry sampling to 10% for both commands and errors - significantly reduces Azure Application Insights data volume and costs while still providing valuable usage insights
 - **Breaking Change:** Error tracking now also uses 10% sampling (previously 100%) - multiply reported counts by 10 to estimate actual numbers

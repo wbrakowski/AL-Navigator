@@ -74,21 +74,31 @@ exports.FieldHoverProvider = class FieldHoverProvider {
      * @returns {vscode.ProviderResult<vscode.Hover>}
      */
     async provideHover(document: TextDocument, position: Position, token: CancellationToken) {
-        return commands.executeCommand('vscode.executeDefinitionProvider', document.uri, position)
-            .then(definitions => {
-                if (token.isCancellationRequested) return Promise.reject('Canceled');
-                return definitions && definitions[0];
-            }).then(async definition => {
-                if (token.isCancellationRequested)
-                    return Promise.reject('Canceled');
+        try {
+            const definitions: any = await commands.executeCommand('vscode.executeDefinitionProvider', document.uri, position);
 
-                const currentPhrase = getFullPhraseInQuotes(document, position);
-                if (!currentPhrase) return;
+            if (token.isCancellationRequested) {
+                return undefined;
+            }
 
-                let translations = await tsl.showBaseAppTranslation(currentPhrase, false, false, false);
-                if (translations.length > 0) {
-                    return new Hover(`${translations} (translated by AL Navigator)`);
-                }
-            });
+            const definition = definitions && definitions[0];
+            if (!definition || token.isCancellationRequested) {
+                return undefined;
+            }
+
+            const currentPhrase = getFullPhraseInQuotes(document, position);
+            if (!currentPhrase) {
+                return undefined;
+            }
+
+            let translations = await tsl.showBaseAppTranslation(currentPhrase, false, false, false);
+            if (translations.length > 0) {
+                return new Hover(`${translations} (translated by AL Navigator)`);
+            }
+        } catch (error) {
+            // Silently fail for hover provider - don't show errors to user
+            console.error('Error in hover provider:', error);
+            return undefined;
+        }
     }
 }

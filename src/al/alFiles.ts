@@ -98,24 +98,24 @@ export class ALFiles {
         }
     }
 
-    private populateALFilesArray(): void {
+    private async populateALFilesArray(): Promise<void> {
         let workspaceALFiles: ALFile[] = new Array();
         let searchPattern: string = '**/*.al*';
-        this.getAlFilesFromCurrentWorkspace(searchPattern).then(Files => {
-            try {
-                Files.forEach(file => {
-                    let workspaceALFile: ALFile = new ALFile(file);
-                    workspaceALFile.alObject.workspaceFile = true;
-                    workspaceALFile.alObject.fsPath = file.fsPath;
-                    workspaceALFiles.push(workspaceALFile);
-                    this.alObjects.push(workspaceALFile.alObject);
-                    // console.log(workspaceALFile.alObject);
-                });
-            }
-            catch (error) {
-                vscode.window.showErrorMessage(error.message);
-            }
-        });
+
+        try {
+            const Files = await this.getAlFilesFromCurrentWorkspace(searchPattern);
+            Files.forEach(file => {
+                let workspaceALFile: ALFile = new ALFile(file);
+                workspaceALFile.alObject.workspaceFile = true;
+                workspaceALFile.alObject.fsPath = file.fsPath;
+                workspaceALFiles.push(workspaceALFile);
+                this.alObjects.push(workspaceALFile.alObject);
+                // console.log(workspaceALFile.alObject);
+            });
+        } catch (error: any) {
+            vscode.window.showErrorMessage(error.message);
+        }
+
         this.workspaceALFiles = workspaceALFiles;
     }
 

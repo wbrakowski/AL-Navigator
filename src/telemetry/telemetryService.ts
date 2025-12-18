@@ -21,13 +21,9 @@ export class TelemetryService {
     private sessionId: string = '';
 
     // Azure Application Insights instrumentation key
-    // Replace this with your own key from Azure Portal
-    // Free tier: 5 GB/month (plenty for extension telemetry)
+    // Public key is safe - protected by daily cap and rate limiting in Azure
+    // Sampling is configured directly in Azure Application Insights (not in code)
     private readonly instrumentationKey = '8f145939-c56a-495d-a090-88c934715fc1';
-
-    // Sampling rate for commands and errors (0.0 - 1.0)
-    // 0.1 = 10% of all commands and errors are tracked
-    private readonly samplingRate = 0.1;
 
     private constructor() {
         // Private constructor for singleton pattern
@@ -84,7 +80,7 @@ export class TelemetryService {
             CustomConsole.customConsole.appendLine(`[Telemetry] Instrumentation Key: ${this.instrumentationKey.substring(0, 8)}...`);
             CustomConsole.customConsole.appendLine(`[Telemetry] Session ID: ${this.sessionId}`);
             CustomConsole.customConsole.appendLine(`[Telemetry] Extension Version: ${this.extensionVersion}`);
-            CustomConsole.customConsole.appendLine(`[Telemetry] Sampling rate: ${this.samplingRate * 100}% for commands and errors`);
+            CustomConsole.customConsole.appendLine(`[Telemetry] Sampling is configured in Azure Application Insights`);
 
             CustomConsole.customConsole.appendLine('[Telemetry] Telemetry service initialized successfully');
 
@@ -95,8 +91,7 @@ export class TelemetryService {
     }
 
     /**
-     * Track a command execution with 10% sampling
-     * Both successful and failed commands use the same sampling rate
+     * Track a command execution
      * 
      * @param commandName The name of the command
      * @param properties Additional properties to track
@@ -113,25 +108,14 @@ export class TelemetryService {
         }
 
         try {
-            // Apply sampling for all commands (10%)
-            const shouldTrack = Math.random() < this.samplingRate;
-
-            if (!shouldTrack) {
-                CustomConsole.customConsole.appendLine(`[Telemetry] Command ${commandName} filtered by sampling`);
-                return; // Skip this event due to sampling
-            }
-
             // DEBUG: Log command tracking
-            CustomConsole.customConsole.appendLine(`[Telemetry] Tracking command: ${commandName} (status: ${properties?.status || 'unknown'})`);
+            CustomConsole.customConsole.appendLine(`[Telemetry] Tracking command: ${commandName}`);
 
             const eventName = `command.${commandName.replace('extension.', '')}`;
             this.reporter.sendTelemetryEvent(eventName, {
                 ...properties,
                 commandName: commandName,
-                extensionVersion: this.extensionVersion,
-                sessionId: this.sessionId,
-                platform: process.platform,
-                sampled: 'yes' // All commands are sampled at 10%
+                sessionId: this.sessionId
             }, measurements);
 
             CustomConsole.customConsole.appendLine(`[Telemetry] Command event sent successfully`);
@@ -161,9 +145,7 @@ export class TelemetryService {
 
             this.reporter.sendTelemetryEvent(eventName, {
                 ...properties,
-                extensionVersion: this.extensionVersion,
-                sessionId: this.sessionId,
-                platform: process.platform
+                sessionId: this.sessionId
             }, measurements);
 
             CustomConsole.customConsole.appendLine(`[Telemetry] Event sent successfully`);
@@ -173,8 +155,8 @@ export class TelemetryService {
     }
 
     /**
-     * Track an error with sampling (10%)
-     * Enhanced with more contextual information
+     * Track an error
+     * Enhanced with error location extraction
      * @param error The error to track
      * @param properties Additional properties to track
      */
@@ -184,33 +166,18 @@ export class TelemetryService {
         }
 
         try {
-            // Apply sampling for errors too
-            const shouldTrack = Math.random() < this.samplingRate;
-
-            if (!shouldTrack) {
-                CustomConsole.customConsole.appendLine(`[Telemetry] Error ${error.name} filtered by sampling`);
-                return; // Skip this error due to sampling
-            }
-
             // DEBUG: Log error tracking
             CustomConsole.customConsole.appendLine(`[Telemetry] Tracking error: ${error.message}`);
 
-            // Enhanced error properties with more context
+            // Only send unique properties not already provided by VS Code
+            // VS Code already sends: stack, message, name, common.os, common.vscodeversion, etc.
             const errorProperties = {
                 ...properties,
-                errorMessage: error.message,
-                errorName: error.name, // Error type (TypeError, ReferenceError, etc.)
-                errorStack: error.stack || 'No stack trace',
-                errorLocation: this.extractErrorLocation(error.stack), // File and line number
-                extensionVersion: this.extensionVersion,
-                sessionId: this.sessionId,
-                platform: process.platform,
-                nodeVersion: process.version,
-                vscodeVersion: vscode.version,
-                sampled: 'yes' // Indicate this error was sampled
+                errorLocation: this.extractErrorLocation(error.stack), // Our custom extracted location
+                sessionId: this.sessionId
             };
 
-            // Track error with sampling applied
+            // Track error
             this.reporter.sendTelemetryErrorEvent('extension.error', errorProperties);
 
             CustomConsole.customConsole.appendLine(`[Telemetry] Error event sent successfully`);
