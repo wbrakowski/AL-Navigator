@@ -4,6 +4,10 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.5]**
+- **Fixed:** Corrected casing of `InStream` data type (was `Instream`) in `ALDataTypes` enum and variable type list - ensures correct AL syntax is generated when creating `InStream` variables #187
+- **Fixed:** Typo in `alVariableOrdering.ts` comment (`N  otification` → `Notification`)
+
 ### **[0.9.4]**
 - **Performance:** Massive performance improvement for startup object selection - translation cache is now loaded once at startup and reused for both current object detection and object list display, eliminating redundant XLF file parsing that caused 3-5 second delays
 - **Fixed:** Cache not being utilized during current object detection - the extension now properly checks cache validity before extracting translations, reducing load time from ~5 seconds to <1 second when cache is valid
