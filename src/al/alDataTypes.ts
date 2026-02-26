@@ -7,7 +7,7 @@ export enum ALDataTypes {
     FieldClass = "FieldClass", FieldRef = "FieldRef", FieldType = "FieldType", File = "File", FilterPageBuilder = "FilterPageBuilder",
     Guid = "Guid",
     HttpClient = "HttpClient", HttpContent = "HttpContent", HttpHeaders = "HttpHeaders", HttpRequestMessage = "HttpRequestMessage", HttpResponseMessage = "HttpResponseMessage",
-    Instream = "Instream", Integer = "Integer",
+    InStream = "InStream", Integer = "Integer",
     Interface = "Interface",
     JsonArray = "JsonArray", JsonObject = "JsonObject", JsonToken = "JsonToken", JsonValue = "JsonValue",
     KeyRef = "KeyRef",

@@ -12,7 +12,7 @@ export module ALVarHelper {
       'FieldClass', 'FieldRef', 'FieldType', 'File', 'FilterPageBuilder',
       'Guid',
       'HttpClient', 'HttpContent', 'HttpHeaders', 'HttpRequestMessage', 'HttpResponseMessage',
-      'Instream', 'Integer',
+      'InStream', 'Integer',
       'Interface',
       'JsonArray', 'JsonObject', 'JsonToken', 'JsonValue',
       'KeyRef',
