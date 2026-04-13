@@ -4,6 +4,10 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.6]**
+- **Fixed:** Updated axios dependency from ^1.13.5 to ^1.15.0 to resolve critical SSRF vulnerability (GHSA-3p68-rc4w-qgx5) and header injection vulnerability (GHSA-fvcv-3m26-pcqx) #192
+- **Fixed:** Applied npm audit fixes for brace-expansion, diff, minimatch, and picomatch vulnerabilities #192
+
 ### **[0.9.5]**
 - **Fixed:** Corrected casing of `InStream` data type (was `Instream`) in `ALDataTypes` enum and variable type list - ensures correct AL syntax is generated when creating `InStream` variables #187
 - **Fixed:** Typo in `alVariableOrdering.ts` comment (`N  otification` → `Notification`)
