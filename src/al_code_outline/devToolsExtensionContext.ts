@@ -1,7 +1,6 @@
 // Thanks to David Feldhoff for this chunk of code
 
 import * as vscode from 'vscode';
-import { isNullOrUndefined } from "util";
 import { ObjectTypes } from '../al/objectTypes';
 import { StringFunctions } from '../additional/stringFunctions';
 import { ToolsSymbolInformationRequest } from './toolsSymbolInformationRequest';
@@ -17,7 +16,7 @@ export class ALCodeOutlineExtension {
     }
 
     public static async getInstance(): Promise<ALCodeOutlineExtension> {
-        if (isNullOrUndefined(this.alCodeOutlineExtensionObject)) {
+        if (this.alCodeOutlineExtensionObject == null) {
             this.setInstance();
         }
         await this.alCodeOutlineExtensionObject.activate();
@@ -26,7 +25,7 @@ export class ALCodeOutlineExtension {
 
     private static setInstance() {
         let vsCodeExtension = vscode.extensions.getExtension('andrzejzwierzchowski.al-code-outline');
-        if (isNullOrUndefined(vsCodeExtension)) {
+        if (vsCodeExtension == null) {
             throw new Error('AL Code Outline has to be installed.');
         }
         this.alCodeOutlineExtensionObject = new ALCodeOutlineExtension(vsCodeExtension as vscode.Extension<any>);
