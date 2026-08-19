@@ -230,11 +230,11 @@
 		"@types/node": "^18.0.0",
 		"@types/vscode": "^1.83.0",
 		"@types/xml2js": "^0.4.14",
+		"@vscode/test-electron": "^2.5.2",
 		"@vscode/vsce": "^3.9.2",
 		"glob": "^8.1.0",
 		"mocha": "^10.8.2",
-		"tslint": "^5.12.1",
-		"vscode-test": "^1.6.0"
+		"tslint": "^5.12.1"
 	},
 	"extensionDependencies": [
 		"andrzejzwierzchowski.al-code-outline"
