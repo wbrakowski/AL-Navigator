@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.8]**
+- **Fixed:** Updated transitive `js-yaml` dependency to 4.3.2/3.15.2 to resolve Dependabot-reported DoS vulnerability ("maxTotalMergeKeys does not limit CPU use for empty merge sources", GHSA-2883-xcg3-v3hh / GHSA-r3ph-w7gj-g6xm)
+
 ### **[0.9.7]**
 - **Fixed:** Removed usage of deprecated `util.isNullOrUndefined` (removed in Node.js 22+) which caused "Create a new report" to fail with `(0, util_1.isNullOrUndefined) is not a function` on VS Code 1.123.0+ #194
 
