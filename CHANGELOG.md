@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.10]**
+- **Fixed:** Updated transitive dependencies (`axios`, `undici`, `qs`, `markdown-it`, `fast-uri`, `brace-expansion`, `@azure/msal-node` and others) to resolve all open Dependabot alerts; `npm audit` now reports 0 vulnerabilities
+
 ### **[0.9.9]**
 - **Fixed:** Updated transitive `follow-redirects` dependency to 1.16.2 to resolve Dependabot-reported high severity vulnerabilities (array-form headers bypass cross-origin credential stripping, `sensitiveHeaders` regex escaping can expose credential headers) - Dependabot alerts #148, #149
 
