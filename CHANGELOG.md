@@ -4,6 +4,9 @@ All notable changes to the "AL Navigator" extension are documented here.
 
 ## Release Notes
 
+### **[0.9.9]**
+- **Fixed:** Updated transitive `follow-redirects` dependency to 1.16.2 to resolve Dependabot-reported high severity vulnerabilities (array-form headers bypass cross-origin credential stripping, `sensitiveHeaders` regex escaping can expose credential headers) - Dependabot alerts #148, #149
+
 ### **[0.9.8]**
 - **Fixed:** Updated transitive `js-yaml` dependency to 4.3.2/3.15.2 to resolve Dependabot-reported DoS vulnerability ("maxTotalMergeKeys does not limit CPU use for empty merge sources", GHSA-2883-xcg3-v3hh / GHSA-r3ph-w7gj-g6xm)
 
